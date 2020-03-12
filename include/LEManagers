@@ -1,0 +1,17 @@
+/***********************************************************
+ LIMITEngine Header File
+ Copyright (C), LIMITGAME, 2020
+ -----------------------------------------------------------
+ @file  Managers
+ @brief Common definitions for Managers
+ @author minseob (leeminseob@outlook.com)
+ ***********************************************************/
+ #pragma once
+
+ namespace LimitEngine {
+ class DrawManager;
+ class Draw2DManager;
+ class SceneManager;
+ class ShaderManager;
+ class ShaderDriverManager;
+ }

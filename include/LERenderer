@@ -1,0 +1,34 @@
+﻿/***********************************************************
+ LIMITEngine Header File
+ Copyright (C), LIMITGAME, 2020
+ -----------------------------------------------------------
+ @file  Renderer
+ @brief Common definitions for Renderer
+ @author minseob (leeminseob@outlook.com)
+ ***********************************************************/
+#pragma once
+
+// Prototype
+namespace LimitEngine {
+class AmbientLight;
+class Camera;
+class CommandBuffer;
+class DirectionalLight;
+class DrawCommand;
+class Light;
+class LightIBL;
+class LightManager;
+class Material;
+class Model;
+class Mesh;
+class PointLight;
+class Shader;
+class ShaderDriver;
+class SpotLight;
+class Sprite;
+class Texture;
+class RenderState;
+class RenderContext;
+}
+
+#include "Renderer/Definitions.h"

@@ -1,0 +1,142 @@
+/***********************************************************
+ LIMITEngine Source File
+ Copyright (C), LIMITGAME, 2020
+ -----------------------------------------------------------
+ @file  VertexBuffer.cpp
+ @brief Vertex Buffer
+ @author minseob (leeminseob@outlook.com)
+ ***********************************************************/
+#pragma once
+
+#include <LERenderer>
+
+#include "Core/Object.h"
+#include "Core/AutoPointer.h"
+#include "Managers/DrawManager.h"
+#include "Renderer/Vertex.h"
+
+namespace LimitEngine {
+    class Shader;
+    class VertexBufferImpl : public Object<LimitEngineMemoryCategory_Graphics>
+    {
+    public:
+        virtual ~VertexBufferImpl() {}
+        
+        virtual void Create(uint32 fvf, size_t stride, size_t size, uint32 flag, void *buffer) = 0;
+        virtual void Dispose() = 0;
+        virtual void Bind(Shader *shader) = 0;
+        virtual void* GetHandle() = 0;
+        virtual void DrawPrimitive(uint32 type, size_t count) = 0;
+    };
+
+    class RendererTask_CreateVertexBuffer : public RendererTask
+    {
+    public:
+        RendererTask_CreateVertexBuffer(VertexBufferImpl *owner, uint32 fvf, uint32 fvfSize, size_t dataSize, uint32 flag, void *initializeBuffer)
+            : mOwner(owner)
+            , mFvf(fvf)
+            , mFvfSize(fvfSize)
+            , mDataSize(dataSize)
+            , mFlag(flag)
+            , mInitializeBuffer(NULL)
+        {
+            if (initializeBuffer) {
+                size_t dataSize = mFvfSize * mDataSize;
+                mInitializeBuffer = malloc(dataSize);
+                ::memcpy(mInitializeBuffer, initializeBuffer, dataSize);
+            }
+        }
+        virtual ~RendererTask_CreateVertexBuffer()
+        {
+            if (mInitializeBuffer)
+                free(mInitializeBuffer);
+        }
+        void Run() override
+        {
+            if (mOwner) {
+                mOwner->Create(mFvf, mFvfSize, mDataSize, mFlag, mInitializeBuffer);
+            }
+        }
+    private:
+        VertexBufferImpl *mOwner;
+        uint32 mFvf;
+        uint32 mFvfSize;
+        size_t mDataSize;
+        uint32 mFlag;
+        void *mInitializeBuffer;
+    };
+
+    class VertexBufferGeneric : public Object<LimitEngineMemoryCategory_Graphics>
+    {
+    public:
+		VertexBufferGeneric(){};
+		virtual ~VertexBufferGeneric(){};
+    };
+    
+    VertexBufferImpl* CreateImplementation();
+
+    template <uint32 tFVF, size_t tSize>
+    class VertexBuffer : public VertexBufferGeneric
+    {
+    public:
+        VertexBuffer()
+            : mVertex(0)
+            , mCreationFlag(0)
+            , mImpl(0)
+            , mSize(0)
+        {
+            mImpl = CreateImplementation();
+        }
+        virtual ~VertexBuffer()
+        {
+            if (mImpl)
+            {
+                mImpl->Dispose();
+                delete mImpl;
+                mImpl = nullptr;
+            }
+            if (mVertex) delete[] mVertex; mVertex = nullptr;
+            mSize = 0;
+        }
+        
+        void Create(size_t size, void *initializeBuffer, uint32 flag)
+        {
+            if (mVertex) delete[] mVertex;
+            mSize = size;
+            mCreationFlag = flag;
+            mVertex = new Vertex<tFVF, tSize>[size]();
+            if (initializeBuffer) {
+                ::memcpy(mVertex, initializeBuffer, size * tSize);
+            }
+
+            AutoPointer<RendererTask> rt_createVertexBuffer = new RendererTask_CreateVertexBuffer(mImpl, tFVF, tSize, size, flag, initializeBuffer);
+            LE_DrawManager.AddRendererTask(rt_createVertexBuffer);
+
+            // No need cpu buffer because we don't edit anymore.
+            if (!(flag & static_cast<uint32>(RendererFlag::CreateBufferFlags::CPU_READABLE))
+                && !(flag & static_cast<uint32>(RendererFlag::CreateBufferFlags::CPU_WRITABLE))) {
+                delete[] mVertex;
+                mVertex = NULL;
+            }
+        }
+        void Bind(Shader *sh) { if (mImpl) mImpl->Bind(sh); }
+        void BindToDrawManager()
+        {
+            DrawCommand::SetFVF(tFVF);
+            DrawCommand::BindVertexBuffer(mImpl->GetHandle(), mVertex, 0, static_cast<uint32>(mSize * tSize), static_cast<uint32>(tSize));
+        }
+        void DrawPrimitive(uint32 type)         { if (mImpl) mImpl->DrawPrimitive(type, mSize); }
+        
+        Vertex<tFVF, tSize>* GetVertices()      { return mVertex; }
+        void* GetHandle()                       { if (mImpl) return mImpl->GetHandle(); return NULL; }
+        void* GetBuffer()                       { return &mVertex[0]; }
+        size_t GetSize()                        { return mSize; }
+        size_t GetVertexSize()                  { return __size; }
+        
+    private:        // Private Members
+        VertexBufferImpl            *mImpl;
+        Vertex<tFVF, tSize>         *mVertex;
+        size_t                       mSize;
+        uint32                       mCreationFlag;
+    };
+}

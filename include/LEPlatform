@@ -1,0 +1,14 @@
+/***********************************************************
+ LIMITEngine Header File
+ Copyright (C), LIMITGAME, 2020
+ -----------------------------------------------------------
+ @file  LEPlatform
+ @brief Definitions for platform
+ @author minseob (leeminseob@outlook.com)
+ ***********************************************************/
+ #pragma once
+ #ifdef WINDOWS
+ #include "Platform/Platform_Windows.h"
+ #else
+ #error No definition for this platform
+ #endif
