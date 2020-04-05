@@ -1,13 +1,10 @@
 /***********************************************************
 LIMITEngine Header File
-Copyright (C), LIMITGAME, 2012
+Copyright (C), LIMITGAME, 2020
 -----------------------------------------------------------
-@file  LE_TextureFactory.h
+@file  TextureFactory.h
 @brief Factory for creating texture
 @author minseob (leeminseob@outlook.com)
------------------------------------------------------------
-History:
-- 2017/5/19 Created by minseob
 ***********************************************************/
 #pragma once
 

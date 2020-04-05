@@ -240,7 +240,7 @@ namespace LimitEngine
         LEMath::IntSize screenSize = mImpl->GetScreenSize();
         if (screenSize.Width() <= 0 || screenSize.Height() <= 0) return;
 
-        //mScreen_size = ConvertReal2Virtual(screenSize);
+        mScreenSize = ConvertReal2Virtual(screenSize);
         //SceneManager::GetSingleton().GetCamera()->SetScreenSize(mScreen_size.width, mScreen_size.height);
         //
         //PostFilterManager::GetSingleton().Init();

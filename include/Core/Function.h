@@ -1,16 +1,12 @@
 ﻿/*****************************************************************************
  LIMITEngine Header File
- Copyright (C), LIMITGAME, 2012
+ Copyright (C), LIMITGAME, 2020
  -----------------------------------------------------------
- * @file    LE_Function.h
- * @brief    Function class
- * @author    minseob
- -----------------------------------------------------------
- History:
- - 2016/10/27 Created by minseob
+ * @file    Function.h
+ * @brief   Function class
+ * @author  minseob
  *****************************************************************************/
-#ifndef _LE_FUNCTION_H_
-#define _LE_FUNCTION_H_
+#pragma once
 
 namespace LimitEngine {
     template <typename ReturnType>
@@ -107,5 +103,3 @@ namespace LimitEngine {
         uint32 mType;
     };
 }; // namespace LimitEngine
-
-#endif // _LE_FUNCTION_H_

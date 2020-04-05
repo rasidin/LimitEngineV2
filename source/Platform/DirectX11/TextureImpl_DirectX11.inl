@@ -159,7 +159,15 @@ namespace LimitEngine {
             tex2DDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
             tex2DDesc.ArraySize = 1;
 
-            if (device->CreateTexture2D(&tex2DDesc, NULL, &mTexture2D) == S_OK) {
+            D3D11_SUBRESOURCE_DATA tex2DSubResource;
+            if (initializeData) {
+                ::memset(&tex2DSubResource, 0, sizeof(D3D11_SUBRESOURCE_DATA));
+                tex2DSubResource.pSysMem = initializeData;
+                tex2DSubResource.SysMemPitch = CalculatePitchSize(format, size);
+                tex2DSubResource.SysMemSlicePitch = CalculateSlideSize(format, size);
+            }
+
+            if (device->CreateTexture2D(&tex2DDesc, initializeData?(&tex2DSubResource):NULL, &mTexture2D) == S_OK) {
                 D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
 
                 ::memset(&srvDesc, 0, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));

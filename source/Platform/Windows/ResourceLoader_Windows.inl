@@ -50,6 +50,19 @@ namespace LimitEngine {
 
             return output;
         }
+        bool WriteToResource(const char *Filename, uint32 FileType, uint32 FileVersion, void *Data, size_t Size)
+        {
+            FILE *fp = nullptr;
+            fopen_s(&fp, Filename, "wb");
+            if (fp) {
+                fwrite(&FileType, sizeof(uint32), 1, fp);
+                fwrite(&FileVersion, sizeof(uint32), 1, fp);
+                fwrite(Data, Size, 1, fp);
+                fclose(fp);
+                return true;
+            }
+            return false;
+        }
     };
 }
 #endif

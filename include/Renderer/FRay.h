@@ -14,8 +14,8 @@ namespace LimitEngine {
     class fRay { public:
         LEMath::FloatVector3 org, tar;
         fRay()
-			: org(0)
-			, tar(0)
+			: org(0.0f)
+			, tar(0.0f)
 		{
             org = LEMath::FloatVector3::Zero;
             tar = LEMath::FloatVector3::Zero;

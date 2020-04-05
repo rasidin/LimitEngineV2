@@ -1,26 +1,38 @@
 /***********************************************************
  LIMITEngine Header File
- Copyright (C), LIMITGAME, 2012
+ Copyright (C), LIMITGAME, 2020
  -----------------------------------------------------------
- @file  LE_Font.h
+ @file  Font.h
  @brief Font Class
  @author minseob (leeminseob@outlook.com)
- -----------------------------------------------------------
- History:
- - 2012/9/15 Created by minseob
  ***********************************************************/
+#pragma once
 
-#ifndef _LE_FONT_H_
-#define _LE_FONT_H_
+#include <LEIntVector2.h>
 
-#include <LE_Math>
-#include "LE_Object.h"
+#include "Core/ReferenceCountedObject.h"
+#include "Core/ReferenceCountedPointer.h"
+#include "Core/SerializableResource.h"
+#include "Containers/VectorArray.h"
 
 namespace LimitEngine {
     class Sprite;
-    class Font : public Object<LimitEngineMemoryCategory_Graphics>
+    class Font : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>, public SerializableResource
     {
+        enum class FileVersion : uint32 {
+            FirstVersion = 1,
+
+            CurrentVersion = FirstVersion
+        };
+
     private:
+        struct Glyph
+        {
+            LEMath::IntSize size;
+            uint8 ascii;
+            uint8 frameIndex;
+        };
+
         typedef struct _CONVERT_TABLE
         {
             uint32       start;
@@ -28,7 +40,7 @@ namespace LimitEngine {
             char        *table;
             char Convert(const char t) 
             { 
-                if (table && t >= int(start) && t < int(start + size)) return table[t-start]; 
+                if (table && t >= int(start) && t < int(start + size)) return table[t-start];
                 return 0; 
             }
             _CONVERT_TABLE()
@@ -46,18 +58,26 @@ namespace LimitEngine {
         
     public:
         Font();
-        Font(const char *filename);
         virtual ~Font();
         
-        void SetSprite(Sprite *s)       { mSprite = s; }
+        virtual void InitResource() override;
+
         void SetConvertTable(uint32 start, uint32 size, char *table = 0);
         
-        void Draw(const iPoint &pos, char *text, float size = 1.f);
-        
+        void Draw(const LEMath::IntPoint &pos, char *text, float size = 1.f);
+
+    public: // Generator
+        static Font* GenerateFromFile(const char *ImageFilePath, const char *GlyphFilePath);
+        SerializableResource* GenerateNew() const override { return new Font(); }
+
+    protected: // Serializer
+        virtual bool Serialize(Archive &OutArchive) override;
+
+        virtual uint32 GetFileType() const { return ('F' | ('O' << 8) | ('N' << 16) | ('T' << 24)); }
+        virtual uint32 GetVersion() const { return (uint32)FileVersion::CurrentVersion; }
+
     private:
-        CONVERT_TABLE            mTable;
-        Sprite                  *mSprite;
+        ReferenceCountedPointer<Sprite> mSprite;
+        VectorArray<Glyph>              mGlyphs;
     };
 }
-
-#endif // _LE_FONT_H_

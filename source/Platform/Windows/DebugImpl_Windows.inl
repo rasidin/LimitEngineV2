@@ -9,6 +9,8 @@
 
 #include "Core/Debug.h"
 
+#include <iostream>
+
 #ifdef WINDOWS
 namespace LimitEngine {
     class DebugImpl_Windows : public DebugImpl

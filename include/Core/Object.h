@@ -1,6 +1,6 @@
 /***********************************************************
  LIMITEngine Header File
- Copyright (C), LIMITGAME, 2012
+ Copyright (C), LIMITGAME, 2020
  -----------------------------------------------------------
  @file  LE_Object.h
  @brief Object Class (BaseObject) Overwrite function for memory
@@ -15,7 +15,7 @@ namespace LimitEngine {
 template<uint32 category = LimitEngineMemoryCategory_Unknown>
 class Object
 {public:
-	~Object(){}
+	virtual ~Object(){}
 	void* operator new (size_t size)
 	{
 		return MemoryAllocator::Alloc(size, category);

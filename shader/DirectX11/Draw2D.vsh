@@ -5,22 +5,19 @@
  @file  Sprite.vsh
  @brief Sprite Shader (Vertex)
  @author minseob (leeminseob@outlook.com)
- -----------------------------------------------------------
- History:
- - 2012/6/25 Created by minseob
  ***********************************************************/
 struct VS_INPUT
 {
 	float4 pos		: POSITION;
-	float4 color	: COLOR;
-	float2 uv		: TEXCOORD;
+	float4 color	: COLOR0;
+	float2 uv		: TEXCOORD0;
 };
 
 struct VS_OUTPUT
 {
 	float4 pos		: SV_POSITION;
-	float4 color	: COLOR;
-	float2 uv		: TEXCOORD;
+	float4 color	: COLOR0;
+	float2 uv		: TEXCOORD0;
 };
 
 VS_OUTPUT vs_main(VS_INPUT In)
@@ -31,6 +28,6 @@ VS_OUTPUT vs_main(VS_INPUT In)
     output.pos.z = 0;
 	output.pos.w = 1;
 	output.color = In.color;
-	output.uv = In.uv;
+    output.uv = In.uv;
 	return output;
 }

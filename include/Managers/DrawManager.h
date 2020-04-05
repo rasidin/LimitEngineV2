@@ -18,8 +18,8 @@
 #include <LEIntVector2.h>
 
 #include "Core/AutoPointer.h"
-//#include "LE_Object.h"
 #include "Core/Event.h"
+#include "Core/Function.h"
 #include "Core/Mutex.h"
 #include "Core/Singleton.h"
 #include "Core/Thread.h"
@@ -64,6 +64,20 @@ public:
     virtual void Run() = 0;
 };
 
+template<typename LAMBDA>
+class RendererTaskLambda final : public RendererTask
+{
+public:
+    RendererTaskLambda(LAMBDA &&Lambda) : mLambda(Forward<LAMBDA>(Lambda)) {}
+
+    virtual void Run() override final {
+        mLambda();
+        mLambda.~LAMBDA();
+    }
+private:
+    LAMBDA mLambda;
+};
+
 class DrawManager;
 typedef Singleton<DrawManager, LimitEngineMemoryCategory_Graphics> SingletonDrawManager;
 class DrawManager : public SingletonDrawManager
@@ -102,6 +116,9 @@ public:                    // Interfaces
 
     // Add renderer task (auto release)
     void AddRendererTask(AutoPointer<RendererTask> &task) { mRendererTasks.Add(task.Pop()); }
+
+    template<typename L>
+    void AddRendererTaskLambda(L &&Lambda) { mRendererTasks.Add(new RendererTaskLambda<L>(Forward<L>(Lambda))); }
 
     // Prepare for drawing scene
     void PrepareForDrawingScene();

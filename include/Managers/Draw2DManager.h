@@ -47,3 +47,4 @@ namespace LimitEngine {
         uint32           mVertex_draw2d_start;     //!< Start offset of vertex buffer for drawing 2D
     };
 }
+#define LE_Draw2DManager Draw2DManager::GetSingleton()

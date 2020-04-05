@@ -78,7 +78,7 @@ namespace LimitEngine {
     }
     void Draw2DManager::FlushDraw2D(const RendererFlag::PrimitiveTypes &PrimitiveType, Shader *Shader /*= nullptr*/)
     {
-        DrawCommand::SetCulling(static_cast<uint32>(RendererFlag::Culling::ClockWise));
+        DrawCommand::SetCulling(static_cast<uint32>(RendererFlag::Culling::CounterClockWise));
         if (Shader == nullptr) {
             if (!mShader_draw2d)
                 mShader_draw2d = ShaderManager::GetSingleton().GetShader("Draw2D");

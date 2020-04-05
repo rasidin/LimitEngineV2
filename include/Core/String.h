@@ -25,7 +25,7 @@ public:
     String(const char *str = 0);
     String(const String &str);
     String(const float &f);
-    ~String();
+    virtual ~String();
 
     // ============================================
     // Operators (inline)

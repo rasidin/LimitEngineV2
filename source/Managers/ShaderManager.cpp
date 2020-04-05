@@ -41,6 +41,9 @@ static const unsigned char Shader_Draw2D_PS[] = {
 //static const unsigned char Shader_GenerateBakedBRDF_CS[] = {
 //#include "shader/DirectX11/bin/GenerateBakedBRDF.cs.txt"
 //};
+static const unsigned char Shader_DrawFont_PS[] = {
+#include "shader/DirectX11/bin/DrawFont.ps.txt"
+};
 #endif
 
 namespace LimitEngine {
@@ -63,14 +66,16 @@ namespace LimitEngine {
         // Set Sprite Shader
         {
             shader = new Shader("Draw2D");
-#ifdef WINDOWS
             shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
             shader->SetCompiledBinary(Shader_Draw2D_PS, sizeof(Shader_Draw2D_PS), Shader::TYPE_PIXEL);
-#else
-            shader->Compile("<ShaderPath>Draw2D.vsh", Shader::TYPE_VERTEX);
-            shader->Compile("<ShaderPath>Draw2D.fsh", Shader::TYPE_PIXEL);
-#endif
-            shader->Link();
+            AddShader(shader);
+        }
+
+        // Set Font Shader
+        {
+            shader = new Shader("DrawFont");
+            shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
+            shader->SetCompiledBinary(Shader_DrawFont_PS, sizeof(Shader_DrawFont_PS), Shader::TYPE_PIXEL);
             AddShader(shader);
         }
 

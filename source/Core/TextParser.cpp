@@ -40,6 +40,7 @@ bool TextParser::Parse(const char *text)
     NODE *currentNode = NULL;
     NODE *parentNode = NULL;
     bool sequenceIn = false;
+    bool escapeIn = false;
     bool stringIn = false;
     bool comment = false;
     while (currentWord) {
@@ -51,6 +52,12 @@ bool TextParser::Parse(const char *text)
                     inputData(parentNode, &currentNode, buf, word_length, sequenceIn);
                 }
             }
+            else if (currentWord == '\r') {
+                if (*ptr == '\n') {
+                    ptr++;
+                }
+                comment = false;
+            }
             else if (currentWord == '\n') {
                 comment = false;
             }
@@ -58,10 +65,16 @@ bool TextParser::Parse(const char *text)
         }
         else if(!comment) {
             if (stringIn) {
-                if (currentWord == '\"') {
+                if (currentWord == '\\' && !escapeIn) {
+                    escapeIn = true;
+                }
+                else if (currentWord == '\"' && !escapeIn) {
                     stringIn = false;
                 }
-                else buf[word_length++] = currentWord;
+                else {
+                    buf[word_length++] = currentWord;
+                    escapeIn = false;
+                }
             }
             else {
                 if (currentWord == '{') {
@@ -171,7 +184,7 @@ void TextParser::inputData(NODE *parent, NODE **node, char *buf, uint32 length, 
     if (length)
     {
         if (*node) {
-            (*node)->values.Add(String(buf));
+            (*node)->values.Add(buf);
             if (!sequenceIn) *node = NULL;
         }
         else {

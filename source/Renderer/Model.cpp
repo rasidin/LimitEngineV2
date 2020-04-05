@@ -347,7 +347,7 @@ namespace LimitEngine {
                     binormal = (normal ^ tangent);
                     if (!rightHanded)
                     {
-                        binormal = binormal * -1;
+                        binormal = binormal * -1.0f;
                     }
                     vtxptr[idx1].SetTangent(tangent);
                     vtxptr[idx2].SetTangent(tangent);

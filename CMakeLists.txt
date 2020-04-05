@@ -8,8 +8,11 @@ add_subdirectory(test)
 
 add_definitions(-DWINDOWS -DUSE_DX11)
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 add_library(LimitEngine
 	source/LimitEngine.cpp
+	source/Core/Archive.cpp
 	source/Core/Debug.cpp
 	source/Core/Event.cpp
 	source/Core/Memory.cpp
@@ -19,6 +22,7 @@ add_library(LimitEngine
 	source/Core/Thread.cpp
 	source/Core/Timer.cpp
 	source/Core/Util.cpp
+	source/Factories/ArchiveFactory.cpp
 	source/Factories/ModelFactory.cpp
 	source/Factories/ShaderFactory.cpp
 	source/Factories/TextureFactory.cpp
@@ -33,6 +37,7 @@ add_library(LimitEngine
 	source/Renderer/CommandBuffer.cpp
 	source/Renderer/Camera.cpp
 	source/Renderer/FPolygon.cpp
+	source/Renderer/Font.cpp
 	source/Renderer/IndexBuffer.cpp
 	source/Renderer/Light.cpp
 	source/Renderer/Material.cpp
@@ -45,6 +50,7 @@ add_library(LimitEngine
 	source/Renderer/ShaderDriverLight.cpp
 	source/Renderer/ShaderDriverParameter.cpp
 	source/Renderer/ShaderParameterParser.cpp
+	source/Renderer/Sprite.cpp
 	source/Renderer/Texture.cpp
 	source/Renderer/VertexBuffer.cpp
 )

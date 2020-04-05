@@ -59,7 +59,7 @@ namespace LimitEngine {
         FVF_SIZE_TANGENT    = 12,
         FVF_SIZE_BINORMAL   = 12,
 	};
-	template <uint32 tFVF, size_t tSize> class Vertex : public Object<LimitEngineMemoryCategory_Graphics>
+	template <uint32 tFVF, size_t tSize> class Vertex
 	{	// P | N |C | T | W...
 	public:
 		size_t GetSize()		{ return tSize; }

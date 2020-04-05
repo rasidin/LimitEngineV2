@@ -15,6 +15,7 @@ class Camera;
 class CommandBuffer;
 class DirectionalLight;
 class DrawCommand;
+class Font;
 class Light;
 class LightIBL;
 class LightManager;

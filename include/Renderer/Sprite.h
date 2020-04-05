@@ -1,62 +1,79 @@
 /***********************************************************
  LIMITEngine Header File
- Copyright (C), LIMITGAME, 2012
+ Copyright (C), LIMITGAME, 2020
  -----------------------------------------------------------
- @file  LE_Sprite.h
+ @file  Sprite.h
  @brief Sprite
  @author minseob (leeminseob@outlook.com)
- -----------------------------------------------------------
- History:
- - 2012/6/18 Created by minseob
  ***********************************************************/
+#pragma once
 
-#ifndef _LE_SPRITE_H_
-#define _LE_SPRITE_H_
+#include <LERenderer>
 
-#include <LE_Math>
+#include <LEIntVector2.h>
+#include <LEIntVector4.h>
+#include <LEFloatVector4.h>
 
-#include "LE_Object.h"
-#include "LE_VectorArray.h"
+#include "Core/ReferenceCountedObject.h"
+#include "Core/ReferenceCountedPointer.h"
+#include "Containers/VectorArray.h"
+#include "Renderer/Texture.h"
 
 namespace LimitEngine {
     class Texture;
     class SpriteFactory;
-    class Sprite : public Object<LimitEngineMemoryCategory_Graphics>
+    class Sprite : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>, public SerializableResource
     {
         friend SpriteFactory;
     private:            // Private Structure
         typedef struct _FRAME
         {
-            fRect       rect;
-            _FRAME() : rect() {}
-            _FRAME(const fRect &r)
+            LEMath::FloatRect mRect;
+            _FRAME() : mRect() {}
+            _FRAME(const LEMath::FloatRect &r)
             {
-                rect = r;
+                mRect = r;
             }
-            void operator=(const fRect &r) { rect = r; }
+            void operator=(const LEMath::FloatRect &r) { mRect = r; }
         } FRAME;
-        
+
     public:
-        Sprite(void *data);
-        Sprite(const char *filename);
-        Sprite(Texture *tex);
+        enum class CoordinateType {
+            VirtualCoordinate = 0,
+            RealCoordinate
+        };
+
+    public:
+        Sprite();
         virtual ~Sprite();
         
-        void AddFrame(const iRect &frameRect);
-        void GenerateFrame(const iSize &frameSize);      
-        void Draw(uint32 frame, const iPoint &pos, float rotation = 0);
-        void Draw(uint32 frame, const iRect &rect, float rotation = 0);
-        void Draw(const iRect &frame, const iRect &rect, float rotation = 0);
-        
-        fRect GetFrameRect(uint32 f);
-        
+        virtual void InitResource() override;
+
+        void SetTexture(Texture *InTexture) { mTexture = InTexture; }
+
+        uint32 AddFrame(const LEMath::IntRect &frameRect);
+        void GenerateFrame(const LEMath::IntSize &frameSize);      
+        void Draw(uint32 frame, const LEMath::IntPoint &pos, float rotation = 0);
+        void Draw(uint32 frame, const LEMath::IntRect &rect, float rotation = 0);
+        void Draw(const LEMath::IntRect &frame, const LEMath::IntRect &rect, float rotation = 0);
+
+        void BeginBatchDraw();
+        void BatchDraw(uint32 frame, const LEMath::IntPoint &pos, CoordinateType CoordType = CoordinateType::VirtualCoordinate);
+        void EndBatchDraw(Shader *InShader = nullptr);
+
+        LEMath::FloatRect GetFrameRect(uint32 f);
+
+        virtual bool Serialize(Archive &OutArchive) override;
+
+    public: // Generators
+        static Sprite* GenerateFromFile(const char *ImageFilePath, const char *InfoFilePath);
+
     private:
         void LoadFromText(const char *text);
 
     private:
-        Texture             *_texture;
-        VectorArray<FRAME>   _frames;
+        ReferenceCountedPointer<Texture>    mTexture;
+        VectorArray<FRAME>                  mFrames;
     }; // Sprite
+    typedef ReferenceCountedPointer<Sprite> SpriteReferencePointer;
 }
-
-#endif

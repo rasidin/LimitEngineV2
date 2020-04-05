@@ -10,7 +10,9 @@
 #include "Managers/ResourceManager.h"
 #include "Core/Data.h"
 #include "Core/Util.h"
+#include "Core/SerializableResource.h"
 
+#include "Factories/ArchiveFactory.h"
 #include "Factories/ModelFactory.h"
 #include "Factories/TextureFactory.h"
 #include "Factories/ShaderFactory.h"
@@ -85,6 +87,7 @@ namespace LimitEngine {
     }
     void ResourceManager::registerFactories()
     {
+        m_Factories.Add(ResourceFactory::ID("", "lea"), new ArchiveFactory());
         m_Factories.Add(ResourceFactory::ID("model", ""), new ModelFactory());
 		m_Factories.Add(ResourceFactory::ID("shader", ""), new ShaderFactory());
         TextureFactory *textureFactory = new TextureFactory();
@@ -168,7 +171,7 @@ namespace LimitEngine {
         if (isRegister) {
             for (uint32 residx = 0; residx < m_Resources.count(); residx++) {
                 if (m_Resources[residx]->id == filename) {
-                    m_Resources[residx]->useCount;
+                    m_Resources[residx]->useCount++;
                     return m_Resources[residx];
                 }
             }
@@ -239,5 +242,17 @@ namespace LimitEngine {
             m_Resources[i]->Release();
         }
         m_Resources.Clear();
+    }
+    void ResourceManager::SaveResource(const char *FilePath, SerializableResource *Resource)
+    {
+        if (!Resource || !FilePath) return;
+
+        Archive OutArchive;
+        OutArchive << Resource;
+        Resource->Serialize(OutArchive);
+        
+        char *convertedPath = GetConvertedPath(FilePath);
+        m_Loader->WriteToResource(convertedPath, Resource->GetFileType(), Resource->GetFileType(), OutArchive.mData, OutArchive.mDataSize);
+        free(convertedPath);
     }
 }

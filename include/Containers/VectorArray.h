@@ -18,6 +18,7 @@
 #include <memory.h>
 #include "Core/Object.h"
 #include "Core/Common.h"
+#include "Core/SerializableResource.h"
 
 namespace LimitEngine
 {
@@ -74,7 +75,7 @@ private:
 	VectorArray<T> *mOwnerArray; // Onwer VectorArray
 	size_t mCurrentIndex;		 // Index of VectorArray
 };
-template <typename T> class VectorArray : public Object<LimitEngineMemoryCategory_Common>
+template <typename T> class VectorArray : public Object<LimitEngineMemoryCategory_Common>, public SerializableResource
 {
 #define VECTORARRAY_INIT          _size(0)\
                                 , _data(0)\
@@ -180,6 +181,8 @@ public:
         }
     }
     
+    inline T* GetData() const { return _data; }
+
     inline void Sort(std::function<bool(const T &t1, const T &t2)> func)
     {
         if(_data == NULL || _size == 0) return;
@@ -206,6 +209,23 @@ public:
         _data = newData;
     }
 
+    virtual bool Serialize(Archive &OutArchive) override
+    {
+        if (OutArchive.IsLoading()) {
+            size_t size;
+            OutArchive << size;
+            Resize(size);
+            void* archiveData = OutArchive.GetData(_size * sizeof(T));
+            memcpy(_data, archiveData, _size * sizeof(T));
+        }
+        else {
+            OutArchive << _size;
+            void* archiveData = OutArchive.AddSize(_size * sizeof(T));
+            memcpy(archiveData, _data, _size * sizeof(T));
+        }
+        return true;
+    }
+
     // For STL
     inline void push_back(const T& d)       { Add(d); }
     inline size_t count() const             { return _size; }
@@ -216,7 +236,7 @@ public:
     {
         if (_data) 
         {
-            for(size_t i=0;i<_size;i++) _data[i].~T();
+            for(size_t i=0;i<_size;i++) _data[i].T::~T();
             memset(_data, 0, sizeof(T) * _reserved);
         }    
         _size = 0;

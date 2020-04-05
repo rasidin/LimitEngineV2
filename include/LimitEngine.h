@@ -30,14 +30,18 @@ public: // Ctor & Dtor
 public: // Public functions
     void Init(WINDOW_HANDLE handle);
     void Term();
-    
+
+    void SetResourceRootPath(const char *RootPath);
+
     void Update();
 
     void Suspend();
     void Resume();
 
+    void DrawDebugUI();
+
 private: // Private members
-    //ResourceManager                 *mResourceManager;
+    ResourceManager                 *mResourceManager;
     DrawManager		                *mDrawManager;
     SceneManager                    *mSceneManager;
     ShaderManager                   *mShaderManager;
@@ -52,6 +56,9 @@ private: // Private members
     TaskManager::TaskID              mTaskID_UpdateScene;                //!< Task for updating scene
     TaskManager::TaskID              mTaskID_DrawScene;                  //!< Task for drawing scene
     TaskManager::TaskID              mTaskID_DrawManager_Run;            //!< Task for running drawmanager
+    TaskManager::TaskID              mTaskID_DrawDebugUI;               //!< Task for drawing debug UI
+
+    Font                            *mSystemFont;
 
 	class Debug				*mDebug;
 }; // Main

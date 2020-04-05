@@ -54,8 +54,8 @@ namespace LimitEngine {
         AABB Transform(const LEMath::FloatMatrix4x4 &m)
         {
             AABB output;
-            output.maximum = m.Translate(LEMath::FloatVector4(maximum.ToFloatVector4()).SetW(1.0f)).ToFloatVector3();
-            output.minimum = m.Translate(LEMath::FloatVector4(minimum.ToFloatVector4()).SetW(1.0f)).ToFloatVector3();
+            output.maximum = m.Translate(LEMath::FloatVector4(maximum).SetW(1.0f)).ToFloatVector3();
+            output.minimum = m.Translate(LEMath::FloatVector4(minimum).SetW(1.0f)).ToFloatVector3();
             return output;
         }
         

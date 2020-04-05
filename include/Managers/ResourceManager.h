@@ -10,6 +10,7 @@
 #include <LERenderer>
 
 #include "Core/AutoPointer.h"
+#include "Core/SerializableResource.h"
 #include "Core/Singleton.h"
 #include "Core/String.h"
 #include "Containers/MapArray.h"
@@ -27,6 +28,7 @@ public:
     
     virtual bool IsExist(const char *filename) = 0;
     virtual void* GetResource(const char *filename, size_t *size) = 0;
+    virtual bool WriteToResource(const char *Filename, uint32 FileType, uint32 FileVersion, void *Data, size_t Size) = 0;
 };
 
 class ResourceManager;
@@ -75,6 +77,8 @@ public:
     const RESOURCE* GetResourceWithRegister(const char *filename, ResourceFactory *customFactory = NULL)
     { return getResource(filename, true, customFactory); }
 
+    void SaveResource(const char *FilePath, SerializableResource *Resource);
+
     bool IsExist(const char *filename);
 
     void  ReleaseResource(const char* filename);
@@ -95,5 +99,5 @@ private:
     ResourceLoader                                   *m_Loader;
     MapArray<ResourceFactory::ID, ResourceFactory*>   m_Factories;
 };
-#define LE_ResourceManager LimitEngine::ResourceManager::GetSingleton()
+#define LE_ResourceManager ResourceManager::GetSingleton()
 }

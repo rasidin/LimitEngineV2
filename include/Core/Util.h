@@ -86,6 +86,23 @@ namespace LimitEngine {
      * @return Converted value into uint8
      */
     uint8 FloatToUInt8(float f);
+
+    // STD functions
+    template <typename T> struct RemoveReference { typedef T Type; };
+    template <typename T> struct RemoveReference<T&> { typedef T Type; };
+    template <typename T> struct RemoveReference<T&&> { typedef T Type; };
+
+    template <typename T>
+    T&& Forward(typename RemoveReference<T>::Type &Obj)
+    {
+        return (T&&)Obj;
+    }
+
+    template <typename T>
+    T&& Forward(typename RemoveReference<T>::Type &&Obj)
+    {
+        return (T&&)Obj;
+    }
 }
 
 #endif // _LE_UTIL_H_

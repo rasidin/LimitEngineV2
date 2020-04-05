@@ -1,23 +1,22 @@
 /***********************************************************
  LIMITEngine Header File
- Copyright (C), LIMITGAME, 2012
+ Copyright (C), LIMITGAME, 2020
  -----------------------------------------------------------
- @file  LE_Texture.h
+ @file  Texture.h
  @brief Texture
  @author minseob (leeminseob@outlook.com)
- -----------------------------------------------------------
- History:
- - 2012/6/14 Created by minseob
  ***********************************************************/
 
-#ifndef _LE_TEXTURE_H_
-#define _LE_TEXTURE_H_
+#pragma once
 
 #include <LEIntVector2.h>
 #include <LEIntVector3.h>
 #include <LEIntVector4.h>
 
-#include "Core/Object.h"
+#include "Core/ReferenceCountedObject.h"
+#include "Core/ReferenceCountedPointer.h"
+#include "Core/SerializableResource.h"
+#include "Containers/VectorArray.h"
 #include "Renderer/ByteColorRGBA.h"
 
 namespace LimitEngine {
@@ -30,6 +29,8 @@ enum TEXTURE_USAGE
 enum TEXTURE_COLOR_FORMAT
 {
     TEXTURE_COLOR_FORMAT_UNKNOWN = 0,
+
+    TEXTURE_COLOR_FORMAT_R8,
 
     TEXTURE_COLOR_FORMAT_R8G8B8,
     TEXTURE_COLOR_FORMAT_A8R8G8B8,
@@ -68,6 +69,55 @@ class TextureImpl : public Object<LimitEngineMemoryCategory_Graphics>
     virtual void* Lock(const LEMath::IntRect &rect, int mipLevel = 0) = 0;
     virtual void Unlock(int mipLevel = 0) = 0;
 };
+class TextureSourceImage : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>, public SerializableResource
+{
+public:
+    TextureSourceImage() {}
+    virtual ~TextureSourceImage() {}
+
+    virtual bool Load(const void *Data, size_t Size) = 0;
+    virtual LEMath::IntSize GetSize() const = 0;
+    virtual uint32 GetDepth() const = 0;
+    virtual bool IsCubemap() const = 0;
+    virtual TEXTURE_COLOR_FORMAT GetFormat() const = 0;
+    virtual uint32 GetRowPitch() const = 0;
+    virtual void* GetColorData() const = 0;
+    virtual size_t GetColorDataSize() const = 0;
+    virtual uint32 GetMipCount() const = 0;
+
+    bool Serialize(Archive &Ar) override;
+};
+class SerializedTextureSource : public TextureSourceImage
+{
+public:
+    explicit SerializedTextureSource() : mSize(), mRowPitch(0u), mMipCount(0u), mFormat(TEXTURE_COLOR_FORMAT_MAX), mIsCubemap(false) {}
+    explicit SerializedTextureSource(const TextureSourceImage &SourceImage);
+    virtual ~SerializedTextureSource();
+
+    virtual bool Load(const void *Data, size_t Size) override { return false; }
+    virtual LEMath::IntSize GetSize() const override { return mSize.XY(); }
+    virtual uint32 GetDepth() const override { return mSize.Z(); }
+    virtual bool IsCubemap() const override { return mIsCubemap; }
+    virtual TEXTURE_COLOR_FORMAT GetFormat() const override { return (TEXTURE_COLOR_FORMAT)mFormat; }
+    virtual uint32 GetRowPitch() const override { return mRowPitch; }
+    virtual void* GetColorData() const override { return mColorData.GetData(); }
+    virtual size_t GetColorDataSize() const override { return mColorData.count();  }
+    virtual uint32 GetMipCount() const override { return mMipCount; }
+
+    bool Serialize(Archive &Ar) override;
+
+private:
+    LEMath::IntVector3 mSize;
+    uint32 mRowPitch;
+    uint32 mMipCount;
+
+    uint32 mFormat;
+    VectorArray<uint8> mColorData;
+
+    bool mIsCubemap;
+
+    friend TextureSourceImage;
+};
 class RendererTask_LoadTextureFromMemory;
 class RendererTask_LoadTextureFromMERLBRDFData;
 class RendererTask_CreateTexture;
@@ -76,7 +126,7 @@ class RendererTask_CreateScreenColor;
 class RendererTask_CreateDepth;
 class RendererTask_CreateColor;
 class TextureFactory;
-class Texture : public Object<LimitEngineMemoryCategory_Graphics>
+class Texture : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>, public SerializableResource
 {
     friend RendererTask_LoadTextureFromMemory;
 	friend RendererTask_LoadTextureFromMERLBRDFData;
@@ -99,6 +149,8 @@ public:
     void CreateColor(const LEMath::IntSize &size, const ByteColorRGBA &color);
     void CreateDepth(const LEMath::IntSize &size);
 
+    void CreateUsingSourceData();
+
     void* Lock(const LEMath::IntRect &rect, int mipLevel = 0)
     { if (mImpl) { return mImpl->Lock(rect, mipLevel); } else return NULL; }
     void Unlock(int mipLevel = 0)
@@ -113,12 +165,22 @@ public:
     void* GetShaderResourceView() const                 { return (mImpl)?mImpl->GetShaderResourceView():nullptr; }
     void* GetUnorderedAccessView() const                { return (mImpl)?mImpl->GetUnorderedAccessView():nullptr; }
 
-private:
-    TextureImpl            *mImpl;
-    LEMath::IntSize         mSize;
-	uint32					mDepth;
-    TEXTURE_COLOR_FORMAT    mFormat;
-};
-}
+    void SetSourceImage(SerializedTextureSource *InSource) { mSource = InSource; }
 
-#endif // _LE_TEXTURE_H_
+    virtual bool Serialize(Archive &OutArchive) override;
+
+public: // Generators
+    static Texture* GenerateFromSourceImage(const TextureSourceImage *SourceImage);
+
+private:
+    TextureImpl                *mImpl;
+    LEMath::IntSize             mSize;
+	uint32					    mDepth;
+    TEXTURE_COLOR_FORMAT        mFormat;
+
+    SerializedTextureSource    *mSource;
+
+    friend class TextureFactory;
+};
+typedef ReferenceCountedPointer<Texture> ReferenceCountedTexture;
+}

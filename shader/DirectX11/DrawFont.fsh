@@ -32,7 +32,8 @@ Texture2D tex0;
 PS_OUTPUT ps_main(PS_INPUT In)
 {
 	PS_OUTPUT output = (PS_OUTPUT)0;
-	output.color = tex0.Sample(defaultSampler, In.uv) * In.color;
+	float fontColor = tex0.Sample(defaultSampler, In.uv).r;
+	output.color = float4(In.color.rgb * fontColor, fontColor);
 
 	return output;
 }

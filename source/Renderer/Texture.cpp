@@ -24,6 +24,37 @@
 #endif
 
 namespace LimitEngine {
+bool TextureSourceImage::Serialize(Archive &Ar) 
+{
+    if (Ar.IsSaving()) {
+        SerializedTextureSource SerializableSource(*this);
+        Ar << SerializableSource;
+        return true;
+    }
+    return false;
+}
+SerializedTextureSource::SerializedTextureSource(const TextureSourceImage &SourceImage)
+{
+    mSize = LEMath::IntVector3(SourceImage.GetSize().Width(), SourceImage.GetSize().Height(), SourceImage.GetDepth());
+    mRowPitch = SourceImage.GetRowPitch();
+    mMipCount = SourceImage.GetMipCount();
+    mFormat = SourceImage.GetFormat();
+    mColorData.Resize(SourceImage.GetColorDataSize());
+    memcpy(&mColorData.GetStart(), SourceImage.GetColorData(), SourceImage.GetColorDataSize());
+    mIsCubemap = SourceImage.IsCubemap();
+}
+SerializedTextureSource::~SerializedTextureSource()
+{
+}
+bool SerializedTextureSource::Serialize(Archive &Ar)
+{
+    Ar << mSize;
+    Ar << mRowPitch;
+    Ar << mMipCount;
+    Ar << mFormat;
+    Ar << mColorData;
+    return true;
+}
 class RendererTask_LoadTextureFromMemory : public RendererTask
 {
 public:
@@ -180,7 +211,7 @@ public:
     void Run() override
     {
         if (mOwner) {
-            mOwner->mImpl->Create(mSize, mFormat, mUsage, mMipLevels);
+            mOwner->mImpl->Create(mSize, mFormat, mUsage, mMipLevels, initializeData, initializeDataSize);
         }
     }
 private:
@@ -275,10 +306,19 @@ private:
     LEMath::IntSize mSize;
     ByteColorRGBA mColor;
 };
+
+Texture* Texture::GenerateFromSourceImage(const TextureSourceImage *SourceImage)
+{
+    Texture *output = new Texture();
+    output->SetSourceImage(new SerializedTextureSource(*SourceImage));
+    return output;
+}
 Texture::Texture()
     : mImpl(0)
+    , mSize(0)
 	, mDepth(1)
     , mFormat(TEXTURE_COLOR_FORMAT_UNKNOWN)
+    , mSource(nullptr)
 {
 #ifdef USE_DX9
     mImpl = new TextureImpl_DirectX9();
@@ -292,6 +332,9 @@ Texture::Texture()
 }
 Texture::~Texture()
 {
+    if (mSource) delete mSource;
+    mSource = nullptr;
+
     if (mImpl) delete mImpl;
     mImpl = nullptr;
 }
@@ -328,6 +371,11 @@ void Texture::CreateDepth(const LEMath::IntSize &size)
     LE_DrawManager.AddRendererTask(rt_createDepth);
     mSize = size; 
 }
+void Texture::CreateUsingSourceData()
+{
+    if (!mSource) return;
+    Create(mSource->GetSize(), mSource->GetFormat(), 0u, mSource->GetMipCount(), mSource->GetColorData(), mSource->GetColorDataSize());
+}
 void Texture::LoadFromMemory(const void *data, size_t size)
 {
     AutoPointer<RendererTask> rt_loadTextureFromMemory = new RendererTask_LoadTextureFromMemory(this, data, size);
@@ -337,5 +385,16 @@ void Texture::LoadFromMERLBRDFData(const void *data, size_t size)
 {
 	AutoPointer<RendererTask> rt_loaddTextureFromMERGLBRDFData = new RendererTask_LoadTextureFromMERLBRDFData(this, data, size);
 	LE_DrawManager.AddRendererTask(rt_loaddTextureFromMERGLBRDFData);
+}
+bool Texture::Serialize(Archive &OutArchive)
+{
+    if (!mSource && OutArchive.IsSaving())
+        return false;
+
+    if (OutArchive.IsLoading()) {
+        mSource = new SerializedTextureSource();
+    }
+    OutArchive << *mSource;
+    return false;
 }
 }
