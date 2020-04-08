@@ -38,11 +38,11 @@ void LimitEngine::Init(WINDOW_HANDLE handle)
 
 	mTaskManager->Init();
 
-    mSystemFont = Font::GenerateFromFile("fonts/System.tga", "fonts/System.text");
+    //mSystemFont = Font::GenerateFromFile("fonts/System.tga", "fonts/System.text");
+    if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("fonts/System.font.lea")) {
+        mSystemFont = (Font*)(LoadedResource->data);
+    }
     mSystemFont->InitResource();
-    //if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("fonts/System.font.lea")) {
-    //    mSystemFont = static_cast<Font*>(LoadedResource->data);
-    //}
 
 	mTaskID_UpdateScene     = LE_TaskManager.AddTask("SceneManager::Update",    TaskPriority_Renderer_UpdateScene,      mSceneManager, &SceneManager::Update);
 //	mTaskID_UpdateLight     = LE_TaskManager.AddTask("LightManager::Update",    TaskPriority_Renderer_UpdateLight,      mLightManager, &LightManager::Update);
@@ -73,6 +73,21 @@ void LimitEngine::SetResourceRootPath(const char *RootPath)
         mResourceManager->SetRootPath(RootPath);
     }
 }
+void LimitEngine::SetBackgroundImage(Texture *Image, BackgroundImageType Type)
+{
+    if (mSceneManager) {
+        switch (Type) {
+        case BackgroundImageType::FullScreen:
+        {
+
+        } break;
+        case BackgroundImageType::HDRI:
+        {
+        } break;
+        default: break;
+        }
+    }
+}
 void LimitEngine::Suspend()
 {
 }
@@ -88,7 +103,6 @@ LimitEngine::LimitEngine()
 , mSceneManager(nullptr)
 , mTaskManager(nullptr)
 , mResourceManager(NULL)
-, mSystemFont(nullptr)
 //, mLightManager(NULL)
 //, mPostFilterManager(NULL)
 //, mDebug(NULL)
@@ -96,6 +110,9 @@ LimitEngine::LimitEngine()
 , mTaskID_UpdateScene(nullptr)
 , mTaskID_DrawScene(nullptr)
 , mTaskID_DrawManager_Run(nullptr)
+, mSystemFont(nullptr)
+, mBackgroundImage(nullptr)
+, mDebug(nullptr)
 {
 	mDebug = new Debug();
 

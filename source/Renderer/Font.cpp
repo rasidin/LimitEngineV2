@@ -79,10 +79,10 @@ namespace LimitEngine {
         }
     }
     bool Font::Serialize(Archive &OutArchive) {
+        OutArchive << mGlyphs;
         if (mSprite.IsValid() == false) {
             mSprite = new Sprite();
         }
-
         OutArchive << *mSprite.Get();
         return true;
     }

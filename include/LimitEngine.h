@@ -23,6 +23,12 @@
 namespace LimitEngine {
 class LimitEngine : public Singleton<LimitEngine>
 {
+public:
+    enum class BackgroundImageType {
+        FullScreen = 0,
+        HDRI,
+    };
+
 public: // Ctor & Dtor
     explicit LimitEngine();
     virtual ~LimitEngine();
@@ -32,6 +38,7 @@ public: // Public functions
     void Term();
 
     void SetResourceRootPath(const char *RootPath);
+    void SetBackgroundImage(Texture *Image, BackgroundImageType Type);
 
     void Update();
 
@@ -59,8 +66,10 @@ private: // Private members
     TaskManager::TaskID              mTaskID_DrawDebugUI;               //!< Task for drawing debug UI
 
     Font                            *mSystemFont;
+    Texture                         *mBackgroundImage;
+    BackgroundImageType              mBackgroundType;
 
-	class Debug				*mDebug;
+	class Debug				        *mDebug;
 }; // Main
 }
 #define gLimitEngine LimitEngine::LimitEngine::GetSingleton()

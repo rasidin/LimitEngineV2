@@ -47,11 +47,9 @@ void* ArchiveFactory::Create(const char *Format, const void *Data, size_t Size)
     }
     if (Generator) {
         newObject = Generator->GenerateNew();
-        if (newObject->Serialize(LoadedArchive)) {
-            newObject->InitResource();
-        }
+        newObject->Serialize(LoadedArchive);
     }
 
-    return newObject;
+    return dynamic_cast<void*>(newObject);
 }
 }

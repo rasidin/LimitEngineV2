@@ -338,7 +338,10 @@ Texture::~Texture()
     if (mImpl) delete mImpl;
     mImpl = nullptr;
 }
-
+void Texture::InitResource()
+{
+    CreateUsingSourceData();
+}
 void Texture::Create(const LEMath::IntSize &size, TEXTURE_COLOR_FORMAT format, uint32 usage, uint32 mipLevels, void *initailizeData, size_t initDataSize)
 { 
     AutoPointer<RendererTask> rt_createTexture = new RendererTask_CreateTexture(this, size, format, usage, mipLevels, initailizeData, initDataSize);

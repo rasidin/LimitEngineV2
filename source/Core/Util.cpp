@@ -61,6 +61,27 @@ namespace LimitEngine {
         output.SetY(p.Y() * realScreenSize.Height() / virtualScreenSize.Height());
         return output;
     }
+    void GetFileName(const char *path, bool containExtension, char *filename)
+    {
+        char *copiedPath = _strdup(path);
+        int lastDirectoryWord = 0;
+        int lastDotWord = 0;
+        for (int idx = 0, length = (int)strlen(copiedPath); idx < length; idx++) {
+            if (copiedPath[idx] == '\\' || copiedPath[idx] == '/') {
+                lastDirectoryWord = idx;
+            }
+            else if (copiedPath[idx] == '.') {
+                lastDotWord = idx;
+            }
+        }
+        if (!containExtension) {
+            copiedPath[lastDotWord] = 0;
+        }
+        char *srcFileName = &copiedPath[lastDirectoryWord?(lastDirectoryWord+1):0];
+        ::memcpy(filename, srcFileName, strlen(srcFileName));
+
+        ::free(copiedPath);
+    }
     void GetExtension(const char *path, char *ext)
     {
         size_t length = strlen(path);

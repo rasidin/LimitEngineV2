@@ -45,14 +45,15 @@ namespace LimitEngine {
         return Output;
     }
 
-    Sprite::Sprite() {}
+    Sprite::Sprite()
+    {}
     Sprite::~Sprite()
     {
     }
     void Sprite::InitResource()
     {
         if (mTexture.IsValid()) {
-            mTexture->CreateUsingSourceData();
+            mTexture->InitResource();
         }
     }
     //void Sprite::LoadFromText(const char *text)

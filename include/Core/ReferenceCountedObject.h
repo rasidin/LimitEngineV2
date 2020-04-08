@@ -19,9 +19,9 @@ namespace LimitEngine {
 
         uint32 AddReferenceCounter() { mReferenceCounter++; return mReferenceCounter; }
         uint32 SubReferenceCounter() { LEASSERT(mReferenceCounter > 0); mReferenceCounter--; return mReferenceCounter; }
-    //protected:
-    //    ReferenceCountedObject() : mReferenceCounter(0u) {}
-    //    virtual ~ReferenceCountedObject() {}
+    protected:
+        ReferenceCountedObject() : mReferenceCounter(0u) {}
+        virtual ~ReferenceCountedObject() {}
     private:
         uint32 mReferenceCounter;
     };

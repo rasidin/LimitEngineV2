@@ -140,6 +140,8 @@ public:
     Texture();
     virtual ~Texture();
 
+    virtual void InitResource() override;
+
     void LoadFromMemory(const void *data, size_t size);
 	void LoadFromMERLBRDFData(const void *data, size_t size);
 
@@ -165,7 +167,7 @@ public:
     void* GetShaderResourceView() const                 { return (mImpl)?mImpl->GetShaderResourceView():nullptr; }
     void* GetUnorderedAccessView() const                { return (mImpl)?mImpl->GetUnorderedAccessView():nullptr; }
 
-    void SetSourceImage(SerializedTextureSource *InSource) { mSource = InSource; }
+    void SetSourceImage(SerializedTextureSource *InSource) { mSource = InSource; if (InSource) { mSize = InSource->GetSize(); mDepth = InSource->GetDepth(); mFormat = InSource->GetFormat(); } }
 
     virtual bool Serialize(Archive &OutArchive) override;
 

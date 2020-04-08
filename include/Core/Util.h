@@ -41,6 +41,12 @@ namespace LimitEngine {
      * @param text [In/Out] Target text
      */
     void UpperCase(char *text);
+    /* @brief Get filename from path
+     * @param path [In] Source path
+     * @param containExtension [In] Filename has extension
+     * @param filename [Out] File name
+     */
+    void GetFileName(const char *path, bool containExtension, char *filename);
     /* @brief Get extension word from path
      * @param path [In] Source path
      * @param ext [Out] Extension word

@@ -2,7 +2,7 @@
  LIMITEngine Header File
  Copyright (C), LIMITGAME, 2020
  -----------------------------------------------------------
- @file  LE_Camera.h
+ @file  Camera.h
  @brief Camera Class
  @author minseob (leeminseob@outlook.com)
  ***********************************************************/
@@ -62,7 +62,7 @@ namespace LimitEngine {
         LEMath::FloatVector3        mDirection;     // Direction of camera
         LEMath::FloatVector3        mUp;            // Up vector of camera
         
-		LEMath::IntSize			mScreenSize;	// Screen size
+		LEMath::IntSize			    mScreenSize;	// Screen size
 
     protected:
         LEMath::FloatVector3        mPosition;      // Position of camera

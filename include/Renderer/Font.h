@@ -68,7 +68,7 @@ namespace LimitEngine {
 
     public: // Generator
         static Font* GenerateFromFile(const char *ImageFilePath, const char *GlyphFilePath);
-        SerializableResource* GenerateNew() const override { return new Font(); }
+        SerializableResource* GenerateNew() const override { return dynamic_cast<SerializableResource*>(new Font()); }
 
     protected: // Serializer
         virtual bool Serialize(Archive &OutArchive) override;

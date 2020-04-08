@@ -177,10 +177,14 @@ namespace LimitEngine {
             }
         }
 
+        char *filenameonly = static_cast<char*>(malloc(strlen(filename) + 1));
+        ::memset(filenameonly, 0, strlen(filename) + 1);
+        GetFileName(filename, true, filenameonly);
+
         char fileType[16]; fileType[0] = 0;
-        GetTypeFromFileName(filename, fileType);
+        GetTypeFromFileName(filenameonly, fileType);
         char fileFormat[16]; fileFormat[0] = 0;
-        GetFormatFromFileName(filename, fileFormat);
+        GetFormatFromFileName(filenameonly, fileFormat);
 
         char *convertedPath = GetConvertedPath(filename);
         size_t size = 0;
@@ -202,6 +206,7 @@ namespace LimitEngine {
 			free(convertedPath);
             return newRes;
         }
+        free(filenameonly);
 		free(convertedPath);
 		return NULL;
     }
