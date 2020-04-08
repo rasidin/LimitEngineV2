@@ -3,12 +3,13 @@ LIMITEngine Header File
 Copyright (C), LIMITGAME, 2020
 -----------------------------------------------------------
 @file  ResourceFactory.h
-@brief Resource Manager for LimitEngine
+@brief Resource Factory for ResourceManager
 @author minseob (leeminseob@outlook.com)
 ***********************************************************/
 #pragma once
 #include "Core/Object.h"
 #include "Core/Memory.h"
+#include "ResourceSourceFactory.h"
 
 namespace LimitEngine {
 class ResourceFactory : public Object<LimitEngineMemoryCategory_Common>
@@ -31,7 +32,7 @@ public:
             return ((type[0] == 0 || strcmp(id.type, type) == 0) && (format[0] == 0 || strcmp(id.format, format) == 0));
         }
     };
-    virtual void* Create(const char *format, const void *data, size_t size) = 0;
+    virtual void* Create(const ResourceSourceFactory *SourceFactory, const void *data, size_t size) = 0;
     virtual void Release(void *data) = 0;
     virtual uint32 GetResourceTypeCode() = 0;
 protected:

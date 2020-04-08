@@ -12,7 +12,7 @@ Copyright (C), LIMITGAME, 2020
 #include "Managers/ShaderManager.h"
 
 namespace LimitEngine {
-void* ShaderFactory::Create(const char *format, const void *data, size_t size)
+void* ShaderFactory::Create(const ResourceSourceFactory*, const void *data, size_t size)
 {
 	if (data == NULL)
 		return NULL;

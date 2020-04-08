@@ -17,7 +17,7 @@ public:
     TextureFactory() {}
     virtual ~TextureFactory() {}
 
-    void* Create(const char *format, const void *data, size_t size) override;
+    void* Create(const ResourceSourceFactory *SourceFactory, const void *data, size_t size) override;
     void Release(void *data) override;
     uint32 GetResourceTypeCode() override { return makeResourceTypeCode("LMDL"); }
 };

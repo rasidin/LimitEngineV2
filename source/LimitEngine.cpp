@@ -38,10 +38,10 @@ void LimitEngine::Init(WINDOW_HANDLE handle)
 
 	mTaskManager->Init();
 
-    //mSystemFont = Font::GenerateFromFile("fonts/System.tga", "fonts/System.text");
-    if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("fonts/System.font.lea")) {
-        mSystemFont = (Font*)(LoadedResource->data);
-    }
+    mSystemFont = Font::GenerateFromFile("fonts/System.tga", "fonts/System.text");
+    //if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("fonts/System.font.lea")) {
+    //    mSystemFont = (Font*)(LoadedResource->data);
+    //}
     mSystemFont->InitResource();
 
 	mTaskID_UpdateScene     = LE_TaskManager.AddTask("SceneManager::Update",    TaskPriority_Renderer_UpdateScene,      mSceneManager, &SceneManager::Update);

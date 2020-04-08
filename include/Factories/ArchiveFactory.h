@@ -17,7 +17,7 @@ public:
     ArchiveFactory();
     virtual ~ArchiveFactory();
 
-    void* Create(const char *Format, const void *Data, size_t Size) override;
+    void* Create(const ResourceSourceFactory *Format, const void *Data, size_t Size) override;
     void Release(void *Data) override {}
     uint32 GetResourceTypeCode() override { return 0u; }
 

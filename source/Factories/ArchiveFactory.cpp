@@ -23,7 +23,7 @@ ArchiveFactory::~ArchiveFactory()
     }
     Generators.Clear();
 }
-void* ArchiveFactory::Create(const char *Format, const void *Data, size_t Size)
+void* ArchiveFactory::Create(const ResourceSourceFactory*, const void *Data, size_t Size)
 {
     if (!Data || Size == 0u) return nullptr;
 

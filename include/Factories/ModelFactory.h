@@ -20,7 +20,7 @@ namespace LimitEngine {
         ModelFactory() {}
         virtual ~ModelFactory() {}
 
-        void* Create(const char *format, const void *data, size_t size) override;
+        void* Create(const ResourceSourceFactory *format, const void *data, size_t size) override;
         void Release(void *data) override;
         uint32 GetResourceTypeCode() override { return makeResourceTypeCode("LMDL"); }
     private:

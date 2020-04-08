@@ -17,6 +17,8 @@
 #include "Factories/TextureFactory.h"
 #include "Factories/ShaderFactory.h"
 
+#include "../Factories/SourceFactories/TGASourceFactory.inl"
+
 #ifdef IOS
 #include "IOS/LE_ResourceLoader_IOS.h"
 #elif defined(WINDOWS)
@@ -97,6 +99,8 @@ namespace LimitEngine {
         m_Factories.Add(ResourceFactory::ID("", "hdr"), textureFactory);
         m_Factories.Add(ResourceFactory::ID("", "dds"), textureFactory);
 		m_Factories.Add(ResourceFactory::ID("brdf", ""), textureFactory);
+
+        m_SourceFactories.Add("tga", new TGASourceFactory());
     }
     void ResourceManager::unregisterFactories()
     {
@@ -194,7 +198,8 @@ namespace LimitEngine {
                 factory = m_Factories.Find(ResourceFactory::ID(fileType, fileFormat));
             void *createdData = NULL;
             if (factory) {
-                createdData = factory->Create(fileFormat, data, size);
+                ResourceSourceFactory *sourceFactory = m_SourceFactories.Find(fileFormat);
+                createdData = factory->Create(sourceFactory, data, size);
             }
             else {
                 createdData = data;

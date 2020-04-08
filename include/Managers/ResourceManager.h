@@ -98,6 +98,7 @@ private:
     VectorArray<RESOURCE*>                            m_Resources;
     ResourceLoader                                   *m_Loader;
     MapArray<ResourceFactory::ID, ResourceFactory*>   m_Factories;
+    MapArray<String, ResourceSourceFactory*>          m_SourceFactories;
 };
 #define LE_ResourceManager ResourceManager::GetSingleton()
 }

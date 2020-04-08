@@ -11,12 +11,10 @@ Copyright (C), LIMITGAME, 2020
 #include "Core/TextParser.h"
 
 namespace LimitEngine {
-void* ModelFactory::Create(const char *format, const void *data, size_t size)
+void* ModelFactory::Create(const ResourceSourceFactory *SourceFactory, const void *data, size_t size)
 {
-    if (strcmp(format, "text") == 0)
-        return createFromText(static_cast<const char*>(data));
-    else if(strcmp(format, "bin") == 0)
-        return createFromBinary(data);
+    //if (strcmp(format, "text") == 0)
+    //    return createFromText(static_cast<const char*>(data));
     return NULL;
 }
 void ModelFactory::Release(void *data)
@@ -33,9 +31,5 @@ void* ModelFactory::createFromText(const char *text)
     Model *output = new Model();
     output->Load(text);
     return output;
-}
-void* ModelFactory::createFromBinary(const void *data)
-{ // unimplemented
-    return NULL;
 }
 }
