@@ -55,3 +55,7 @@ add_library(LimitEngine
 	source/Renderer/VertexBuffer.cpp
 )
 target_include_directories(LimitEngine PUBLIC ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/include)
+
+install(TARGETS LimitEngine
+		ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+		LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
