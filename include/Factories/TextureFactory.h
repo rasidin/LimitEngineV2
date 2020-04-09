@@ -14,6 +14,8 @@ namespace LimitEngine {
 class TextureFactory : public ResourceFactory
 {
 public:
+    static constexpr ResourceFactory::ID ID = GENERATE_RESOURCEFACTORY_ID("TEXT");
+
     TextureFactory() {}
     virtual ~TextureFactory() {}
 

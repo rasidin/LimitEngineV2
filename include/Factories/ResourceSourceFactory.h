@@ -12,6 +12,8 @@ namespace LimitEngine {
 class ResourceSourceFactory 
 {
 public:
+    typedef uint32 ID;
+
     virtual void* ConvertRawData(const void *Data, size_t Size) const = 0;
 };
 }

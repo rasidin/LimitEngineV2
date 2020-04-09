@@ -53,7 +53,7 @@ namespace LimitEngine {
         }
         void PreRenderFinished() override {}
 
-        AutoPointer<void> MakeInitParameter() {
+        void* MakeInitParameter() {
             CommandInit_Parameter *Output = new CommandInit_Parameter();
 
             Output->mD3DDevice = mD3DDevice;
@@ -61,7 +61,7 @@ namespace LimitEngine {
             Output->mBaseRenderTargetView = mBaseRenderTargetView;
             Output->mBaseDepthStencilView = mBaseDepthStencilView;
 
-            return AutoPointer<void>((void*)Output);
+            return dynamic_cast<void*>(Output);
         }
 
         void Init(WINDOW_HANDLE handle) override

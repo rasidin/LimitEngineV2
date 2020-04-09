@@ -7,11 +7,13 @@
  @author minseob (leeminseob@outlook.com)
  ***********************************************************/
 
+#include "Renderer/Material.h"
+
+#include "Factories/TextureFactory.h"
 #include "Managers/DrawManager.h"
 #include "Managers/ResourceManager.h"
 #include "Managers/ShaderManager.h"
 #include "Renderer/DrawCommand.h"
-#include "Renderer/Material.h"
 #include "Renderer/Shader.h"
 #include "Renderer/ShaderDriverParameter.h"
 
@@ -77,7 +79,7 @@ namespace LimitEngine {
                         mParameters[node->name] = node->values[0].ToFloat();
                     }
                     else { // texture
-                        const ResourceManager::RESOURCE *resource = LE_ResourceManager.GetResourceWithRegister(node->values[0]);
+                        const ResourceManager::RESOURCE *resource = LE_ResourceManager.GetResourceWithRegister(node->values[0], TextureFactory::ID);
                         if (resource)
                             mParameters[node->name] = static_cast<Texture*>(resource->data);
                     }

@@ -13,6 +13,7 @@
 
 #include "Core/TextParser.h"
 #include "Core/Util.h"
+#include "Factories/TextParserFactory.h"
 #include "Renderer/DrawCommand.h"
 #include "Renderer/Sprite.h"
 #include "Managers/ResourceManager.h"
@@ -27,43 +28,42 @@ namespace LimitEngine {
         Output->mSprite = Sprite::GenerateFromFile(ImageFilePath, nullptr);
 
         // Set sprite frames from file
-        AutoPointer<ResourceManager::RESOURCE> textResource = LE_ResourceManager.GetResourceWithoutRegister(GlyphFilePath);
-        if (char *text = (char*)((ResourceManager::RESOURCE*)textResource)->data)
-        {
-            TextParser parser;
-            parser.Parse(text);
-            TextParser::NODE *node = NULL;
-            if ((node = parser.GetNode("FILETYPE")) && node->values[0] == "FONT")
+        AutoPointer<ResourceManager::RESOURCE> textResource = LE_ResourceManager.GetResourceWithoutRegister(GlyphFilePath, TextParserFactory::ID);
+        if (textResource.Exists()) {
+            if (TextParser *parser = static_cast<TextParser*>(((ResourceManager::RESOURCE*)textResource)->data))
             {
-                if (TextParser::NODE *datanode = parser.GetNode("DATA"))
-                if (node = datanode->children[0])
+                TextParser::NODE *node = NULL;
+                if ((node = parser->GetNode("FILETYPE")) && node->values[0] == "FONT")
                 {
-                    Output->mGlyphs.Reserve(node->children.count());
-                    for (size_t i = 0; i < node->children.count(); i++)
-                    {
-                        if (TextParser::NODE *child = node->children[i]) {
-                            Font::Glyph &newGlyph = Output->mGlyphs.Add();
-                            if (TextParser::NODE *node_rect = child->FindChild("RECT"))
+                    if (TextParser::NODE *datanode = parser->GetNode("DATA"))
+                        if (node = datanode->children[0])
+                        {
+                            Output->mGlyphs.Reserve(node->children.count());
+                            for (size_t i = 0; i < node->children.count(); i++)
                             {
-                                LEMath::IntRect frameRect(
-                                    node_rect->values[0].ToInt(),
-                                    node_rect->values[1].ToInt(),
-                                    node_rect->values[2].ToInt(),
-                                    node_rect->values[3].ToInt()
-                                );
-                                newGlyph.frameIndex = Output->mSprite->AddFrame(frameRect);
-                                newGlyph.size = frameRect.Size();
-                            }
-                            if (TextParser::NODE *node_ascii = child->FindChild("ASCII"))
-                            {
-                                newGlyph.ascii = node_ascii->values[0].ToInt();
+                                if (TextParser::NODE *child = node->children[i]) {
+                                    Font::Glyph &newGlyph = Output->mGlyphs.Add();
+                                    if (TextParser::NODE *node_rect = child->FindChild("RECT"))
+                                    {
+                                        LEMath::IntRect frameRect(
+                                            node_rect->values[0].ToInt(),
+                                            node_rect->values[1].ToInt(),
+                                            node_rect->values[2].ToInt(),
+                                            node_rect->values[3].ToInt()
+                                        );
+                                        newGlyph.frameIndex = Output->mSprite->AddFrame(frameRect);
+                                        newGlyph.size = frameRect.Size();
+                                    }
+                                    if (TextParser::NODE *node_ascii = child->FindChild("ASCII"))
+                                    {
+                                        newGlyph.ascii = node_ascii->values[0].ToInt();
+                                    }
+                                }
                             }
                         }
-                    }
                 }
             }
         }
-
         return Output;
     }
     Font::Font()

@@ -17,6 +17,8 @@ namespace LimitEngine {
     class ModelFactory : public ResourceFactory 
     {
     public:
+        static constexpr ResourceFactory::ID ID = GENERATE_RESOURCEFACTORY_ID("MODE");
+
         ModelFactory() {}
         virtual ~ModelFactory() {}
 

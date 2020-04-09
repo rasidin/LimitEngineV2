@@ -18,6 +18,7 @@
 
 #include "Core/Util.h"
 #include "Core/TextParser.h"
+#include "Factories/TextureFactory.h"
 #include "Managers/DrawManager.h"
 #include "Managers/Draw2DManager.h"
 #include "Managers/ResourceManager.h"
@@ -32,14 +33,12 @@ namespace LimitEngine {
         Sprite *Output = new Sprite();
 
         if (ImageFilePath) {
-            AutoPointer<ResourceManager::RESOURCE> TextureResource = LE_ResourceManager.GetResourceWithoutRegister(ImageFilePath);
+            AutoPointer<ResourceManager::RESOURCE> TextureResource = LE_ResourceManager.GetResourceWithoutRegister(ImageFilePath, TextureFactory::ID);
             if (TextureResource.Exists()) {
-                Texture *texture = static_cast<Texture*>(TextureResource->data);
+                Texture *texture = static_cast<Texture*>(TextureResource->PopData());
+                texture->CreateUsingSourceData();
                 Output->SetTexture(texture);
             }
-        }
-        if (InfoFilePath) {
-
         }
 
         return Output;

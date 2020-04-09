@@ -20,6 +20,7 @@
 #endif
 
 #include "Core/Debug.h"
+#include "Factories/ShaderFactory.h"
 #include "Managers/DrawManager.h"
 #include "Managers/ShaderDriverManager.h"
 #include "Managers/ResourceManager.h"
@@ -133,7 +134,7 @@ namespace LimitEngine {
 
         gDebug << "Load Shader:" << filename;
 
-        const ResourceManager::RESOURCE *resource = LE_ResourceManager.GetResourceWithRegister(filename);
+        const ResourceManager::RESOURCE *resource = LE_ResourceManager.GetResourceWithRegister(filename, ShaderFactory::ID);
         AutoPointer<RendererTask> rt_compileShader = new RendererTask_CompileShader(this, resource->data, resource->size, type);
         LE_DrawManager.AddRendererTask(rt_compileShader);
 

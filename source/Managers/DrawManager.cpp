@@ -124,8 +124,7 @@ namespace LimitEngine
         mImpl->Init(handle);
         mDraw2DManager->Init();
 
-        AutoPointer<void> InitParameter = mImpl->MakeInitParameter();
-        mCommandBuffer->Init(InitParameter);
+        mCommandBuffer->Init(mImpl->MakeInitParameter());
 
         ThreadParam threadParameter;
         threadParameter.func = ThreadFunction(this, &DrawManager::FlushCommandThread);

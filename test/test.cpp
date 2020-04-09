@@ -2,6 +2,7 @@
 #include <TBWidget.h>
 
 #include <LimitEngine.h>
+#include <Factories/TextureFactory.h>
 #include <Managers/ResourceManager.h>
 #include <Renderer/Texture.h>
 
@@ -17,7 +18,7 @@ public:
     {}
 	
     void SetupScene() {
-        if (LimitEngine::ResourceManager::RESOURCE *TextureResource = LimitEngine::LE_ResourceManager.GetResourceWithoutRegister("textures/19F_Background_2K.exr")) {
+        if (LimitEngine::ResourceManager::RESOURCE *TextureResource = LimitEngine::LE_ResourceManager.GetResourceWithoutRegister("textures/19F_Background_2K.exr", LimitEngine::TextureFactory::ID)) {
             mBackgroundImage = static_cast<LimitEngine::Texture*>(TextureResource->data);
             mBackgroundImage->InitResource();
             Engine->SetBackgroundImage(mBackgroundImage, LimitEngine::LimitEngine::BackgroundImageType::FullScreen);

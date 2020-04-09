@@ -7,6 +7,7 @@ Copyright (C), LIMITGAME, 2020
 @author minseob (leeminseob@outlook.com)
 ***********************************************************/
 #include "Factories/TextureFactory.h"
+#include "Factories/ResourceSourceFactory.h"
 #include "Renderer/Texture.h"
 #include "Managers/DrawManager.h"
 

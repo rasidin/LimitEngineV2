@@ -26,6 +26,7 @@ add_library(LimitEngine
 	source/Factories/ModelFactory.cpp
 	source/Factories/ShaderFactory.cpp
 	source/Factories/TextureFactory.cpp
+	source/Factories/TextParserFactory.cpp
 	source/Managers/DrawManager.cpp
 	source/Managers/Draw2DManager.cpp
 	source/Managers/ResourceManager.cpp

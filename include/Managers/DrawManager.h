@@ -41,7 +41,7 @@ public:
     DrawManagerImpl() {}
     virtual ~DrawManagerImpl() {}
     
-    virtual AutoPointer<void> MakeInitParameter() = 0;
+    virtual void* MakeInitParameter() = 0;
 
     virtual void ReadyToRender() = 0;
     virtual LEMath::IntSize GetScreenSize() = 0;
@@ -62,6 +62,8 @@ class RendererTask : public Object<LimitEngineMemoryCategory_Graphics>
 public:
     virtual ~RendererTask() {}
     virtual void Run() = 0;
+
+    void Release() { delete this; }
 };
 
 template<typename LAMBDA>

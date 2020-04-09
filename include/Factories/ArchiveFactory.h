@@ -14,6 +14,8 @@ namespace LimitEngine {
 class ArchiveFactory : public ResourceFactory
 {
 public:
+    static constexpr ResourceFactory::ID ID = GENERATE_RESOURCEFACTORY_ID("ARCH");
+
     ArchiveFactory();
     virtual ~ArchiveFactory();
 

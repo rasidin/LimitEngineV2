@@ -53,11 +53,11 @@ public:
             : id(i), factory(f), useCount(1u), type(f ? f->GetResourceTypeCode() : 0), size(s), data(d), orgData(o)
         {}
 
+        void* PopData() { void *output = data; data = nullptr; return output; }
         void Release();
     private:
+        virtual ~_RESOURCE() {}
         void ForceRelease();
-
-        ~_RESOURCE() {}
     } RESOURCE;
     
 public:
@@ -67,15 +67,19 @@ public:
 	// ---------------------------------------------------
 	// Get & Set
 	// ----------------------------------------------------
-	static void  SetRootPath(const char* path) { m_RootPath = path; }
+	static void  SetRootPath(const char* path) { mRootPath = path; }
 
     static char* GetConvertedPath(const char* filename);
     static void  SetPathTag(const char *key, const char *value);
     
-    AutoPointer<RESOURCE> GetResourceWithoutRegister(const char* filename, ResourceFactory *customFactory = NULL)
-    { return AutoPointer<RESOURCE>(getResource(filename, false, customFactory)); }
-    const RESOURCE* GetResourceWithRegister(const char *filename, ResourceFactory *customFactory = NULL)
-    { return getResource(filename, true, customFactory); }
+    AutoPointer<RESOURCE> GetResourceWithoutRegister(const char* Filename, ResourceFactory *Factory)
+    { return AutoPointer<RESOURCE>(getResource(Filename, false, Factory)); }
+    AutoPointer<RESOURCE> GetResourceWithoutRegister(const char* Filename, ResourceFactory::ID ID)
+    { return AutoPointer<RESOURCE>(getResource(Filename, false, findFactory(ID))); }
+    const RESOURCE* GetResourceWithRegister(const char *Filename, ResourceFactory *Factory)
+    { return getResource(Filename, true, Factory); }
+    const RESOURCE* GetResourceWithRegister(const char *Filename, ResourceFactory::ID ID)
+    { return getResource(Filename, true, findFactory(ID)); }
 
     void SaveResource(const char *FilePath, SerializableResource *Resource);
 
@@ -85,20 +89,24 @@ public:
     void  ReleaseResource(void *data);
     void  ReleaseAll();
 
+    void AddFactory(const char *Name, ResourceFactory *Factory);
+    void AddSourceFactory(const char *Extension, ResourceSourceFactory *Factory);
+
 protected:
-    RESOURCE* getResource(const char* filename, bool isRegister, ResourceFactory *customFactory);
+    RESOURCE* getResource(const char* Filename, bool NeedRegister, ResourceFactory *Factory);
+    ResourceFactory* findFactory(ResourceFactory::ID ID);
 private:
     void registerFactories();
     void unregisterFactories();
 
 private:
-    static MapArray<String, String>                   m_PathTable;
-    static String					                  m_RootPath;
+    static MapArray<String, String>                                mPathTable;
+    static String					                               mRootPath;
 
-    VectorArray<RESOURCE*>                            m_Resources;
-    ResourceLoader                                   *m_Loader;
-    MapArray<ResourceFactory::ID, ResourceFactory*>   m_Factories;
-    MapArray<String, ResourceSourceFactory*>          m_SourceFactories;
+    VectorArray<RESOURCE*>                                         mResources;
+    ResourceLoader                                                *mLoader;
+    MapArray<ResourceFactory::ID, ResourceFactory*>                mFactories;
+    MapArray<String, ResourceSourceFactory*>                       mSourceFactories;
 };
 #define LE_ResourceManager ResourceManager::GetSingleton()
 }

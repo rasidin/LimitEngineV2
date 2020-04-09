@@ -17,6 +17,8 @@ namespace LimitEngine {
 class ShaderFactory : public ResourceFactory
 {
 public:
+    static constexpr ResourceFactory::ID ID = GENERATE_RESOURCEFACTORY_ID("SHAD");
+
 	ShaderFactory() {}
 	virtual ~ShaderFactory() {}
 

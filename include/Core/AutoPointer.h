@@ -26,7 +26,7 @@ namespace LimitEngine {
 		~AutoPointer()
 		{
 			if (mBuffer) {
-				MemoryAllocator::Free(mBuffer);
+                mBuffer->Release();
 				mBuffer = nullptr;
 			}
 		}
