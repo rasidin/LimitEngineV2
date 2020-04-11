@@ -89,8 +89,8 @@ public:
     void  ReleaseResource(void *data);
     void  ReleaseAll();
 
-    void AddFactory(const char *Name, ResourceFactory *Factory);
-    void AddSourceFactory(const char *Extension, ResourceSourceFactory *Factory);
+    void AddFactory(ResourceFactory::ID ID, ResourceFactory *Factory) { mFactories.Add(ID, Factory); }
+    void AddSourceFactory(const char *Extension, ResourceSourceFactory *Factory) { mSourceFactories.Add(Extension, Factory); }
 
 protected:
     RESOURCE* getResource(const char* Filename, bool NeedRegister, ResourceFactory *Factory);
