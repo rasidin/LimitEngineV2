@@ -195,12 +195,13 @@ namespace LimitEngine {
         if (void *data = mLoader->GetResource(convertedPath, &size)) {
             void *createdData = NULL;
             ResourceSourceFactory *sourceFactory = mSourceFactories.Find(fileFormat);
-            createdData = Factory->Create(sourceFactory, data, size);
-            RESOURCE *newRes = new RESOURCE(Filename, Factory, size, createdData, data);
-            if (NeedRegister)
-                mResources.Add(newRes);
-			free(convertedPath);
-            return newRes;
+            if (createdData = Factory->Create(sourceFactory, data, size)) {
+                RESOURCE *newRes = new RESOURCE(Filename, Factory, size, createdData, data);
+                if (NeedRegister)
+                    mResources.Add(newRes);
+                free(convertedPath);
+                return newRes;
+            }
         }
         free(filenameonly);
 		free(convertedPath);

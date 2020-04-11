@@ -136,6 +136,13 @@ class Texture : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics
     friend RendererTask_CreateDepth;
     friend RendererTask_CreateColor;
     friend TextureFactory;
+    
+    enum class FileVersion : uint32 {
+        FirstVersion = 1,
+
+        CurrentVersion = FirstVersion
+    };
+
 public:
     Texture();
     virtual ~Texture();
@@ -173,6 +180,10 @@ public:
 
 public: // Generators
     static Texture* GenerateFromSourceImage(const TextureSourceImage *SourceImage);
+
+protected: // Interface for serializing
+    virtual uint32 GetFileType() const { return ('T' | ('E' << 8) | ('X' << 16) | ('T' << 24)); }
+    virtual uint32 GetVersion() const { return static_cast<uint32>(FileVersion::CurrentVersion); }
 
 private:
     TextureImpl                *mImpl;

@@ -2,8 +2,8 @@
 LIMITEngine Header File
 Copyright (C), LIMITGAME, 2020
 -----------------------------------------------------------
-@file  ResourceSourceFactory.h
-@brief Resource Source Factory for ResourceManager
+@file  TGASourceFactory.h
+@brief Source factory for tga file
 @author minseob (leeminseob@outlook.com)
 ***********************************************************/
 #pragma once

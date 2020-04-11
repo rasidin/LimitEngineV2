@@ -10,11 +10,13 @@ Copyright (C), LIMITGAME, 2020
 
 #include "Core/Archive.h"
 #include "Renderer/Font.h"
+#include "Renderer/Texture.h"
 
 namespace LimitEngine {
 ArchiveFactory::ArchiveFactory()
 {
     Generators.Add(new Font());
+    Generators.Add(new Texture());
 }
 ArchiveFactory::~ArchiveFactory()
 {
