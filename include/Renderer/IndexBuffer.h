@@ -9,6 +9,7 @@
 #pragma once
 
 #include "Core/Object.h"
+#include "Core/SerializableResource.h"
 
 namespace LimitEngine {
     class IndexBufferImpl : public Object<LimitEngineMemoryCategory_Graphics>
@@ -20,7 +21,7 @@ namespace LimitEngine {
         virtual void* GetHandle() = 0;
         virtual void* GetBuffer() = 0;
     };
-    class IndexBuffer : public Object<LimitEngineMemoryCategory_Graphics>
+    class IndexBuffer : public Object<LimitEngineMemoryCategory_Graphics>, public SerializableResource
     {
     public:
         IndexBuffer();

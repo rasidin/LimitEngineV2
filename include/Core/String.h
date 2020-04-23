@@ -189,6 +189,8 @@ public:
 
 private:
     char        *mBuffer;
+
+    friend class Archive;
 };
 }
 

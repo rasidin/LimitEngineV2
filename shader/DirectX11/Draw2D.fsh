@@ -1,13 +1,10 @@
 /***********************************************************
- LIMITEngine Header File
- Copyright (C), LIMITGAME, 2012
+ LIMITEngine Shader File
+ Copyright (C), LIMITGAME, 2020
  -----------------------------------------------------------
- @file  Sprite.vsh
- @brief Sprite Shader (Pixel)
+ @file  Draw2D.fsh
+ @brief Draw rect (used by sprite)
  @author minseob (leeminseob@outlook.com)
- -----------------------------------------------------------
- History:
- - 2012/6/25 Created by minseob
  ***********************************************************/
 struct PS_INPUT
 {

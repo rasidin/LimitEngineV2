@@ -22,12 +22,14 @@ namespace LimitEngine {
             LightFlagIBL            = 1<<3,
         };
 	public:
-		bool IsValid(const ShaderParameterParser::ParameterMap &paramMap) override;
+		bool IsValid(const ShaderParameterParser::ParameterMap &paramMap) const override;
+        bool IsValid(const Shader *InShader) const override;
 		void Apply(const RenderState &rs, const Material *material) override;
 		const char* GetName() const override { return "ShaderDriverLight"; }
 	private:
 		ShaderDriver* create() override { return new ShaderDriverLight; }
 		void setup(const ShaderParameterParser::ParameterMap &paramMap) override;
+        void setup(const Shader *InShader) override;
     private:
         uint32 mLightFlags;
         int32 mBRDFLUT_Position;

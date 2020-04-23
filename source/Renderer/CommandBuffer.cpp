@@ -255,7 +255,7 @@ void CommandBuffer::Flush(RenderState *rs)
             case COMMAND::cSetRenderTarget:
             {
                 COMMAND_SETRENDERTARGET *command = reinterpret_cast<COMMAND_SETRENDERTARGET*>(currentCommand);
-                mImpl->SetRenderTarget(command->index, command->texture, command->surfaceIndex);
+                mImpl->SetRenderTarget(command->index, command->color, command->depthstencil, command->surfaceIndex);
             } break;
             case COMMAND::cBindShader:
             {
@@ -399,9 +399,9 @@ void DrawCommand::SetDepthFunc(RendererFlag::TestFlags f)
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETDEPTHFUNC(f);
 }
 
-void DrawCommand::SetRenderTarget(uint32 index, Texture *texture, uint32 surfaceIndex)
+void DrawCommand::SetRenderTarget(uint32 index, Texture *color, Texture *depth, uint32 surfaceIndex)
 {
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETRENDERTARGET(index, texture, surfaceIndex);
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETRENDERTARGET(index, color, depth, surfaceIndex);
 }
 
 void DrawCommand::BindShader(Shader *sh)

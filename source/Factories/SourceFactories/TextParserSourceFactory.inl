@@ -15,8 +15,12 @@ namespace LimitEngine {
 class TextParserSourceFactory : public ResourceSourceFactory
 {
 public:
+    static constexpr ResourceSourceFactory::ID FactoryID = GENERATE_RESOURCEFACTORY_ID("TEPA");
+
     TextParserSourceFactory() {}
     virtual ~TextParserSourceFactory() {}
+
+    virtual ID GetID() const override { return FactoryID; }
 
     virtual void* ConvertRawData(const void *Data, size_t Size) const {
         TextParser *Output = new TextParser();

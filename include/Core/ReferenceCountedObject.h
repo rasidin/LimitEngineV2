@@ -17,8 +17,8 @@ namespace LimitEngine {
     public:
         uint32 GetReferenceCounter() const { return mReferenceCounter; }
 
-        uint32 AddReferenceCounter() { mReferenceCounter++; return mReferenceCounter; }
-        uint32 SubReferenceCounter() { LEASSERT(mReferenceCounter > 0); mReferenceCounter--; return mReferenceCounter; }
+        uint32 AddReferenceCounter() { return ++mReferenceCounter; }
+        uint32 SubReferenceCounter() { LEASSERT(mReferenceCounter > 0); return --mReferenceCounter; }
     protected:
         ReferenceCountedObject() : mReferenceCounter(0u) {}
         virtual ~ReferenceCountedObject() {}

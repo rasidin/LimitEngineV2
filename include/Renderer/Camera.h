@@ -50,11 +50,14 @@ namespace LimitEngine {
         // Set field of view (radians)
         virtual void SetFovRadians(float fov)               { if(mFrustum) mFrustum->SetFOVRadians(fov); }
         // Get field of view (radians)
-        float GetFovRadians() const                         { if(mFrustum) return mFrustum->GetFOVRadians(); return DefaultFOVRadians; }
+        virtual float GetFovRadians() const                         { if(mFrustum) return mFrustum->GetFOVRadians(); return DefaultFOVRadians; }
         // Get view matrix
         const LEMath::FloatMatrix4x4& GetViewMatrix() const             { return mViewMatrix; }
         // Get projection matrix
         LEMath::FloatMatrix4x4  GetProjectionMatrix()                   { if(mFrustum) return mFrustum->GetProjectionMatrix(); return LEMath::FloatMatrix4x4::Identity; }
+
+        // Get exposure (EV)
+        virtual float GetExposure() const { return 1.0f; }
 	private:
 		// Setup metadata for editor
 		void setupMetaData();
@@ -66,7 +69,7 @@ namespace LimitEngine {
 
     protected:
         LEMath::FloatVector3        mPosition;      // Position of camera
-        Frustum        *mFrustum;       // Frustum for camera view
+        Frustum                    *mFrustum;       // Frustum for camera view
         LEMath::FloatMatrix4x4      mViewMatrix;    // View matrix made by camera
     };
 }

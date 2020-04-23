@@ -24,37 +24,29 @@
 #endif
 
 namespace LimitEngine {
-bool TextureSourceImage::Serialize(Archive &Ar) 
-{
-    if (Ar.IsSaving()) {
-        SerializedTextureSource SerializableSource(*this);
-        Ar << SerializableSource;
-        return true;
-    }
-    return false;
+template<> Archive& Archive::operator << (SerializedTextureSource &InSource) {
+    *this << InSource.mSize;
+    *this << InSource.mRowPitch;
+    *this << InSource.mMipCount;
+    *this << InSource.mFormat;
+    *this << (SerializableResource*)&InSource.mColorData;
+    return *this;
 }
+
 SerializedTextureSource::SerializedTextureSource(const TextureSourceImage &SourceImage)
 {
     mSize = LEMath::IntVector3(SourceImage.GetSize().Width(), SourceImage.GetSize().Height(), SourceImage.GetDepth());
     mRowPitch = SourceImage.GetRowPitch();
     mMipCount = SourceImage.GetMipCount();
     mFormat = SourceImage.GetFormat();
-    mColorData.Resize(SourceImage.GetColorDataSize());
+    mColorData.Resize(static_cast<uint32>(SourceImage.GetColorDataSize()));
     memcpy(&mColorData.GetStart(), SourceImage.GetColorData(), SourceImage.GetColorDataSize());
     mIsCubemap = SourceImage.IsCubemap();
 }
 SerializedTextureSource::~SerializedTextureSource()
 {
 }
-bool SerializedTextureSource::Serialize(Archive &Ar)
-{
-    Ar << mSize;
-    Ar << mRowPitch;
-    Ar << mMipCount;
-    Ar << mFormat;
-    Ar << mColorData;
-    return true;
-}
+
 class RendererTask_LoadTextureFromMemory : public RendererTask
 {
 public:
@@ -268,23 +260,25 @@ private:
     Texture *mOwner;
     LEMath::IntSize mSize;
 };
-class RendererTask_CreateDepth : public RendererTask
+class RendererTask_CreateDepthStencil : public RendererTask
 {
 public:
-    RendererTask_CreateDepth(Texture *owner, LEMath::IntSize size)
+    RendererTask_CreateDepthStencil(Texture *owner, LEMath::IntSize size, TEXTURE_DEPTH_FORMAT format)
         : mOwner(owner)
         , mSize(size)
+        , mFormat(format)
     {}
     void Run() override
     {
         if (mOwner) {
-            mOwner->mImpl->CreateDepth(mSize);
+            mOwner->mImpl->CreateDepthStencil(mSize, mFormat);
             mOwner->mFormat = mOwner->mImpl->GetFormat();
         }
     }
 private:
     Texture *mOwner;
     LEMath::IntSize mSize;
+    TEXTURE_DEPTH_FORMAT mFormat;
 };
 class RendererTask_CreateColor : public RendererTask
 {
@@ -306,7 +300,27 @@ private:
     LEMath::IntSize mSize;
     ByteColorRGBA mColor;
 };
-
+class RendererTask_CreateRenderTarget : public RendererTask
+{
+public:
+    RendererTask_CreateRenderTarget(Texture *owner, const LEMath::IntSize size, TEXTURE_COLOR_FORMAT format, uint32 usage)
+        : mOwner(owner)
+        , mSize(size)
+        , mFormat(format)
+        , mUsage(usage)
+    {}
+    void Run() override
+    {
+        if (mOwner) {
+            mOwner->mImpl->CreateRenderTarget(mSize, mFormat, mUsage);
+        }
+    }
+private:
+    Texture *mOwner;
+    LEMath::IntSize mSize;
+    TEXTURE_COLOR_FORMAT mFormat;
+    uint32 mUsage;
+};
 Texture* Texture::GenerateFromSourceImage(const TextureSourceImage *SourceImage)
 {
     Texture *output = new Texture();
@@ -368,11 +382,17 @@ void Texture::CreateColor(const LEMath::IntSize &size, const ByteColorRGBA &colo
     LE_DrawManager.AddRendererTask(rt_createColor);
     mSize = size;
 }
-void Texture::CreateDepth(const LEMath::IntSize &size)
+void Texture::CreateDepthStencil(const LEMath::IntSize &size, TEXTURE_DEPTH_FORMAT format)
 { 
-    AutoPointer<RendererTask> rt_createDepth = new RendererTask_CreateDepth(this, size);
+    AutoPointer<RendererTask> rt_createDepth = new RendererTask_CreateDepthStencil(this, size, format);
     LE_DrawManager.AddRendererTask(rt_createDepth);
     mSize = size; 
+}
+void Texture::CreateRenderTarget(const LEMath::IntSize &size, TEXTURE_COLOR_FORMAT format, uint32 usage /*= 0*/)
+{
+    AutoPointer<RendererTask> rt_createRenderTarget = new RendererTask_CreateRenderTarget(this, size, format, usage);
+    LE_DrawManager.AddRendererTask(rt_createRenderTarget);
+    mSize = size;
 }
 void Texture::CreateUsingSourceData()
 {

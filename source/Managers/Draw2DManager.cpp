@@ -32,6 +32,7 @@ namespace LimitEngine {
     {
         mShader_draw2d = ShaderManager::GetSingleton().GetShader("Draw2D");
         mVertexbuffer_draw2d.Create(Vertex2DReserved, NULL, static_cast<uint32>(RendererFlag::CreateBufferFlags::CPU_READABLE) | static_cast<uint32>(RendererFlag::CreateBufferFlags::CPU_WRITABLE));
+        mVertexbuffer_draw2d.InitResource();
 
         // Create vertex buffer for drawing full screen (For postfilter, background...)
         Vertex<VERTEXTYPE(PCT)> scrVertex[6];

@@ -22,8 +22,9 @@ namespace LimitEngine {
 		ShaderDriverManager();
 		~ShaderDriverManager();
 
-		void SetupShaderDriver(Shader *shader, const char *code);
+        void SetupShaderDriver(Shader *shader, const char *code = nullptr);
 	private:
 		VectorArray<ShaderDriver*>		mDrivers;
 	};
+#define LE_ShaderDriverManager ShaderDriverManager::GetSingleton()
 }

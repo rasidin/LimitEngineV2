@@ -66,14 +66,14 @@ private: // Non-creatable by user
 		: mOwnerArray(NULL)
 		, mCurrentIndex(SIZE_MAX)
 	{}
-	VectorArrayIterator(VectorArray<T> *owner, size_t index)
+	VectorArrayIterator(VectorArray<T> *owner, uint32 index)
 		: mOwnerArray(owner)
 		, mCurrentIndex(index)
 	{}
 
 private:
 	VectorArray<T> *mOwnerArray; // Onwer VectorArray
-	size_t mCurrentIndex;		 // Index of VectorArray
+	uint32 mCurrentIndex;		 // Index of VectorArray
 };
 template <typename T> class VectorArray : public Object<LimitEngineMemoryCategory_Common>, public SerializableResource
 {
@@ -82,7 +82,7 @@ template <typename T> class VectorArray : public Object<LimitEngineMemoryCategor
                                 , _reserved(0)
 public:
     VectorArray() : VECTORARRAY_INIT                {}
-    VectorArray(size_t s) : VECTORARRAY_INIT        {}
+    VectorArray(uint32 s) : VECTORARRAY_INIT        {}
     VectorArray(const VectorArray &v) : VECTORARRAY_INIT
     {   // Copy
         Resize(v.size());
@@ -93,18 +93,18 @@ public:
     {
         if (_data) 
         {
-            for (size_t i=0;i<_size;i++) _data[i].~T();
+            for (uint32 i=0;i<_size;i++) _data[i].~T();
             free(_data);
         }
         _size = 0;
         _data = NULL;
     }
 
-    inline size_t GetSize()    const                { return _size; }
+    inline uint32 GetSize()    const                { return _size; }
     inline T& GetStart()                            { return *(_data); }
     inline T& GetLast()                             { return *(_data + _size - 1); }
     
-    inline void Reserve(size_t n)
+    inline void Reserve(uint32 n)
     {
         if (_size >= n)
         {
@@ -122,7 +122,7 @@ public:
         }
     }
 
-    inline void Resize(size_t n)
+    inline void Resize(uint32 n)
     {
         if (n <= _reserved)
         {
@@ -154,7 +154,7 @@ public:
         _data[GetSize()-1] = d;
     }
 
-    inline void Delete(size_t n)
+    inline void Delete(uint32 n)
     {
         LEASSERT(_size);
         if (!_size) return;
@@ -164,7 +164,7 @@ public:
         {
             _reserved = _size;
         }
-        for(size_t i=n;i<_size;i++)
+        for(uint32 i=n;i<_size;i++)
         {
             memcpy(&_data[i], &_data[i+1], sizeof(T));
         }
@@ -172,7 +172,7 @@ public:
     
     inline void Delete(T t)
     {
-        for(size_t datacnt=0;datacnt<_size;++datacnt)
+        for(uint32 datacnt=0;datacnt<_size;++datacnt)
         {
             if (_data[datacnt] == t) {
                 Delete(datacnt);
@@ -204,7 +204,7 @@ public:
             }
             newData[nidx] = _data[idx];
         }
-        for (size_t i=0;i<_size;i++) _data[i].~T();
+        for (uint32 i=0;i<_size;i++) _data[i].~T();
         free(_data);
         _data = newData;
     }
@@ -212,7 +212,7 @@ public:
     virtual bool Serialize(Archive &OutArchive) override
     {
         if (OutArchive.IsLoading()) {
-            size_t size;
+            uint32 size;
             OutArchive << size;
             Resize(size);
             void* archiveData = OutArchive.GetData(_size * sizeof(T));
@@ -228,27 +228,27 @@ public:
 
     // For STL
     inline void push_back(const T& d)       { Add(d); }
-    inline size_t count() const             { return _size; }
-    inline size_t size() const              { return _size; }
-    inline void erase(size_t n)             { Delete(n); }
+    inline uint32 count() const             { return _size; }
+    inline uint32 size() const              { return _size; }
+    inline void erase(uint32 n)             { Delete(n); }
     
     void Clear()
     {
         if (_data) 
         {
-            for(size_t i=0;i<_size;i++) _data[i].T::~T();
+            for(uint32 i=0;i<_size;i++) _data[i].T::~T();
             memset(_data, 0, sizeof(T) * _reserved);
         }    
         _size = 0;
         _reserved = 0;
     }
 
-    T& operator [] (size_t n)                { LEASSERT(n < _size); return *(_data + n); }
-    const T& operator [] (size_t n) const   { LEASSERT(n < _size); return *(_data + n); }
+    T& operator [] (uint32 n)                { LEASSERT(n < _size); return *(_data + n); }
+    const T& operator [] (uint32 n) const   { LEASSERT(n < _size); return *(_data + n); }
     void operator=(const VectorArray<T> &t)
     {
         Resize(t.size());
-        for(size_t i=0;i<_size;i++)
+        for(uint32 i=0;i<_size;i++)
         {
             _data[i] = t[i];
         }
@@ -258,8 +258,8 @@ public:
 	Iterator begin() { return Iterator(this, 0); }
 	Iterator end() { return Iterator(); }
 private:
-    size_t    _size;
-    size_t  _reserved;
+    uint32    _size;
+    uint32  _reserved;
     T*        _data;
 };
 }

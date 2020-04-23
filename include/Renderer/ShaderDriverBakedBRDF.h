@@ -21,12 +21,14 @@ namespace LimitEngine {
 		ShaderDriverBakedBRDF() : mBakedBRDF_Position(InvalidShaderPosition), mBRDFLUT_Position(InvalidShaderPosition), mBakedBRDFTexture(NULL), mBRDFLUTTexture(NULL){}
 		virtual ~ShaderDriverBakedBRDF();
 	public:
-		bool IsValid(const ShaderParameterParser::ParameterMap &paramMap) override;
+		bool IsValid(const ShaderParameterParser::ParameterMap &paramMap) const override;
+        bool IsValid(const Shader *InShader) const override { return false; }
 		void Apply(const RenderState &rs, const Material *material) override;
 		const char* GetName() const override { return "ShaderDriverBakedBRDF"; }
 	private:
 		ShaderDriver* create() override { return new ShaderDriverBakedBRDF; }
 		void setup(const ShaderParameterParser::ParameterMap &paramMap) override;
+        void setup(const Shader *InShader) override {}
 	private:
 		int32 mBakedBRDF_Position;
 		int32 mBRDFLUT_Position;

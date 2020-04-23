@@ -9,6 +9,14 @@ Copyright (C), LIMITGAME, 2020
 #pragma once
 
 namespace LimitEngine {
+enum class BackgroundImageType : char {
+    None = 0,
+    Fullscreen,
+    Longlat,
+    
+    Num,
+};
+
 struct RendererFlag {
     enum class PrimitiveTypes
     {

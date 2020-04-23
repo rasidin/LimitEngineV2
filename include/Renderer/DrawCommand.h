@@ -36,7 +36,7 @@ class DrawCommand
     static void DrawPrimitive(RendererFlag::PrimitiveTypes type, uint32 offset, uint32 count);
     static void DrawPrimitiveUp(RendererFlag::PrimitiveTypes type, uint32 count, void *data, uint32 stride);
     static void DrawIndexedPrimitive(RendererFlag::PrimitiveTypes type, uint32 vtxcount, uint32 count);
-    static void SetRenderTarget(uint32 index, Texture *renderTexture, uint32 surfaceIndex = 0);
+    static void SetRenderTarget(uint32 index, Texture *color, Texture *depthstencil, uint32 surfaceIndex = 0);
     static void SetFVF(uint32 fvf);
     static void SetShaderUniformFloat1(Shader *shader, int location, const float v);
     static void SetShaderUniformFloat2(Shader *shader, int location, const LEMath::FloatVector2 &value);

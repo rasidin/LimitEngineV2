@@ -45,6 +45,13 @@ enum TEXTURE_COLOR_FORMAT
 
     TEXTURE_COLOR_FORMAT_MAX,
 };
+enum TEXTURE_DEPTH_FORMAT
+{
+    TEXTURE_DEPTH_FORMAT_UNKNOWN = 0,
+
+    TEXTURE_DEPTH_FORMAT_D32F,
+    TEXTURE_DEPTH_FORMAT_D24S8,
+};
 class TextureImpl : public Object<LimitEngineMemoryCategory_Graphics>
 {public:
     TextureImpl() {}
@@ -60,16 +67,19 @@ class TextureImpl : public Object<LimitEngineMemoryCategory_Graphics>
 	virtual bool Create3D(const LEMath::IntVector3 &size, TEXTURE_COLOR_FORMAT format, uint32 usage, uint32 mipLevels, void *initializeData = NULL, size_t initDataSize = 0u) = 0;
 	virtual void CreateScreenColor(const LEMath::IntSize &size) = 0;
     virtual void CreateColor(const LEMath::IntSize &size, const ByteColorRGBA &color) = 0;
-    virtual void CreateDepth(const LEMath::IntSize &size) = 0;
+    virtual void CreateDepthStencil(const LEMath::IntSize &size, TEXTURE_DEPTH_FORMAT format) = 0;
+    virtual void CreateRenderTarget(const LEMath::IntSize &size, TEXTURE_COLOR_FORMAT format, uint32 usage) = 0;
     virtual void GenerateMipmap() = 0;
 
     virtual void* GetShaderResourceView() const = 0;
     virtual void* GetUnorderedAccessView() const = 0;
+    virtual void* GetRenderTargetView() const = 0;
+    virtual void* GetDepthStencilView() const = 0;
 
     virtual void* Lock(const LEMath::IntRect &rect, int mipLevel = 0) = 0;
     virtual void Unlock(int mipLevel = 0) = 0;
 };
-class TextureSourceImage : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>, public SerializableResource
+class TextureSourceImage : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>
 {
 public:
     TextureSourceImage() {}
@@ -84,8 +94,6 @@ public:
     virtual void* GetColorData() const = 0;
     virtual size_t GetColorDataSize() const = 0;
     virtual uint32 GetMipCount() const = 0;
-
-    bool Serialize(Archive &Ar) override;
 };
 class SerializedTextureSource : public TextureSourceImage
 {
@@ -104,8 +112,6 @@ public:
     virtual size_t GetColorDataSize() const override { return mColorData.count();  }
     virtual uint32 GetMipCount() const override { return mMipCount; }
 
-    bool Serialize(Archive &Ar) override;
-
 private:
     LEMath::IntVector3 mSize;
     uint32 mRowPitch;
@@ -117,25 +123,20 @@ private:
     bool mIsCubemap;
 
     friend TextureSourceImage;
+    friend Archive;
 };
-class RendererTask_LoadTextureFromMemory;
-class RendererTask_LoadTextureFromMERLBRDFData;
-class RendererTask_CreateTexture;
-class RendererTask_CreateTexture3D;
-class RendererTask_CreateScreenColor;
-class RendererTask_CreateDepth;
-class RendererTask_CreateColor;
-class TextureFactory;
 class Texture : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>, public SerializableResource
 {
-    friend RendererTask_LoadTextureFromMemory;
-	friend RendererTask_LoadTextureFromMERLBRDFData;
-    friend RendererTask_CreateTexture;
-	friend RendererTask_CreateTexture3D;
-    friend RendererTask_CreateScreenColor;
-    friend RendererTask_CreateDepth;
-    friend RendererTask_CreateColor;
-    friend TextureFactory;
+    friend class RendererTask_LoadTextureFromMemory;
+	friend class RendererTask_LoadTextureFromMERLBRDFData;
+    friend class RendererTask_CreateTexture;
+	friend class RendererTask_CreateTexture3D;
+    friend class RendererTask_CreateScreenColor;
+    friend class RendererTask_CreateDepth;
+    friend class RendererTask_CreateColor;
+    friend class RendererTask_CreateRenderTarget;
+    friend class RendererTask_CreateDepthStencil;
+    friend class TextureFactory;
     
     enum class FileVersion : uint32 {
         FirstVersion = 1,
@@ -156,7 +157,8 @@ public:
 	void Create3D(const LEMath::IntVector3 &size, TEXTURE_COLOR_FORMAT format, uint32 usage = 0, uint32 mipLevels = 1, void *initializeData = NULL, size_t initDataSize = 0u);
     void CreateScreenColor(const LEMath::IntSize &size);
     void CreateColor(const LEMath::IntSize &size, const ByteColorRGBA &color);
-    void CreateDepth(const LEMath::IntSize &size);
+    void CreateDepthStencil(const LEMath::IntSize &size, TEXTURE_DEPTH_FORMAT format);
+    void CreateRenderTarget(const LEMath::IntSize &size, TEXTURE_COLOR_FORMAT format, uint32 usage = 0);
 
     void CreateUsingSourceData();
 
@@ -173,6 +175,8 @@ public:
 
     void* GetShaderResourceView() const                 { return (mImpl)?mImpl->GetShaderResourceView():nullptr; }
     void* GetUnorderedAccessView() const                { return (mImpl)?mImpl->GetUnorderedAccessView():nullptr; }
+    void* GetRenderTargetView() const                   { return (mImpl)?mImpl->GetRenderTargetView():nullptr; }
+    void* GetDepthStencilView() const                   { return (mImpl)?mImpl->GetDepthStencilView():nullptr; }
 
     void SetSourceImage(SerializedTextureSource *InSource) { mSource = InSource; if (InSource) { mSize = InSource->GetSize(); mDepth = InSource->GetDepth(); mFormat = InSource->GetFormat(); } }
 
@@ -180,6 +184,8 @@ public:
 
 public: // Generators
     static Texture* GenerateFromSourceImage(const TextureSourceImage *SourceImage);
+
+    SerializableResource* GenerateNew() const override { return dynamic_cast<SerializableResource*>(new Texture()); }
 
 protected: // Interface for serializing
     virtual uint32 GetFileType() const { return ('T' | ('E' << 8) | ('X' << 16) | ('T' << 24)); }

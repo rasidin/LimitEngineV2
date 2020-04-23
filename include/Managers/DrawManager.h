@@ -17,12 +17,15 @@
 #include <LEFloatVector4.h>
 #include <LEIntVector2.h>
 
+#include "InitializeOptions.h"
+
 #include "Core/AutoPointer.h"
 #include "Core/Event.h"
 #include "Core/Function.h"
 #include "Core/Mutex.h"
 #include "Core/Singleton.h"
 #include "Core/Thread.h"
+#include "Core/Util.h"
 #include "Containers/VectorArray.h"
 #include "Renderer/DrawCommand.h"
 #include "Renderer/RenderState.h"
@@ -47,14 +50,14 @@ public:
     virtual LEMath::IntSize GetScreenSize() = 0;
     virtual void PreRenderFinished() = 0;
     
-    virtual void Init(WINDOW_HANDLE handle) = 0;
+    virtual void Init(WINDOW_HANDLE handle, const InitializeOptions &Options) = 0;
     virtual void ResizeScreen(const LEMath::IntSize &size) = 0;
     virtual void Present(Texture *texture) = 0;
     virtual void Term() = 0;
-    virtual void BindFrameBuffer(uint32 buffer) = 0;
     
     virtual void* GetDeviceHandle() const = 0;
     virtual void* GetDeviceContext() const = 0;
+    virtual void* GetFrameBuffer() const = 0;
 };
 
 class RendererTask : public Object<LimitEngineMemoryCategory_Graphics>
@@ -104,7 +107,7 @@ public:             // Public Definition
     } VERTEX_DRAW2D;
     
 public:                    // Interfaces
-    void Init(WINDOW_HANDLE handle);
+    void Init(WINDOW_HANDLE handle, const InitializeOptions &Options);
     void Run();
 
     // Device
@@ -112,6 +115,9 @@ public:                    // Interfaces
 
     // Get device context
     void* GetDeviceContext() const { return mImpl ? mImpl->GetDeviceContext() : nullptr; }
+
+    // Get frame buffer
+    void* GetFrameBuffer() const { return mImpl ? mImpl->GetFrameBuffer() : nullptr; }
 
     // Is ready to rendering?
     bool IsReadyToRender() { return mReadyToRender; }

@@ -124,8 +124,12 @@ private:
 class TGASourceFactory : public ResourceSourceFactory
 {
 public:
+    static constexpr ID FactoryID = GENERATE_RESOURCEFACTORY_ID("TGAS");
+
     TGASourceFactory() {}
     virtual ~TGASourceFactory() {}
+
+    virtual ID GetID() const override { return FactoryID; }
 
     virtual void* ConvertRawData(const void *Data, size_t Size) const {
         TGAImage *Output = new TGAImage();

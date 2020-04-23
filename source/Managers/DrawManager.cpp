@@ -8,8 +8,6 @@
  ***********************************************************/
 
 #include "Managers/DrawManager.h"
-//#include "LE_SceneManager.h"
-//#include "LE_PostFilterManager.h"
 
 #include <LEIntVector2.h>
 
@@ -110,7 +108,7 @@ namespace LimitEngine
         }
     }
 
-    void DrawManager::Init(WINDOW_HANDLE handle)
+    void DrawManager::Init(WINDOW_HANDLE handle, const InitializeOptions &Options)
     {
 #if defined(USE_DX9)
         mImpl = new DrawManagerImpl_DirectX9();
@@ -121,7 +119,7 @@ namespace LimitEngine
 #endif
         mRenderContext = new RenderContext();
 
-        mImpl->Init(handle);
+        mImpl->Init(handle, Options);
         mDraw2DManager->Init();
 
         mCommandBuffer->Init(mImpl->MakeInitParameter());
@@ -226,9 +224,9 @@ namespace LimitEngine
     {
         LEMath::FloatMatrix4x4 viewMatrix = mRenderState->GetViewMatrix();
         LEMath::FloatMatrix4x4 projMatrix = mRenderState->GetProjMatrix();
-        LEMath::FloatMatrix4x4 viewProjMatrix = projMatrix * viewMatrix;
+        LEMath::FloatMatrix4x4 viewProjMatrix = viewMatrix * projMatrix;
 
-        mRenderState->SetViewProjMatrix(viewProjMatrix);
+        mRenderState->SetViewProjMatrix(viewProjMatrix.Transpose());
         mRenderState->SetInvViewMatrix(viewMatrix.Inverse());
         mRenderState->SetInvProjMatrix(projMatrix.Inverse());
         mRenderState->SetInvViewProjMatrix(viewProjMatrix.Inverse());

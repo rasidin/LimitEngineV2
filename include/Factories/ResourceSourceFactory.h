@@ -14,6 +14,7 @@ class ResourceSourceFactory
 public:
     typedef uint32 ID;
 
+    virtual ID GetID() const = 0;
     virtual void* ConvertRawData(const void *Data, size_t Size) const = 0;
 };
 }

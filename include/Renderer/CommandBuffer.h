@@ -47,7 +47,7 @@ public:
     virtual void SetDepthFunc(uint32 Func) = 0;
     virtual void SetEnabled(uint32 Flag) = 0;
     virtual void SetDisable(uint32 Flag) = 0;
-    virtual void SetRenderTarget(uint32 Index, Texture *Tex, uint32 SurfaceIndex) = 0;
+    virtual void SetRenderTarget(uint32 Index, Texture *Color, Texture *Depth, uint32 SurfaceIndex) = 0;
     //virtual void SetUniformFloat1(int Location, float Value) = 0;
     //virtual void SetUniformFloat2(int Location, const LEMath::FloatVector2 &Value) = 0;
     //virtual void SetUniformFloat4(int Location, const LEMath::FloatVector4 &Value) = 0;
@@ -385,16 +385,18 @@ private:            // Private Structure
     // Set render target for drawing
     typedef struct _COMMAND_SETRENDERTARGET : public _COMMAND_COMMON
     {
-        _COMMAND_SETRENDERTARGET(uint32 idx, Texture *tex, uint32 suridx)
+        _COMMAND_SETRENDERTARGET(uint32 idx, Texture *c, Texture *d, uint32 suridx)
             : _COMMAND_COMMON(cSetRenderTarget)
             , index(idx)
             , surfaceIndex(suridx)
-            , texture(tex)
+            , color(c)
+            , depthstencil(d)
         {
         }
         uint32               index;
         uint32               surfaceIndex;
-        Texture             *texture;
+        Texture             *color;
+        Texture             *depthstencil;
     } COMMAND_SETRENDERTARGET;
 public:
     // Ctor & Dtor

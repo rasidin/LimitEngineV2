@@ -56,8 +56,8 @@ namespace LimitEngine {
 #if defined(USE_DX9) || defined(USE_DX11) // For directX
             return LEMath::FloatMatrix4x4(mNearMeters / rightDistanceInScreen, 0.0f, 0.0f, 0.0f,
                                           0.0f, mNearMeters / topDistanceInScreen, 0.0f, 0.0f,
-                                          0.0f, 0.0f, mFarMeters / (mFarMeters - mNearMeters), -mFarMeters*mNearMeters / (mFarMeters - mNearMeters),
-                                          0.0f, 0.0f, 1.0f, 0.0f);
+                                          0.0f, 0.0f, mFarMeters / (mFarMeters - mNearMeters), 1.0f,
+                                          0.0f, 0.0f, -mFarMeters * mNearMeters / (mFarMeters - mNearMeters), 0.0f);
 #else
             return LEMath::FloatMatrix4x4(mNearMeters/ rightDistanceInScreen, 0.0f, 0.0f, 0.0f,
                               0.0f, mNearMeters/ topDistanceInScreen, 0.0f, 0.0f,

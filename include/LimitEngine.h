@@ -13,8 +13,10 @@
 #include <LEManagers>
 #include <LERenderer>
 
+#include "InitializeOptions.h"
 #include "Core/Singleton.h"
 #include "Managers/TaskManager.h"
+#include "Factories/ResourceFactory.h"
 //#include "ResourceManager.h"
 //#include "GuiManager.h"
 //#include "ProfileManager.h"
@@ -23,22 +25,21 @@
 namespace LimitEngine {
 class LimitEngine : public Singleton<LimitEngine>
 {
-public:
-    enum class BackgroundImageType {
-        FullScreen = 0,
-        HDRI,
-    };
-
 public: // Ctor & Dtor
     explicit LimitEngine();
     virtual ~LimitEngine();
 
 public: // Public functions
-    void Init(WINDOW_HANDLE handle);
+    void Init(WINDOW_HANDLE handle, const InitializeOptions &Options);
     void Term();
 
     void SetResourceRootPath(const char *RootPath);
     void SetBackgroundImage(Texture *Image, BackgroundImageType Type);
+
+    void SetMainCamera(Camera *InCamera);
+
+    Texture* LoadTexture(const char *filepath, ResourceFactory::ID ResourceID, bool bTransient);
+    Model* LoadModel(const char *filepath, ResourceFactory::ID ResourceID, bool bTransient);
 
     void Update();
 
@@ -52,8 +53,10 @@ private: // Private members
     DrawManager		                *mDrawManager;
     SceneManager                    *mSceneManager;
     ShaderManager                   *mShaderManager;
+    PostProcessManager              *mPostProcessManager;
     TaskManager                     *mTaskManager;
-    //ShaderDriverManager             *mShaderDriverManager;
+    RenderTargetPoolManager         *mRenderTargetPoolManager;
+    ShaderDriverManager             *mShaderDriverManager;
     //LightManager                    *mLightManager;
     //GUIManager                      *mGuiManager;
     //ProfileManager                  *mProfileManager;
@@ -62,12 +65,11 @@ private: // Private members
     TaskManager::TaskID              mTaskID_UpdateLight;                //!< Task for updating lights
     TaskManager::TaskID              mTaskID_UpdateScene;                //!< Task for updating scene
     TaskManager::TaskID              mTaskID_DrawScene;                  //!< Task for drawing scene
+    TaskManager::TaskID              mTaskID_PostProcess;               //!< Task for post process
     TaskManager::TaskID              mTaskID_DrawManager_Run;            //!< Task for running drawmanager
     TaskManager::TaskID              mTaskID_DrawDebugUI;               //!< Task for drawing debug UI
 
     Font                            *mSystemFont;
-    Texture                         *mBackgroundImage;
-    BackgroundImageType              mBackgroundType;
 
 	class Debug				        *mDebug;
 }; // Main

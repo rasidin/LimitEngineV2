@@ -56,5 +56,7 @@ namespace LimitEngine {
         ShaderDriverParameter              *mShaderDriverParameter;
 
         Shader                             *mShader;
+
+        friend Archive;
     };
 }

@@ -23,6 +23,7 @@ class Material;
 class Model;
 class Mesh;
 class PointLight;
+class PostProcessManager;
 class Shader;
 class ShaderDriver;
 class SpotLight;
@@ -30,6 +31,7 @@ class Sprite;
 class Texture;
 class RenderState;
 class RenderContext;
+class RenderTargetPoolManager;
 }
 
 #include "Renderer/Definitions.h"

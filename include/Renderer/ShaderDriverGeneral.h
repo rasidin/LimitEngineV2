@@ -21,12 +21,14 @@ namespace LimitEngine {
     class ShaderDriverGeneral : public ShaderDriver
     {
     public:
-        bool IsValid(const ShaderParameterParser::ParameterMap &paramMap) override;
+        bool IsValid(const ShaderParameterParser::ParameterMap &paramMap) const override;
+        bool IsValid(const Shader* InShader) const override;
         void Apply(const RenderState &rs, const Material *material) override;
         const char* GetName() const override { return "ShaderDriverGeneral"; }
     private:
         ShaderDriver* create() override { return new ShaderDriverGeneral; }
         void setup(const ShaderParameterParser::ParameterMap &paramMap) override;
+        void setup(const Shader *InShader) override;
     private:
         int mParameter_wvpMat;
         int mParameter_invViewMat;

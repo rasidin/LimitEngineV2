@@ -66,7 +66,7 @@ namespace LimitEngine {
         void *mInitializeBuffer;
     };
 
-    class VertexBufferGeneric : public Object<LimitEngineMemoryCategory_Graphics>
+    class VertexBufferGeneric : public Object<LimitEngineMemoryCategory_Graphics>, public SerializableResource
     {
     public:
 		VertexBufferGeneric(){};
@@ -98,7 +98,28 @@ namespace LimitEngine {
             if (mVertex) delete[] mVertex; mVertex = nullptr;
             mSize = 0;
         }
-        
+
+        virtual void InitResource() override
+        {
+            AutoPointer<RendererTask> rt_createVertexBuffer = new RendererTask_CreateVertexBuffer(mImpl, tFVF, tSize, mSize, mCreationFlag, mVertex);
+            LE_DrawManager.AddRendererTask(rt_createVertexBuffer);
+        }
+
+        virtual bool Serialize(Archive &Ar) override 
+        {
+            Ar << mSize;
+            Ar << mCreationFlag;
+            size_t dataSize = tSize * mSize;
+            if (Ar.IsLoading()) {
+                mVertex = new Vertex<tFVF, tSize>[mSize]();
+                ::memcpy(mVertex, Ar.GetData(dataSize), dataSize);
+            }
+            else {
+                ::memcpy(Ar.AddSize(dataSize), mVertex, dataSize);
+            }
+            return true;
+        }
+
         void Create(size_t size, void *initializeBuffer, uint32 flag)
         {
             if (mVertex) delete[] mVertex;
@@ -109,15 +130,15 @@ namespace LimitEngine {
                 ::memcpy(mVertex, initializeBuffer, size * tSize);
             }
 
-            AutoPointer<RendererTask> rt_createVertexBuffer = new RendererTask_CreateVertexBuffer(mImpl, tFVF, tSize, size, flag, initializeBuffer);
-            LE_DrawManager.AddRendererTask(rt_createVertexBuffer);
+            //AutoPointer<RendererTask> rt_createVertexBuffer = new RendererTask_CreateVertexBuffer(mImpl, tFVF, tSize, size, flag, initializeBuffer);
+            //LE_DrawManager.AddRendererTask(rt_createVertexBuffer);
 
-            // No need cpu buffer because we don't edit anymore.
-            if (!(flag & static_cast<uint32>(RendererFlag::CreateBufferFlags::CPU_READABLE))
-                && !(flag & static_cast<uint32>(RendererFlag::CreateBufferFlags::CPU_WRITABLE))) {
-                delete[] mVertex;
-                mVertex = NULL;
-            }
+            //// No need cpu buffer because we don't edit anymore.
+            //if (!(flag & static_cast<uint32>(RendererFlag::CreateBufferFlags::CPU_READABLE))
+            //    && !(flag & static_cast<uint32>(RendererFlag::CreateBufferFlags::CPU_WRITABLE))) {
+            //    delete[] mVertex;
+            //    mVertex = NULL;
+            //}
         }
         void Bind(Shader *sh) { if (mImpl) mImpl->Bind(sh); }
         void BindToDrawManager()

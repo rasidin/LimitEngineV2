@@ -84,7 +84,7 @@ namespace LimitEngine {
     }
     ResourceManager::~ResourceManager()
     {
-        for(size_t i=0;i<mResources.GetSize();i++)
+        for(uint32 i=0;i<mResources.GetSize();i++)
         {
             mResources[i]->Release();
         }
@@ -213,7 +213,7 @@ namespace LimitEngine {
     }
     void ResourceManager::ReleaseResource(const char* filename)
     {
-        for(size_t i=0;i<mResources.GetSize();i++)
+        for(uint32 i=0;i<mResources.GetSize();i++)
         {
             if (mResources[i]->id == filename)
             {
@@ -228,7 +228,7 @@ namespace LimitEngine {
     }
     void ResourceManager::ReleaseResource(void *data)
     {
-        for(size_t i=0;i<mResources.GetSize();i++)
+        for(uint32 i=0;i<mResources.GetSize();i++)
         {
             if (mResources[i]->data == data)
             {
@@ -243,7 +243,7 @@ namespace LimitEngine {
     }
     void ResourceManager::ReleaseAll()
     {
-        for (size_t i = 0; i < mResources.GetSize(); i++)
+        for (uint32 i = 0; i < mResources.GetSize(); i++)
         {
             mResources[i]->Release();
         }
@@ -255,7 +255,6 @@ namespace LimitEngine {
 
         Archive OutArchive;
         OutArchive << Resource;
-        Resource->Serialize(OutArchive);
         
         char *convertedPath = GetConvertedPath(FilePath);
         mLoader->WriteToResource(convertedPath, Resource->GetFileType(), Resource->GetFileType(), OutArchive.mData, OutArchive.mDataSize);

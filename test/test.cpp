@@ -1,9 +1,16 @@
 #include <TBApplication.h>
 #include <TBWidget.h>
 
+#include <LEIntVector2.h>
+
 #include <LimitEngine.h>
+#include <Core/SerializableResource.h>
+#include <Renderer/CinemaCamera.h>
+#include <Factories/ArchiveFactory.h>
 #include <Factories/TextureFactory.h>
+#include <Factories/ModelFactory.h>
 #include <Managers/ResourceManager.h>
+#include <Renderer/Model.h>
 #include <Renderer/Texture.h>
 
 #include <iostream>
@@ -15,23 +22,38 @@ public:
         : ToolBase::TBWidget(Title, 1920, 1080) 
         , Engine(InEngine)
         , mBackgroundImage(nullptr)
+        , mSphereModel(nullptr)
     {}
 	
     void SetupScene() {
-        if (LimitEngine::ResourceManager::RESOURCE *TextureResource = LimitEngine::LE_ResourceManager.GetResourceWithoutRegister("textures/19F_Background_2K.exr", LimitEngine::TextureFactory::ID)) {
-            mBackgroundImage = static_cast<LimitEngine::Texture*>(TextureResource->data);
+        mCamera = new LimitEngine::CinemaCamera();
+        mCamera->SetPosition( LEMath::FloatVector3(0.0f, 0.0f, 5.0f));
+        mCamera->SetDirection(LEMath::FloatVector3(0.0f, 0.0f,-1.0f));
+        mCamera->SetShutterSpeed(1.0f / 8.0f);
+        mCamera->SetFStop(1.0f / 4.0f);
+        mCamera->SetExposureOffset(-3.0f);
+        Engine->SetMainCamera(mCamera);
+
+        //mSphereModel = Engine->LoadModel("models/sphere.model.text", LimitEngine::ModelFactory::ID, false);
+        mSphereModel = Engine->LoadModel("models/sphere.model.lea", LimitEngine::ArchiveFactory::ID, false);
+        mSphereModel->InitResource();
+        if (mBackgroundImage = Engine->LoadTexture("textures/19F_Background_2K.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
             mBackgroundImage->InitResource();
-            Engine->SetBackgroundImage(mBackgroundImage, LimitEngine::LimitEngine::BackgroundImageType::FullScreen);
+            Engine->SetBackgroundImage(mBackgroundImage, LimitEngine::BackgroundImageType::Fullscreen);
         }
+
+        //LimitEngine::ResourceManager::GetSingleton().SaveResource("models/sphere.model.lea", mSphereModel);
     }
 
 	virtual void FrameUpdate(double frameTime) override {
         Engine->Update();
 	}
 private:
-    LimitEngine::LimitEngine *Engine;
+    LimitEngine::LimitEngine    *Engine;
 
-    LimitEngine::Texture *mBackgroundImage;
+    LimitEngine::CinemaCamera   *mCamera;
+    LimitEngine::Texture        *mBackgroundImage;
+    LimitEngine::Model          *mSphereModel;
 };
 
 int main()
@@ -43,9 +65,15 @@ int main()
     LimitEngine::LimitEngine *Engine = new LimitEngine::LimitEngine();
     Engine->SetResourceRootPath("../../resources");
 
+    LimitEngine::InitializeOptions engineOptions(
+        LEMath::IntSize(1920, 1080),
+        LimitEngine::InitializeOptions::ColorSpace::Linear,
+        LimitEngine::InitializeOptions::ColorSpace::sRGB
+    );
+
 	ToolBase::TBApplication app;
 	LimitEngineWindow window("Test", Engine);
-    Engine->Init(window.GetHandle());
+    Engine->Init(window.GetHandle(), engineOptions);
     window.SetupScene();
 	app.Run();
     Engine->Term();

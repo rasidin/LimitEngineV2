@@ -1,17 +1,12 @@
 /***********************************************************
  LIMITEngine Header File
- Copyright (C), LIMITGAME, 2012
+ Copyright (C), LIMITGAME, 2020
  -----------------------------------------------------------
- @file  LE_Model.h
+ @file  Model.h
  @brief Model Class
  @author minseob (leeminseob@outlook.com)
- -----------------------------------------------------------
- History:
- - 2012/8/26 Created by minseob
  ***********************************************************/
-
-#ifndef _LE_MODEL_H_
-#define _LE_MODEL_H_
+#pragma once 
 
 #include <LEIntVector3.h>
 #include <LEFloatVector3.h>
@@ -19,6 +14,7 @@
 
 #include "Core/Object.h"
 #include "Core/TextParser.h"
+#include "Core/SerializableResource.h"
 #include "Renderer/AABB.h"
 #include "Renderer/FPolygon.h"
 #include "Renderer/FRay.h"
@@ -37,20 +33,25 @@ namespace LimitEngine {
     class IndexBuffer;
     class Material;
     class Shader;
-    class Model : public Object<LimitEngineMemoryCategory_Graphics>, public MetaData
+    class Model : public Object<LimitEngineMemoryCategory_Graphics>, public SerializableResource, public MetaData
     {
         friend ModelFactory;
     public:
+        static constexpr uint32 FileType = GENERATE_SERIALIZABLERESOURCE_ID("MODL");
+
         typedef struct _DRAWGROUP
         {
+            String                  materialID;
+
             Material                *material;
             VectorArray<LEMath::IntVector3>    indices;
             IndexBuffer             *indexBuffer;
-            
+
             ~_DRAWGROUP()
             {
                 if (indexBuffer) delete indexBuffer;
             }
+            void InitResource();
         } DRAWGROUP;
 
         typedef struct _MESH
@@ -72,7 +73,7 @@ namespace LimitEngine {
             }
             ~_MESH()
             {
-                for(size_t i=0;i<drawgroups.size();i++)
+                for(uint32 i=0;i<drawgroups.size();i++)
                     delete drawgroups[i];
                 drawgroups.Clear();
 				if(vertexbuffer)
@@ -83,6 +84,7 @@ namespace LimitEngine {
             {
                 worldMatrix = LEMath::FloatMatrix4x4::GenerateTransform(pos) * LEMath::FloatMatrix4x4::GenerateRotationXYZ(rot) * LEMath::FloatMatrix4x4::GenerateScaling(scl);
             }
+            void InitResource();
             DRAWGROUP* AddDrawGroup() {
                 DRAWGROUP *out = new DRAWGROUP();
                 drawgroups.push_back(out);
@@ -95,15 +97,15 @@ namespace LimitEngine {
         virtual ~Model();
 
         AABB GetBoundingBox() { return mBoundingbox; }
-                
+
         void Draw(const RenderState &rs);
 
         void SetName(const String &name)        { mName = name; }
         String GetName()                        { return mName; }
-        size_t GetMeshCount()                   { return mMeshes.size(); }
-        MESH* GetMesh(size_t n)                 { return mMeshes[n]; }
-        size_t GetMaterialCount()               { return mMaterials.size(); }
-        Material* GetMaterial(size_t n)         { return mMaterials[n]; }
+        uint32 GetMeshCount()                   { return mMeshes.size(); }
+        MESH* GetMesh(uint32 n)                 { return mMeshes[n]; }
+        uint32 GetMaterialCount()               { return mMaterials.size(); }
+        Material* GetMaterial(uint32 n)         { return mMaterials[n]; }
 
 		void SetPosition(const LEMath::FloatVector3 &p)     { mPosition = p; }
         void SetScale(const LEMath::FloatVector3 &s)        { mScale = s; }
@@ -113,6 +115,18 @@ namespace LimitEngine {
         
         fPolygon::INTERSECT_RESULT Intersect(const fRay &r);
 		fPolygon::INTERSECT_RESULT IntersectSphere(const fRay &r, float radius);
+
+    public: // Generator
+        static Model* GenerateFromTextParser(TextParser *Parser);
+
+        virtual void InitResource() override;
+
+    protected: // For serialization
+        virtual bool Serialize(Archive &OutArchive) override;
+        virtual SerializableResource* GenerateNew() const override { return new Model(); }
+
+        virtual uint32 GetFileType() const override { return FileType; }
+        virtual uint32 GetVersion() const override  { return 1u; }
 
     private:
 		void setupMetaData();
@@ -128,17 +142,15 @@ namespace LimitEngine {
         
         VectorArray<MESH*>       mMeshes;
         
-        LEMath::FloatVector3                 mBasePosition;
-        LEMath::FloatVector3                 mBaseScale;
-        LEMath::FloatVector3                 mBaseRotation;
-        LEMath::FloatMatrix4x4               mBaseMatrix;
+        LEMath::FloatVector3     mBasePosition;
+        LEMath::FloatVector3     mBaseScale;
+        LEMath::FloatVector3     mBaseRotation;
+        LEMath::FloatMatrix4x4   mBaseMatrix;
         
         String                   mName;
-        LEMath::FloatVector3                 mPosition;
-        LEMath::FloatVector3                 mScale;
-        LEMath::FloatVector3                 mRotation;
+        LEMath::FloatVector3     mPosition;
+        LEMath::FloatVector3     mScale;
+        LEMath::FloatVector3     mRotation;
         VectorArray<Material*>   mMaterials;
     };
 }
-
-#endif // _LE_MODEL_H_

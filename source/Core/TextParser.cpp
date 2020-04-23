@@ -24,7 +24,7 @@ TextParser::TextParser(const char *text)
 
 TextParser::~TextParser()
 {
-    for(size_t i=0;i<mNodes.count();i++)
+    for(uint32 i=0;i<mNodes.count();i++)
     {
         delete mNodes[i];
     }
@@ -50,6 +50,12 @@ bool TextParser::Parse(const char *text)
                 if (word_length) {
                     buf[word_length] = 0;
                     inputData(parentNode, &currentNode, buf, word_length, sequenceIn);
+                }
+                if (*ptr == '\r') {
+                    ptr++;
+                }
+                if (*ptr == '\n') {
+                    ptr++;
                 }
             }
             else if (currentWord == '\r') {
@@ -78,11 +84,24 @@ bool TextParser::Parse(const char *text)
             }
             else {
                 if (currentWord == '{') {
+                    if (currentNode == nullptr) {
+                        addNewNode(parentNode, nullptr, &currentNode);
+                    }
                     parentNode = currentNode;
                     currentNode = NULL;
-                    buf[word_length] = 0;
-                    inputData(parentNode, &currentNode, buf, word_length, sequenceIn);
-                    word_length = 0;
+                    //String NewNodeName;
+                    //if (word_length) {
+                    //    buf[word_length] = 0;
+                    //    NewNodeName = buf;
+                    //    word_length = 0;
+                    //}
+                    //else {
+                    //    if (parentNode->values.count()) {
+                    //        NewNodeName = parentNode->values[parentNode->values.count() - 1];
+                    //        parentNode->values.erase(parentNode->values.count() - 1);
+                    //    }
+                    //}
+                    //addNewNode(parentNode, NewNodeName.GetCharPtr(), &currentNode);
                 }
                 else if (currentWord == '}') {
                     parentNode = parentNode->parent;
@@ -97,11 +116,13 @@ bool TextParser::Parse(const char *text)
                     word_length = 0;
                 }
                 else if (currentWord == ']') {
+                    if (word_length) {
+                        buf[word_length] = 0;
+                        inputData(parentNode, &currentNode, buf, word_length, sequenceIn);
+                        word_length = 0;
+                    }
                     sequenceIn = false;
                     currentNode = NULL;
-                    buf[word_length] = 0;
-                    inputData(parentNode, &currentNode, buf, word_length, sequenceIn);
-                    word_length = 0;
                 }
                 else if (currentWord == '\"') {
                     stringIn = true;
@@ -130,7 +151,7 @@ bool TextParser::Save(const char *filename)
     fopen_s(&fp, filename, "w");
     if (!fp) return false;
     int indent = 0;
-    for(size_t i=0;i<mNodes.size();i++)
+    for(uint32 i=0;i<mNodes.size();i++)
     {
         mNodes[i]->Save(fp, indent);
     }
@@ -144,7 +165,7 @@ void TextParser::NODE::Save(FILE *fp, int indent)
         for(int i=0;i<indent;i++) fprintf(fp, "\t");
         fprintf(fp, name.GetCharPtr());
         fprintf(fp, " {\n");
-        for(size_t i=0;i<children.size();i++)
+        for(uint32 i=0;i<children.size();i++)
         {
             children[i]->Save(fp, indent+1);
         }
@@ -177,6 +198,15 @@ TextParser::NODE* TextParser::GetNode(const char *name)
         mNodes[n]->FindChild(name);
     }
     return NULL;
+}
+
+void TextParser::addNewNode(NODE *Parent, const char *NodeName, NODE **OutNode)
+{
+    *OutNode = new NODE();
+    (*OutNode)->name = NodeName;
+    (*OutNode)->parent = Parent;
+    if (Parent) Parent->children.Add(*OutNode);
+    else mNodes.Add(*OutNode);
 }
 
 void TextParser::inputData(NODE *parent, NODE **node, char *buf, uint32 length, bool sequenceIn)

@@ -9,6 +9,8 @@
 #pragma once
 #include "Archive.h"
 
+#define GENERATE_SERIALIZABLERESOURCE_ID(id) (id[0] | (id[1]<<8) | (id[2]<<16) | (id[3]<<24))
+
 namespace LimitEngine {
     class SerializableResource 
     {

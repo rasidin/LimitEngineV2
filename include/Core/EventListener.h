@@ -27,7 +27,7 @@ namespace LimitEngine {
 			return this;
 		}
 		void operator()() {
-			for (int32 funcidx = 0; funcidx < mEventFunctions.count(); funcidx++) {
+			for (uint32 funcidx = 0; funcidx < mEventFunctions.count(); funcidx++) {
 				mEventFunctions[funcidx]();
 			}
 		}

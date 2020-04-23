@@ -32,7 +32,6 @@ namespace LimitEngine {
             , mBaseRenderTarget(nullptr)
             , mBaseDepthStencilTexture(nullptr)
             , mBaseRenderTargetView(nullptr)
-            , mBaseDepthStencilView(nullptr)
         {
         }
 
@@ -40,7 +39,7 @@ namespace LimitEngine {
 
         void ReadyToRender() override
         {
-            mD3DDeviceContext->OMSetRenderTargets(1, &mBaseRenderTargetView, mBaseDepthStencilView);
+            mD3DDeviceContext->OMSetRenderTargets(1, &mBaseRenderTargetView, /*mBaseDepthStencilView*/nullptr);
         }
         LEMath::IntSize GetScreenSize() override
         {
@@ -59,12 +58,11 @@ namespace LimitEngine {
             Output->mD3DDevice = mD3DDevice;
             Output->mD3DDeviceContext = mD3DDeviceContext;
             Output->mBaseRenderTargetView = mBaseRenderTargetView;
-            Output->mBaseDepthStencilView = mBaseDepthStencilView;
 
             return dynamic_cast<void*>(Output);
         }
 
-        void Init(WINDOW_HANDLE handle) override
+        void Init(WINDOW_HANDLE handle, const InitializeOptions &Options) override
         {
             const D3D_FEATURE_LEVEL featureLevels[] =
             {
@@ -81,8 +79,8 @@ namespace LimitEngine {
             ::memset(&swapChainDesc, 0, sizeof(DXGI_SWAP_CHAIN_DESC));
             swapChainDesc.Windowed = true;
             swapChainDesc.BufferCount = 1;
-            swapChainDesc.BufferDesc.Width = 1920;
-            swapChainDesc.BufferDesc.Height = 1080;
+            swapChainDesc.BufferDesc.Width = Options.Resolution.Width();
+            swapChainDesc.BufferDesc.Height = Options.Resolution.Height();
             swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
             swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
             swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
@@ -105,31 +103,7 @@ namespace LimitEngine {
                 Debug::Error("Failed to create rendertargetview");
                 return;
             }
-            // Create DepthStencilView
-            D3D11_TEXTURE2D_DESC depthStencilDesc;
-            ::memset(&depthStencilDesc, 0, sizeof(D3D11_TEXTURE2D_DESC));
-            depthStencilDesc.Width = 1920;
-            depthStencilDesc.Height = 1080;
-            depthStencilDesc.MipLevels = 1;
-            depthStencilDesc.ArraySize = 1;
-            depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-            depthStencilDesc.SampleDesc.Count = 1;
-            depthStencilDesc.SampleDesc.Quality = 0;
-            depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
-            depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-            if (FAILED(mD3DDevice->CreateTexture2D(&depthStencilDesc, NULL, &mBaseDepthStencilTexture))) {
-                Debug::Error("Failed to create depthstencil texture");
-                return;
-            }
 
-            D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
-            ::memset(&depthStencilViewDesc, 0, sizeof(D3D11_DEPTH_STENCIL_VIEW_DESC));
-            depthStencilViewDesc.Format = depthStencilDesc.Format;
-            depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
-            if (FAILED(mD3DDevice->CreateDepthStencilView(mBaseDepthStencilTexture, &depthStencilViewDesc, &mBaseDepthStencilView))) {
-                Debug::Error("Failed to create depthstencilview");
-                return;
-            }
             // Set viewport
             D3D11_VIEWPORT viewPort;
             viewPort.TopLeftX = 0;
@@ -156,10 +130,6 @@ namespace LimitEngine {
                 mBaseRenderTargetView->Release();
                 mBaseRenderTargetView = NULL;
             }
-            if (mBaseDepthStencilView != NULL) {
-                mBaseDepthStencilView->Release();
-                mBaseDepthStencilView = NULL;
-            }
             if (mBaseRenderTarget != NULL) {
                 mBaseRenderTarget->Release();
                 mBaseRenderTarget = NULL;
@@ -177,7 +147,7 @@ namespace LimitEngine {
                 mD3DDevice = NULL;
             }
         }
-        void BindFrameBuffer(uint32 buffer) override {}
+        void* GetFrameBuffer() const override { return mBaseRenderTargetView; }
 
         void* GetDeviceHandle() const override { return mD3DDevice; }
         void* GetDeviceContext() const override { return mD3DDeviceContext; }
@@ -193,7 +163,6 @@ namespace LimitEngine {
         ID3D11Texture2D			*mBaseRenderTarget;                             // Texture for rendertarget
         ID3D11Texture2D         *mBaseDepthStencilTexture;                      // Texture for depthstencil
         ID3D11RenderTargetView	*mBaseRenderTargetView;                         // View for rendertarget
-        ID3D11DepthStencilView	*mBaseDepthStencilView;                         // View for depthstencil
     };
 }
 

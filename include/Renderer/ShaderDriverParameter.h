@@ -51,7 +51,8 @@ namespace LimitEngine {
 	public:
 		virtual ~ShaderDriverParameter();
 
-		bool IsValid(const ShaderParameterParser::ParameterMap &paramMap) override;
+		bool IsValid(const ShaderParameterParser::ParameterMap &paramMap) const override;
+        bool IsValid(const Shader *InShader) const override { return false; }
 		void Apply(const RenderState &rs, const Material *material) override;
 		const char* GetName() const override { return "ShaderDriverParameter"; }
 
@@ -61,6 +62,7 @@ namespace LimitEngine {
 	private:
 		ShaderDriver* create() override { return new ShaderDriverParameter; }
 		void setup(const ShaderParameterParser::ParameterMap &paramMap) override;
+        void setup(const Shader *InShader) override {}
 	private:
 		MapArray<String, ShaderParameter> mParameters;
 	};

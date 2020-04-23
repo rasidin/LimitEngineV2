@@ -21,9 +21,9 @@ namespace LimitEngine {
 	ShaderDriverManager::ShaderDriverManager()
 	{
 		mDrivers.Add(new ShaderDriverGeneral);
-		mDrivers.Add(new ShaderDriverParameter);
+		//mDrivers.Add(new ShaderDriverParameter);
         mDrivers.Add(new ShaderDriverLight);
-		mDrivers.Add(new ShaderDriverBakedBRDF);
+		//mDrivers.Add(new ShaderDriverBakedBRDF);
 	}
 	ShaderDriverManager::~ShaderDriverManager()
 	{
@@ -32,18 +32,24 @@ namespace LimitEngine {
 		}
 		mDrivers.Clear();
 	}
-	void ShaderDriverManager::SetupShaderDriver(Shader *shader, const char *code) 
+    void ShaderDriverManager::SetupShaderDriver(Shader *shader, const char *code /*= nullptr*/)
 	{
-		if(code==NULL)
-			return;
-
-		ShaderParameterParser parser;
-		if(parser.Parse(code)) {
-			for(uint32 sdidx=0;sdidx<mDrivers.count();sdidx++) {
-				if(mDrivers[sdidx]->IsValid(parser.mParameters)) {
-					shader->AddDriver(mDrivers[sdidx]->Create(shader, parser.mParameters));
-				}
-			}
-		}
+        if (code == NULL) {
+            for (uint32 sdidx = 0; sdidx < mDrivers.count(); sdidx++) {
+                if (mDrivers[sdidx]->IsValid(shader)) {
+                    shader->AddDriver(mDrivers[sdidx]->Create(shader));
+                }
+            }
+        }
+        else {
+            ShaderParameterParser parser;
+            if (parser.Parse(code)) {
+                for (uint32 sdidx = 0; sdidx < mDrivers.count(); sdidx++) {
+                    if (mDrivers[sdidx]->IsValid(parser.mParameters)) {
+                        shader->AddDriver(mDrivers[sdidx]->Create(shader, parser.mParameters));
+                    }
+                }
+            }
+        }
 	}
 }

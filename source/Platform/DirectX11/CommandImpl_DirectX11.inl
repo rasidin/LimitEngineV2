@@ -12,6 +12,7 @@ Copyright (C), LIMITGAME, 2020
 
 #include "Renderer/CommandBuffer.h"
 #include "Renderer/Texture.h"
+#include "Managers/DrawManager.h"
 
 #include "PrivateDefinitions_DirectX11.h"
 
@@ -420,7 +421,14 @@ namespace LimitEngine {
                 cache.BlendStateModified = true;
             }
         }
-        void SetRenderTarget(uint32 index, Texture *texture, uint32 surfaceIndex) override {/* unimplemented */ }
+        void SetRenderTarget(uint32 index, Texture *color, Texture *depth, uint32 surfaceIndex) override {
+            if (mD3DDevice) {
+                ID3D11RenderTargetView *renderTargetView = color ? ((ID3D11RenderTargetView*)color->GetRenderTargetView()) : ((ID3D11RenderTargetView*)LE_DrawManager.GetFrameBuffer());
+                ID3D11DepthStencilView *depthStencilView = depth ? ((ID3D11DepthStencilView*)depth->GetDepthStencilView()) : nullptr;
+
+                mD3DDeviceContext->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
+            }
+        }
     private:
         inline DepthStateID makeDepthStateIndex(uint32 flag, RendererFlag::TestFlags funcFlag) { return uint32((flag << 8) | static_cast<uint32>(funcFlag)); }
         ID3D11DepthStencilState* getDepthStencilState(uint32 flag, RendererFlag::TestFlags funcFlag)
@@ -483,9 +491,9 @@ namespace LimitEngine {
                     blendDesc.RenderTarget[rtidx].SrcBlendAlpha = id.sourceAlpha[rtidx];
                     blendDesc.RenderTarget[rtidx].DestBlendAlpha = id.destAlpha[rtidx];
                     blendDesc.RenderTarget[rtidx].BlendOpAlpha = id.blendAlpha[rtidx];
-                    blendDesc.RenderTarget[rtidx].RenderTargetWriteMask = 0xff;
+                    blendDesc.RenderTarget[rtidx].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
                 }
-                mD3DDevice->CreateBlendState(&blendDesc, &newState);
+                HRESULT hr = mD3DDevice->CreateBlendState(&blendDesc, &newState);
                 mBlendStates[id] = newState;
 
                 return newState;

@@ -33,6 +33,20 @@ namespace LimitEngine {
         Material *mOwner;
     };
 
+    template<> Archive& Archive::operator << (Material &InMaterial) {
+        *this << InMaterial.mId;
+        *this << InMaterial.mName;
+        String shaderName;
+        if (InMaterial.mShader) {
+            shaderName = InMaterial.mShader->GetName();
+        }
+        *this << shaderName;
+        if (IsLoading()) {
+            InMaterial.mShader = LE_ShaderManager.GetShader(shaderName);
+        }
+        return *this;
+    }
+
     Material::Material()
         : mId()
         , mName()
@@ -56,7 +70,9 @@ namespace LimitEngine {
         if (mShader) {
             delete mShader;
         }
-        mShader = new Shader();
+        mShader = nullptr;
+
+        bool CompiledShaders = false;
 		bool SucceedCompilingVS = false;
 		bool SucceedCompilingPS = false;
 		for (uint32 chidx = 0; chidx < root->children.size(); chidx++) {
@@ -67,11 +83,18 @@ namespace LimitEngine {
             else if (node->name == "NAME") {
                 mName = node->values[0];
             }
+            else if (node->name == "SHADER") {
+                mShader = LE_ShaderManager.GetShader(node->values[0]);
+            }
             else if (node->name == "VERTEXSHADER") {
+                if (mShader == nullptr) mShader = new Shader();
+                CompiledShaders = true;
 				SucceedCompilingVS = mShader->Compile(node->values[0], Shader::TYPE_VERTEX);
             }
             else if (node->name == "PIXELSHADER") {
-				SucceedCompilingPS = mShader->Compile(node->values[0], Shader::TYPE_PIXEL);
+                if (mShader == nullptr) mShader = new Shader();
+                CompiledShaders = true;
+                SucceedCompilingPS = mShader->Compile(node->values[0], Shader::TYPE_PIXEL);
             }
             else { // Texture or Parameter
                 if (node->values.count() == 1) {
@@ -98,10 +121,10 @@ namespace LimitEngine {
                 }
             }
         }
-		if (SucceedCompilingVS && SucceedCompilingPS) {
+		if (CompiledShaders && SucceedCompilingVS && SucceedCompilingPS) {
 			LE_ShaderManager.AddShader(mShader);
 		}
-		else {
+		else if (CompiledShaders) {
 			delete mShader;
 			mShader = NULL;
 		}

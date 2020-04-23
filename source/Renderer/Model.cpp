@@ -23,9 +23,55 @@
 #include "Renderer/Material.h"
 
 namespace LimitEngine {
+    template<> Archive& Archive::operator << (Model::DRAWGROUP &InDrawGroup) {
+        if (InDrawGroup.material)
+            InDrawGroup.materialID = InDrawGroup.material->GetID();
+        *this << InDrawGroup.materialID;
+        *this << (SerializableResource*)&InDrawGroup.indices;
+        return *this;
+    }
+
+    template<> Archive& Archive::operator << (Model::MESH &InMesh) {
+        *this << InMesh.pos;
+        *this << InMesh.scl;
+        *this << InMesh.rot;
+        *this << InMesh.worldMatrix;
+
+        *this << (SerializableResource*)InMesh.vertexbuffer;
+
+        uint32 NumDrawGroups = InMesh.drawgroups.count();
+        *this << NumDrawGroups;
+        if (IsLoading()) {
+            Model::DRAWGROUP *newDrawGroup = new Model::DRAWGROUP();
+            *this << *newDrawGroup;
+            InMesh.drawgroups.Add(newDrawGroup);
+        }
+        else {
+            for (uint32 Index = 0; Index < NumDrawGroups; Index++) {
+                *this << *InMesh.drawgroups[Index];
+            }
+        }
+        return *this;
+    }
+
+    void Model::_DRAWGROUP::InitResource()
+    {
+        indexBuffer = new IndexBuffer();
+        indexBuffer->Create(indices.count() * 3, &indices[0]);
+    }
+
+    void Model::_MESH::InitResource()
+    {
+        for (uint32 Index = 0; Index < drawgroups.count(); Index++) {
+            drawgroups[Index]->InitResource();
+        }
+        vertexbuffer->InitResource();
+    }
+
     Model::Model()
     : mBoundingbox()
     , mMaterials()
+    , mBaseMatrix(LEMath::FloatMatrix4x4::Identity)
     , mPosition(LEMath::FloatVector3::Zero)
     , mScale(LEMath::FloatVector3::One)
     , mRotation(LEMath::FloatVector3::Zero)
@@ -38,6 +84,7 @@ namespace LimitEngine {
     Model::Model(const char *filename)
     : mBoundingbox()
     , mMaterials()
+    , mBaseMatrix(LEMath::FloatMatrix4x4::Identity)
     , mPosition(LEMath::FloatVector3::Zero)
     , mScale(LEMath::FloatVector3::One)
     , mRotation(LEMath::FloatVector3::Zero)
@@ -57,17 +104,39 @@ namespace LimitEngine {
 	}
     Model::~Model()
     {
-        for (size_t i=0;i<mMeshes.count();i++) {
+        for (uint32 i=0;i<mMeshes.count();i++) {
             if(mMeshes[i])
                 delete mMeshes[i];
         }
         mMeshes.Clear();
         
-        for(size_t i=0;i<mMaterials.count();i++) {
+        for(uint32 i=0;i<mMaterials.count();i++) {
             if (mMaterials[i])
                 delete mMaterials[i];
         }
         mMaterials.Clear();
+    }
+    void Model::InitResource()
+    {
+        setupMaterialShaderParameters();
+        for (uint32 Index = 0; Index < mMeshes.count(); Index++) {
+            mMeshes[Index]->InitResource();
+            for (uint32 DGIdx = 0; DGIdx < mMeshes[Index]->drawgroups.count(); DGIdx++) {
+                for (uint32 MatIdx=0;MatIdx< mMaterials.count();MatIdx++) {
+                    if (mMaterials[MatIdx]->GetID() == mMeshes[Index]->drawgroups[DGIdx]->materialID) {
+                        mMeshes[Index]->drawgroups[DGIdx]->material = mMaterials[MatIdx];
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    Model* Model::GenerateFromTextParser(TextParser *Parser)
+    {
+        if (!Parser) return nullptr;
+        Model *output = new Model();
+        output->Load(Parser->GetNode("DATA"));
+        return output;
     }
     void Model::Load(const char *text)
     {
@@ -87,16 +156,15 @@ namespace LimitEngine {
         TextParser::NODE *node = NULL;
         if ((node = root->FindChild("MATERIALS")))
         {
-            for (size_t i=0;i<node->children.count();i++) {
+            for (uint32 i=0;i<node->children.count();i++) {
                 Material *material = new Material();
-                TextParser::NODE *matNode = node->children[i];
-                material->Load(matNode);
+                material->Load(node);
                 mMaterials.Add(material);
             }
         }
         if ((node = root->FindChild("TRANSFORM")))
         {
-            for (size_t i=0;i<node->children.size();i++) {
+            for (uint32 i=0;i<node->children.size();i++) {
                 TextParser::NODE *transNode = node->children[i];
                 if (transNode) {
                     if (transNode->name == "POSITION") {
@@ -114,7 +182,7 @@ namespace LimitEngine {
         }
         if ((node = root->FindChild("ELEMENTS")))
         {
-            for (size_t j=0;j<node->children.count();j++) {
+            for (uint32 j=0;j<node->children.count();j++) {
                 if (TextParser::NODE *eleNode = node->children[j]) {
                     if (eleNode->name == "MESH") {
                         MESH *mesh = new MESH();
@@ -122,7 +190,7 @@ namespace LimitEngine {
                         TextParser::NODE *tn = NULL;
                         if ((tn = eleNode->FindChild("TRANSFORM")))
                         {
-                            for (size_t i=0;i<tn->children.size();i++) {
+                            for (uint32 i=0;i<tn->children.size();i++) {
                                 TextParser::NODE *transNode = tn->children[i];
                                 if (transNode) {
                                     if (transNode->name == "POSITION") {
@@ -143,7 +211,7 @@ namespace LimitEngine {
                             mesh->vertexbuffer = new RigidVertexBuffer();
                             RigidVertexBuffer *vtxbuf = (VertexBuffer<FVF_PNCTTB, SIZE_PNCTTB>*)mesh->vertexbuffer;
                             RigidVertex *vtxptr = new RigidVertex[verticesNode->children.count()]();
-                            for (size_t i=0;i<verticesNode->children.count();i++) {
+                            for (uint32 i=0;i<verticesNode->children.count();i++) {
                                 TextParser::NODE *vtxNode = verticesNode->children[i];
                                 TextParser::NODE *vtxPos = vtxNode->FindChild("POSITION");
                                 if (vtxPos) {
@@ -177,12 +245,12 @@ namespace LimitEngine {
                         }
                         TextParser::NODE *indicesNode = eleNode->FindChild("INDICES");
                         if (indicesNode) { // Make indices
-                            for(size_t i=0;i<indicesNode->children.count();i++) {
+                            for(uint32 i=0;i<indicesNode->children.count();i++) {
                                 TextParser::NODE *idxNode = indicesNode->children[i];
                                 DRAWGROUP *drawgroup = NULL;
                                 if (TextParser::NODE *materialNode = idxNode->FindChild("MATERIAL")) {
                                     String matname = materialNode->values[0];
-                                    for(size_t l=0;l<mesh->drawgroups.count();l++)
+                                    for(uint32 l=0;l<mesh->drawgroups.count();l++)
                                     {
                                         if (mesh->drawgroups[l]->material->GetID() == matname)
                                         {
@@ -193,7 +261,7 @@ namespace LimitEngine {
                                     if (!drawgroup)
                                     {
                                         Material *material = NULL;
-                                        for(size_t l=0;l<mMaterials.count();l++)
+                                        for(uint32 l=0;l<mMaterials.count();l++)
                                         {
                                             if (mMaterials[l]->GetID() == matname)
                                             {
@@ -214,12 +282,6 @@ namespace LimitEngine {
                                 }
                             }
                         }
-                        // Set IndexBuffer
-                        for (size_t i=0;i<mesh->drawgroups.count();i++)
-                        {
-                            mesh->drawgroups[i]->indexBuffer = new IndexBuffer();
-                            mesh->drawgroups[i]->indexBuffer->Create(mesh->drawgroups[i]->indices.count()*3, &mesh->drawgroups[i]->indices[0]);
-                        }
                     }
                 }
             }
@@ -227,6 +289,45 @@ namespace LimitEngine {
         // Postprocess
         calcTangentBinormal();
         setupMaterialShaderParameters();
+    }
+    bool Model::Serialize(Archive &Ar)
+    {
+        Ar << mName;
+        Ar << mBoundingbox;
+        Ar << mBasePosition;
+        Ar << mBaseScale;
+        Ar << mBaseRotation;
+
+        uint32 NumMaterials = mMaterials.count();
+        Ar << NumMaterials;
+        if (Ar.IsLoading()) {
+            for (uint32 Index = 0; Index < NumMaterials; Index++) {
+                Material *newMaterial = new Material();
+                Ar << *newMaterial;
+                mMaterials.Add(newMaterial);
+            }
+        }
+        else {
+            for (uint32 Index = 0; Index < NumMaterials; Index++) {
+                Ar << *mMaterials[Index];
+            }
+        }
+
+        uint32 NumMeshes = mMeshes.count();
+        Ar << NumMeshes;
+        if (Ar.IsLoading()) {
+            MESH *newMesh = new MESH();
+            newMesh->vertexbuffer = new RigidVertexBuffer();
+            Ar << *newMesh;
+            mMeshes.Add(newMesh);
+        }
+        else {
+            for (uint32 Index = 0; Index < NumMeshes; Index++) {
+                Ar << *mMeshes[Index];
+            }
+        }
+
+        return true;
     }
     void Model::Draw(const RenderState &rs)
     {
@@ -236,10 +337,10 @@ namespace LimitEngine {
         LEMath::FloatMatrix4x4 globalTransMatrix = getTransformMatrix();
         LEMath::FloatMatrix4x4 modelWvpMat = LEMath::FloatMatrix4x4(rs.GetViewProjMatrix()) * globalTransMatrix;
 
-        for (size_t i=0;i<mMeshes.size();i++)
+        for (uint32 i=0;i<mMeshes.size();i++)
         {
             MESH *mesh = mMeshes[i];
-            for(size_t j=0;j<mesh->drawgroups.count();j++)
+            for(uint32 j=0;j<mesh->drawgroups.count();j++)
             {
                 DRAWGROUP *drawGroup = mesh->drawgroups[j];
                 // Set material
@@ -313,18 +414,18 @@ namespace LimitEngine {
     }
     void Model::calcTangentBinormal()
     {
-        for (size_t i=0;i<mMeshes.size();i++)
+        for (uint32 i=0;i<mMeshes.size();i++)
         {
             RigidVertex *vtxptr = (RigidVertex*)((RigidVertexBuffer *)mMeshes[i]->vertexbuffer)->GetBuffer();
             if (vtxptr == NULL || vtxptr[0].GetBinormal() != LEMath::FloatVector3::Zero && vtxptr[0].GetTangent() != LEMath::FloatVector3::Zero)
                 continue;
-            for (size_t l=0;l<mMeshes[i]->drawgroups.size();l++)
+            for (uint32 l=0;l<mMeshes[i]->drawgroups.size();l++)
             {
-                for (size_t m=0;m<mMeshes[i]->drawgroups[l]->indices.size();m++)
+                for (uint32 m=0;m<mMeshes[i]->drawgroups[l]->indices.size();m++)
                 {
-                    int idx1 = mMeshes[i]->drawgroups[l]->indices[m].x;
-                    int idx2 = mMeshes[i]->drawgroups[l]->indices[m].y;
-                    int idx3 = mMeshes[i]->drawgroups[l]->indices[m].z;
+                    int idx1 = mMeshes[i]->drawgroups[l]->indices[m].X();
+                    int idx2 = mMeshes[i]->drawgroups[l]->indices[m].Y();
+                    int idx3 = mMeshes[i]->drawgroups[l]->indices[m].Z();
                     LEMath::FloatVector3 p1 = vtxptr[idx1].GetPosition();
                     LEMath::FloatVector3 p2 = vtxptr[idx2].GetPosition();
                     LEMath::FloatVector3 p3 = vtxptr[idx3].GetPosition();

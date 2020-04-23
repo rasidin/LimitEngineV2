@@ -26,9 +26,11 @@ namespace LimitEngine {
 		virtual ~ShaderDriver() {}
 
 		// Is driver valid?
-		virtual bool IsValid(const ShaderParameterParser::ParameterMap &mapParam) = 0;
+		virtual bool IsValid(const ShaderParameterParser::ParameterMap &mapParam) const = 0;
+        virtual bool IsValid(const Shader *InShader) const = 0;
 		// Create own class (duplicate)
 		ShaderDriver* Create(Shader *shader, const ShaderParameterParser::ParameterMap &mapParam);
+        ShaderDriver* Create(Shader *InShader);
 		// Apply shader driver
 		virtual void Apply(const RenderState &rs, const Material *material) = 0;
 		// ShaderDriverName
@@ -37,6 +39,7 @@ namespace LimitEngine {
 	protected:
 		virtual ShaderDriver* create() = 0;
 		virtual void setup(const ShaderParameterParser::ParameterMap &paramMap) = 0;
+        virtual void setup(const Shader *InShader) = 0;
 		int getShaderUniformLocation(const ShaderParameterParser::ParameterMap &mapParam, const String &paramWord);
 		int getShaderTextureLocation(const ShaderParameterParser::ParameterMap &mapParam, const String &paramWord);
 

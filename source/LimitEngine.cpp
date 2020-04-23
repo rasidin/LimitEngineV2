@@ -9,20 +9,23 @@
 
 #include "LimitEngine.h"
 
+#include "Core/AutoPointer.h"
 #include "Core/Common.h"
 #include "Core/Debug.h"
 #include "Core/TaskPriority.h"
 #include "Managers/DrawManager.h"
 #include "Managers/SceneManager.h"
+#include "Managers/ShaderDriverManager.h"
 #include "Managers/ShaderManager.h"
+#include "Managers/PostProcessManager.h"
 #include "Managers/TaskManager.h"
 #include "Managers/ResourceManager.h"
+#include "Managers/RenderTargetPoolManager.h"
 #include "Renderer/Font.h"
  //#include "LightManager.h"
 //#include "Random.h"
 //#include "SceneManager.h"
 //#include "ShaderManager.h"
-//#include "ShaderDriverManager.h"
 //#include "TouchInterface.h"
 //#include "Timer.h"
 
@@ -30,11 +33,12 @@ namespace LimitEngine {
 // =============================================================
 // Main
 LimitEngine* LimitEngine::mInstance = NULL;
-void LimitEngine::Init(WINDOW_HANDLE handle)
+void LimitEngine::Init(WINDOW_HANDLE handle, const InitializeOptions &Options)
 {
-	mSceneManager->Init();
-	mDrawManager->Init(handle);
+	mSceneManager->Init(Options);
+	mDrawManager->Init(handle, Options);
 	mShaderManager->Init();
+    mPostProcessManager->Init(Options);
 
 	mTaskManager->Init();
 
@@ -47,6 +51,7 @@ void LimitEngine::Init(WINDOW_HANDLE handle)
 	mTaskID_UpdateScene     = LE_TaskManager.AddTask("SceneManager::Update",    TaskPriority_Renderer_UpdateScene,      mSceneManager, &SceneManager::Update);
 //	mTaskID_UpdateLight     = LE_TaskManager.AddTask("LightManager::Update",    TaskPriority_Renderer_UpdateLight,      mLightManager, &LightManager::Update);
 	mTaskID_DrawScene       = LE_TaskManager.AddTask("SceneManager::Draw",      TaskPriority_Renderer_DrawScene,        mSceneManager, &SceneManager::Draw);
+    mTaskID_PostProcess     = LE_TaskManager.AddTask("PostProcess::Process",    TaskPriority_Renderer_PostProcess,      mPostProcessManager, &PostProcessManager::Process);
     mTaskID_DrawDebugUI     = LE_TaskManager.AddTask("LimitEngine::DrawDebugUI",TaskPriority_Renderer_DrawDebugUI, this, &LimitEngine::DrawDebugUI);
     mTaskID_DrawManager_Run = LE_TaskManager.AddTask("DrawManager::Run",        TaskPriority_Renderer_DrawManager_Run,  mDrawManager,  &DrawManager::Run);
 }
@@ -61,6 +66,8 @@ void LimitEngine::Term()
 		LE_TaskManager.RemoveTask(mTaskID_DrawScene);
 	if (mTaskID_DrawManager_Run)
 		LE_TaskManager.RemoveTask(mTaskID_DrawManager_Run);
+    if (mTaskID_PostProcess)
+        LE_TaskManager.RemoveTask(mTaskID_PostProcess);
     if (mTaskID_DrawDebugUI)
         LE_TaskManager.RemoveTask(mTaskID_DrawDebugUI);
 
@@ -76,17 +83,44 @@ void LimitEngine::SetResourceRootPath(const char *RootPath)
 void LimitEngine::SetBackgroundImage(Texture *Image, BackgroundImageType Type)
 {
     if (mSceneManager) {
-        switch (Type) {
-        case BackgroundImageType::FullScreen:
-        {
-
-        } break;
-        case BackgroundImageType::HDRI:
-        {
-        } break;
-        default: break;
+        mSceneManager->SetBackgroundImage(Image, Type);
+    }
+}
+void LimitEngine::SetMainCamera(Camera *InCamera)
+{
+    mSceneManager->SetCamera(InCamera);
+}
+Texture* LimitEngine::LoadTexture(const char *filepath, ResourceFactory::ID ID, bool bTransient)
+{
+    if (bTransient) {
+        if (AutoPointer<ResourceManager::RESOURCE> TextureResource = mResourceManager->GetResourceWithoutRegister(filepath, ID)) {
+            return (Texture*)TextureResource->PopData();
         }
     }
+    else {
+        if (const ResourceManager::RESOURCE *TextureResource = mResourceManager->GetResourceWithRegister(filepath, ID)) {
+            return (Texture*)TextureResource->data;
+        }
+    }
+    return nullptr;
+}
+Model* LimitEngine::LoadModel(const char *filepath, ResourceFactory::ID ID, bool bTransient)
+{
+    Model* OutModel = nullptr;
+    if (bTransient) {
+        if (AutoPointer<ResourceManager::RESOURCE> TextureResource = mResourceManager->GetResourceWithoutRegister(filepath, ID)) {
+            OutModel = (Model*)TextureResource->PopData();
+        }
+    }
+    else {
+        if (const ResourceManager::RESOURCE *TextureResource = mResourceManager->GetResourceWithRegister(filepath, ID)) {
+            OutModel = (Model*)TextureResource->data;
+        }
+    }
+    if (OutModel) {
+        mSceneManager->AddModel(OutModel);
+    }
+    return OutModel;
 }
 void LimitEngine::Suspend()
 {
@@ -101,7 +135,10 @@ LimitEngine::LimitEngine()
 , mDrawManager(nullptr)
 , mShaderManager(nullptr)
 , mSceneManager(nullptr)
+, mShaderDriverManager(nullptr)
+, mPostProcessManager(nullptr)
 , mTaskManager(nullptr)
+, mRenderTargetPoolManager(nullptr)
 , mResourceManager(NULL)
 //, mLightManager(NULL)
 //, mPostFilterManager(NULL)
@@ -111,7 +148,6 @@ LimitEngine::LimitEngine()
 , mTaskID_DrawScene(nullptr)
 , mTaskID_DrawManager_Run(nullptr)
 , mSystemFont(nullptr)
-, mBackgroundImage(nullptr)
 , mDebug(nullptr)
 {
 	mDebug = new Debug();
@@ -120,15 +156,16 @@ LimitEngine::LimitEngine()
 	gDebug << "Date : " << __DATE__ << Debug::EndL;
     
 	mResourceManager = new ResourceManager();
-	mTaskManager = new TaskManager();
+    mRenderTargetPoolManager = new RenderTargetPoolManager();
+    mTaskManager = new TaskManager();
 	mSceneManager = new SceneManager();
 	mDrawManager = new DrawManager();
 	mShaderManager = new ShaderManager();
-	//mShaderDriverManager = new ShaderDriverManager();
+    mPostProcessManager = new PostProcessManager();
+	mShaderDriverManager = new ShaderDriverManager();
 	//mGuiManager = new GUIManager();
 	//mProfileManager = new ProfileManager();
  //   mLightManager = new LightManager();
- //   mPostFilterManager = new PostFilterManager();
 
  //   //! random initialize
  //   Random::init(static_cast<uint32>(Timer::GetTimeUSec()));
@@ -140,14 +177,15 @@ LimitEngine::~LimitEngine()
 
 	//delete mResourceManager; mResourceManager = NULL;
 	delete mDrawManager; mDrawManager = nullptr;
+    delete mPostProcessManager; mPostProcessManager = nullptr;
 	delete mShaderManager; mShaderManager = nullptr;
     delete mSceneManager; mSceneManager = nullptr;
-    //delete mShaderDriverManager; mShaderDriverManager = NULL;
+    delete mShaderDriverManager; mShaderDriverManager = NULL;
 	//delete mGuiManager; mGuiManager = NULL;
 	//delete mProfileManager; mProfileManager = NULL;
 	//delete mLightManager; mLightManager = NULL;
-	//delete mPostFilterManager; mPostFilterManager = NULL;
-	
+    delete mRenderTargetPoolManager; mRenderTargetPoolManager = nullptr;
+
 	delete mTaskManager; mTaskManager = nullptr;
 	delete mDebug; mDebug = nullptr;
 }

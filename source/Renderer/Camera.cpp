@@ -9,6 +9,8 @@
 
 #include "Renderer/Camera.h"
 
+#include "Managers/DrawManager.h"
+
 #include <LEFloatVector3.h>
 #include <LEFloatMatrix4x4.h>
 
@@ -43,6 +45,12 @@ const float Camera::DefaultFOVRadians = PI*0.5f;
     
     void Camera::Update()
     {
+        if (mFrustum) {
+            LEMath::IntSize ScreenSize = LE_DrawManager.GetRealScreenSize();
+            mFrustum->SetAspectRatio((float)ScreenSize.Height() / ScreenSize.Width());
+            mFrustum->SetFOVRadians(GetFovRadians());
+        }
+
         LEMath::FloatVector3 right = (mUp ^ mDirection).Normalize();
         LEMath::FloatVector3 up = (mDirection ^ right).Normalize();
         mViewMatrix = LEMath::FloatMatrix4x4(

@@ -29,14 +29,17 @@ add_library(LimitEngine
 	source/Factories/TextParserFactory.cpp
 	source/Managers/DrawManager.cpp
 	source/Managers/Draw2DManager.cpp
-	source/Managers/ResourceManager.cpp
 	source/Managers/SceneManager.cpp
 	source/Managers/ShaderDriverManager.cpp
 	source/Managers/ShaderManager.cpp
+	source/Managers/PostProcessManager.cpp
+	source/Managers/ResourceManager.cpp
+	source/Managers/RenderTargetPoolManager.cpp
 	source/Managers/TaskManager.cpp
 	source/Renderer/AABB.cpp
 	source/Renderer/CommandBuffer.cpp
 	source/Renderer/Camera.cpp
+	source/Renderer/CinemaCamera.cpp
 	source/Renderer/FPolygon.cpp
 	source/Renderer/Font.cpp
 	source/Renderer/IndexBuffer.cpp

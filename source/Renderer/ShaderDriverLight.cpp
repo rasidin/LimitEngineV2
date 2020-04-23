@@ -9,6 +9,7 @@
 #include <LEIntVector2.h>
 
 #include "Managers/DrawManager.h"
+#include "Renderer/Shader.h"
 #include "Renderer/ShaderDriverLight.h"
 #include "Renderer/DrawCommand.h"
 #include "Renderer/Material.h"
@@ -24,12 +25,13 @@ namespace LimitEngine {
         {
         }
     };
-	bool ShaderDriverLight::IsValid(const ShaderParameterParser::ParameterMap &paramMap)
+	bool ShaderDriverLight::IsValid(const ShaderParameterParser::ParameterMap &paramMap) const
     {
-        mLightFlags = 0u;
-        if(paramMap.FindIndex("IBLDiffuseTexture") >= 0)
-            mLightFlags |= LightFlagIBL;
-        return mLightFlags != 0;
+        return paramMap.FindIndex("IBLDiffuseTexture") >= 0;
+    }
+    bool ShaderDriverLight::IsValid(const Shader *InShader) const
+    {
+        return InShader->GetUniformLocation("IBLDiffuseTexture") >= 0;
     }
 	void ShaderDriverLight::Apply(const RenderState &rs, const Material *material)
     {
@@ -59,5 +61,12 @@ namespace LimitEngine {
         mIBLTexSize_Position = getShaderUniformLocation(paramMap, "IBLTextureSize");
 		mIBLSpcTex_Position =  getShaderTextureLocation(paramMap, "IBLSpecularTexture");
         mIBLDifTex_Position =  getShaderTextureLocation(paramMap, "IBLDiffuseTexture");
+    }
+    void ShaderDriverLight::setup(const Shader *InShader)
+    {
+        mBRDFLUT_Position = InShader->GetUniformLocation("BRDFLUT");
+        mIBLTexSize_Position = InShader->GetUniformLocation("IBLTextureSize");
+        mIBLSpcTex_Position = InShader->GetUniformLocation("IBLSpecularTexture");
+        mIBLDifTex_Position = InShader->GetUniformLocation("IBLDiffuseTexture");
     }
 }

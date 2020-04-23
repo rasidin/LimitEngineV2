@@ -18,17 +18,28 @@
 #include "Managers/SceneManager.h"
 
 namespace LimitEngine {
-	bool ShaderDriverGeneral::IsValid(const ShaderParameterParser::ParameterMap &paramMap) 
+	bool ShaderDriverGeneral::IsValid(const ShaderParameterParser::ParameterMap &paramMap) const
 	{
-        return paramMap.FindIndex("WorldViewProjection") >= 0 || paramMap.FindIndex("EyePosition") >= 0;
+        return paramMap.FindIndex("WorldViewProjMatrix") >= 0 || paramMap.FindIndex("EyePosition") >= 0;
 	}
+    bool ShaderDriverGeneral::IsValid(const Shader* InShader) const
+    {
+        return InShader->GetUniformLocation("WorldViewProjMatrix") >= 0;
+    }
 	void ShaderDriverGeneral::setup(const ShaderParameterParser::ParameterMap &paramMap)
 	{
-		mParameter_wvpMat = getShaderUniformLocation(paramMap, "WorldViewProjection");
+		mParameter_wvpMat = getShaderUniformLocation(paramMap, "WorldViewProjMatrix");
 		mParameter_invViewMat = getShaderUniformLocation(paramMap, "InverseViewMatrix");
         mParameter_worldMat = getShaderUniformLocation(paramMap, "WorldMatrix");
         mParameter_eyePos = getShaderUniformLocation(paramMap, "EyePosition");
 	}
+    void ShaderDriverGeneral::setup(const Shader *InShader)
+    {
+        mParameter_wvpMat = InShader->GetUniformLocation("WorldViewProjMatrix");
+        mParameter_invViewMat = InShader->GetUniformLocation("InverseViewMatrix");
+        mParameter_worldMat = InShader->GetUniformLocation("WorldMatrix");
+        mParameter_eyePos = InShader->GetUniformLocation("EyePosition");
+    }
 	void ShaderDriverGeneral::Apply(const RenderState &rs, const Material *material)
 	{
 		if(mOwnerShader == NULL)

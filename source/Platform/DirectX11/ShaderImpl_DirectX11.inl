@@ -275,15 +275,15 @@ namespace LimitEngine
             if (mComputeShader.mShader)
                 devCtx->CSSetShader(mComputeShader.mShader, nullptr, 0);
         }
-        int  GetAttribPosition(const char *name) override
+        int  GetAttribPosition(const char *name) const override
         { // unimplemented
             return -1;
         }
-        int  GetAttribPosition(uint32 type) override
+        int  GetAttribPosition(uint32 type) const override
         { // unimplemented
             return -1;
         }
-        int  GetUniformLocation(const char *name) override
+        int  GetUniformLocation(const char *name) const override
         {
             for (uint32 varidx = 0; varidx < mShaderVariables.GetSize(); varidx++) {
                 if (strcmp(mShaderVariables[varidx].Name, name) == 0) {
@@ -292,11 +292,11 @@ namespace LimitEngine
             }
             return -1;
         }
-        int  GetParameterLocation(int loc_id) override
+        int  GetParameterLocation(int loc_id) const override
         { // unimplemented
             return -1;
         }
-        int  GetTextureLocation(const char *name) override
+        int  GetTextureLocation(const char *name) const override
         {
             for (uint32 texidx = 0; texidx < mShaderResources.GetSize(); texidx++) {
                 if (strcmp(mShaderResources[texidx].Name, name) == 0) {
@@ -305,7 +305,7 @@ namespace LimitEngine
             }
             return -1;
         }
-        int  GetTextureLocation(int loc_id) override
+        int  GetTextureLocation(int loc_id) const override
         { // unimplemented
             return -1;
         }

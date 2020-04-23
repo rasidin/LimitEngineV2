@@ -9,6 +9,9 @@
 
 #include "Managers/ShaderManager.h"
 
+#include "Managers/DrawManager.h"
+#include "Managers/ShaderDriverManager.h"
+
 #ifdef USE_DX9
 static const unsigned char Shader_Draw2D_VS[] = {
 #include "shader/DirectX9/bin/Draw2D.vs.txt"
@@ -32,6 +35,12 @@ static const unsigned char Shader_Draw2D_VS[] = {
 static const unsigned char Shader_Draw2D_PS[] = {
 #include "shader/DirectX11/bin/Draw2D.ps.txt"
 };
+static const unsigned char Shader_DrawFullscreen_PS[] = {
+#include "shader/DirectX11/bin/DrawFullscreen.ps.txt"
+};
+static const unsigned char Shader_ResolveSceneColorSRGB_PS[] = {
+#include "shader/DirectX11/bin/ResolveSceneColorSRGB.ps.txt"
+};
 //static const unsigned char Shader_DrawIBL_PS[] = {
 //#include "shader/DirectX11/bin/DrawIBL.ps.txt"
 //};
@@ -43,6 +52,12 @@ static const unsigned char Shader_Draw2D_PS[] = {
 //};
 static const unsigned char Shader_DrawFont_PS[] = {
 #include "shader/DirectX11/bin/DrawFont.ps.txt"
+};
+static const unsigned char Shader_Standard_VS[] = {
+#include "shader/DirectX11/bin/Standard.vs.txt"
+};
+static const unsigned char Shader_Standard_PS[] = {
+#include "shader/DirectX11/bin/Standard.ps.txt"
 };
 #endif
 
@@ -63,6 +78,15 @@ namespace LimitEngine {
     {
         Shader *shader;
 
+        // Set Standard shader
+        {
+            shader = new Shader("Standard");
+            shader->SetCompiledBinary(Shader_Standard_VS, sizeof(Shader_Standard_VS), Shader::TYPE_VERTEX);
+            shader->SetCompiledBinary(Shader_Standard_PS, sizeof(Shader_Standard_PS), Shader::TYPE_PIXEL);
+            AddShader(shader);
+            //AddShader(shader);
+        }
+
         // Set Sprite Shader
         {
             shader = new Shader("Draw2D");
@@ -76,6 +100,22 @@ namespace LimitEngine {
             shader = new Shader("DrawFont");
             shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
             shader->SetCompiledBinary(Shader_DrawFont_PS, sizeof(Shader_DrawFont_PS), Shader::TYPE_PIXEL);
+            AddShader(shader);
+        }
+
+        // Set 
+        {
+            shader = new Shader("DrawFullscreen");
+            shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
+            shader->SetCompiledBinary(Shader_DrawFullscreen_PS, sizeof(Shader_DrawFullscreen_PS), Shader::TYPE_PIXEL);
+            AddShader(shader);
+        }
+
+        // Set Resolve scene color (SRGB)
+        {
+            shader = new Shader("ResolveSceneColorSRGB");
+            shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
+            shader->SetCompiledBinary(Shader_ResolveSceneColorSRGB_PS, sizeof(Shader_ResolveSceneColorSRGB_PS), Shader::TYPE_PIXEL);
             AddShader(shader);
         }
 
@@ -125,7 +165,7 @@ namespace LimitEngine {
     }
     void ShaderManager::Term()
     {
-        for(size_t i=0;i<mShaders.GetSize();i++)
+        for(uint32 i=0;i<mShaders.GetSize();i++)
         {
             delete mShaders[i];
         }
@@ -137,7 +177,7 @@ namespace LimitEngine {
     }
     void ShaderManager::BindShader(uint32 shaderID)
     {
-        for(size_t i=0;i<mShaders.GetSize();i++)
+        for(uint32 i=0;i<mShaders.GetSize();i++)
         {
             if (mShaders[i]->GetID() == shaderID)
             {
@@ -148,7 +188,7 @@ namespace LimitEngine {
     }
     void ShaderManager::BindShader(const char *name)
     {
-        for(size_t i=0;i<mShaders.GetSize();i++)
+        for(uint32 i=0;i<mShaders.GetSize();i++)
         {
             if (mShaders[i]->GetName() == name)
             {
@@ -159,7 +199,7 @@ namespace LimitEngine {
     }
     void ShaderManager::AddShader(Shader *sh)
     {
-        for(size_t shidx=0;shidx<mShaders.GetSize();shidx++)
+        for(uint32 shidx=0;shidx<mShaders.GetSize();shidx++)
         {
             if (mShaders[shidx]->GetName() == sh->GetName()) {
                 delete mShaders[shidx];
@@ -167,12 +207,17 @@ namespace LimitEngine {
                 break;
             }
         }
+        Shader *CapturedShader = sh;
+        ShaderDriverManager *CapturedManager = ShaderDriverManager::GetSingletonPtr();
+        LE_DrawManager.AddRendererTaskLambda([CapturedManager, CapturedShader]() {
+            CapturedManager->SetupShaderDriver(CapturedShader);
+        });
         sh->SetID(mShaderID++);
         mShaders.push_back(sh);
     }
     uint32 ShaderManager::GetShaderID(const char *shaderName)
     {
-        for(size_t i=0;i<mShaders.GetSize();i++)
+        for(uint32 i=0;i<mShaders.GetSize();i++)
         {
             if (mShaders[i]->GetName() == shaderName)
             {
@@ -183,7 +228,7 @@ namespace LimitEngine {
     }
     Shader* ShaderManager::GetShader(const char *name)
     {
-        for(size_t i=0;i<mShaders.GetSize();i++)
+        for(uint32 i=0;i<mShaders.GetSize();i++)
         {
             if (mShaders[i]->GetName() == name)
             {

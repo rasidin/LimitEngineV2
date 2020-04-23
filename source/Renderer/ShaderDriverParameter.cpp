@@ -17,7 +17,7 @@ namespace LimitEngine {
     ShaderDriverParameter::~ShaderDriverParameter()
     {
     }
-    bool ShaderDriverParameter::IsValid(const ShaderParameterParser::ParameterMap &paramMap)
+    bool ShaderDriverParameter::IsValid(const ShaderParameterParser::ParameterMap &paramMap) const
     {
         for(uint32 pmidx=0;pmidx<paramMap.size();pmidx++) {
             if(paramMap.GetAt(pmidx).value.attributes.FindIndex("type") >= 0 && paramMap.GetAt(pmidx).value.attributes["type"] == "Parameter") {

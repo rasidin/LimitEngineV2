@@ -37,12 +37,12 @@ namespace LimitEngine {
         virtual bool SetCompiledBinary(const unsigned char *bin, size_t size, int type) = 0;
         virtual bool Link() = 0;
         virtual void Bind() = 0;
-        virtual int  GetAttribPosition(const char *name) = 0;
-        virtual int  GetAttribPosition(uint32 type) = 0;
-        virtual int  GetUniformLocation(const char *name) = 0;
-        virtual int  GetParameterLocation(int loc_id) = 0;
-        virtual int  GetTextureLocation(const char *name) = 0;
-        virtual int  GetTextureLocation(int loc_id) = 0;
+        virtual int  GetAttribPosition(const char *name) const = 0;
+        virtual int  GetAttribPosition(uint32 type) const = 0;
+        virtual int  GetUniformLocation(const char *name) const = 0;
+        virtual int  GetParameterLocation(int loc_id) const = 0;
+        virtual int  GetTextureLocation(const char *name) const = 0;
+        virtual int  GetTextureLocation(int loc_id) const = 0;
         virtual void SetUniformTexture(const char *name, uint32 n) = 0;
         virtual void SetUniformParameter(const char *name, uint32 n) = 0;
         virtual void SetUniformFloat1(int loc, const float &f) = 0;
@@ -109,17 +109,17 @@ namespace LimitEngine {
         uint32 GetID()					{ return _id; }
 	    void SetName(const char *name)	{ _name = name; }
 		const String&	GetName() const	{ return _name; }
-        int  GetAttribPosition(const char *name)
-                { if (mImpl) return mImpl->GetAttribPosition(name); return -1; }
-        int  GetAttribPosition(uint32 type)
-                { if (mImpl) return mImpl->GetAttribPosition(type); return  -1; }
-        int  GetUniformLocation(const char *name)
+        int  GetAttribPosition(const char *name) const
+        { if (mImpl) return mImpl->GetAttribPosition(name); return -1; }
+        int  GetAttribPosition(uint32 type) const
+        { if (mImpl) return mImpl->GetAttribPosition(type); return  -1; }
+        int  GetUniformLocation(const char *name) const
         { if (mImpl) return mImpl->GetUniformLocation(name); return -1; }
-        int  GetParameterLocation(uint32 loc_id)
+        int  GetParameterLocation(uint32 loc_id) const
         { if (mImpl) return mImpl->GetParameterLocation(loc_id); return -1; }
-		int  GetTextureLocation(const char *name)
+		int  GetTextureLocation(const char *name) const
 		{ if (mImpl) return mImpl->GetTextureLocation(name); return -1; }
-        int  GetTextureLocation(uint32 loc_id)
+        int  GetTextureLocation(uint32 loc_id) const
         { if (mImpl) return mImpl->GetTextureLocation(loc_id); return -1; }
         void SetUniformParameter(const char *name, uint32 n)
         { if (mImpl) mImpl->SetUniformParameter(name, n); }

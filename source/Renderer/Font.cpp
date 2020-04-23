@@ -39,7 +39,7 @@ namespace LimitEngine {
                         if (node = datanode->children[0])
                         {
                             Output->mGlyphs.Reserve(node->children.count());
-                            for (size_t i = 0; i < node->children.count(); i++)
+                            for (uint32 i = 0; i < node->children.count(); i++)
                             {
                                 if (TextParser::NODE *child = node->children[i]) {
                                     Font::Glyph &newGlyph = Output->mGlyphs.Add();
@@ -79,7 +79,7 @@ namespace LimitEngine {
         }
     }
     bool Font::Serialize(Archive &OutArchive) {
-        OutArchive << mGlyphs;
+        OutArchive << (SerializableResource*)&mGlyphs;
         if (mSprite.IsValid() == false) {
             mSprite = new Sprite();
         }
@@ -111,11 +111,11 @@ namespace LimitEngine {
         mSprite->BeginBatchDraw();
 
         LEMath::IntPoint currentPosition = pos;
-        const uint8 glyphAsciiStart = mGlyphs[0].ascii;
+        const char glyphAsciiStart = mGlyphs[0].ascii;
         char *ptr = text;
         while (*ptr)
         {
-            if (glyphAsciiStart > *ptr && (*ptr) - glyphAsciiStart >= mGlyphs.count()) {
+            if (glyphAsciiStart > *ptr && (*ptr) - glyphAsciiStart >= static_cast<char>(mGlyphs.count())) {
                 ptr++;
                 continue;
             }

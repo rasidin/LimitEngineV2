@@ -43,7 +43,7 @@ namespace LimitEngine {
             ~_NODE()
             {
                 values.Clear();
-                for(size_t i=0;i<children.count();i++)
+                for(uint32 i=0;i<children.count();i++)
                 {
                     delete children[i];
                 }
@@ -137,6 +137,7 @@ namespace LimitEngine {
 
         NODE* GetNode(const char *name);
     private:
+        void addNewNode(NODE *Parent, const char *NodeName, NODE **OutNode);
         void inputData(NODE *parent, NODE **node, char *buf, uint32 length, bool sequneceIn);
         
     private:

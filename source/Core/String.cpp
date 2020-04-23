@@ -9,10 +9,25 @@
 
 #include "Core/String.h"
 
+#include "Core/Archive.h"
 #include "Core/Common.h"
 #include "Core/MemoryAllocator.h"
 
 namespace LimitEngine {
+    template<> Archive& Archive::operator << (String &InString) {
+        uint32 length = InString.mBuffer?static_cast<uint32>(strlen(InString.mBuffer)):0u;
+        *this << length;
+        if (length) {
+            if (IsLoading()) {
+                InString.mBuffer = (char*)malloc(length + 1);
+                ::memcpy(InString.mBuffer, GetData(length + 1), length + 1);
+            }
+            else {
+                ::memcpy(AddSize(length + 1), InString.mBuffer, length + 1);
+            }
+        }
+        return *this;
+    }
 	String::String(const char *str)
 		: mBuffer(NULL)
 	{

@@ -11,10 +11,18 @@
 
 #include <LEFloatVector3.h>
 
+#include "Core/Archive.h"
 #include "Core/Util.h"
 #include "Renderer/FRay.h"
 
 namespace LimitEngine {
+    template<> Archive& Archive::operator << (AABB &InAABB)
+    {
+        *this << InAABB.minimum;
+        *this << InAABB.maximum;
+        return *this;
+    }
+
 	AABB::INTERSECT_RESULT AABB::INTERSECT_FAIL = AABB::INTERSECT_RESULT(false, LEMath::FloatVector3::Zero);
 	AABB::INTERSECT_RESULT
 	AABB::Intersect(const fRay &r) {

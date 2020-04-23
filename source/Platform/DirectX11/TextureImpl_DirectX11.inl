@@ -41,6 +41,18 @@ namespace LimitEngine {
             return DXGI_FORMAT_UNKNOWN;
         }
     }
+    DXGI_FORMAT ConvertTextureFormat(const TEXTURE_DEPTH_FORMAT &format)
+    {
+        switch (format)
+        {
+        case TEXTURE_DEPTH_FORMAT_D32F:
+            return DXGI_FORMAT_D32_FLOAT;
+        case TEXTURE_DEPTH_FORMAT_D24S8:
+            return DXGI_FORMAT_D24_UNORM_S8_UINT;
+        default:
+            return DXGI_FORMAT_UNKNOWN;
+        }
+    }
     UINT CalculatePitchSize(const TEXTURE_COLOR_FORMAT &format, LEMath::IntSize size)
     {
         UINT pixelSize = size.Width();
@@ -102,6 +114,8 @@ namespace LimitEngine {
             , mTexture3D(nullptr)
             , mShaderResourceView(nullptr)
             , mUnorderedAccessView(nullptr)
+            , mRenderTargetView(nullptr)
+            , mDepthStencilView(nullptr)
             , mSize()
             , mDepth(0)
             , mFormat()
@@ -292,23 +306,111 @@ namespace LimitEngine {
 
             delete[] colorBuffer;
         }
-        void CreateDepth(const LEMath::IntSize &size) override { /* unimplemented */ }
+        void CreateDepthStencil(const LEMath::IntSize &size, TEXTURE_DEPTH_FORMAT format) override 
+        { 
+            if (mShaderResourceView) mShaderResourceView->Release(); mShaderResourceView = NULL;
+            if (mUnorderedAccessView) mUnorderedAccessView->Release(); mUnorderedAccessView = NULL;
+
+            ID3D11Device *device = (ID3D11Device*)LE_DrawManager.GetDeviceHandle();
+            LEASSERT(device);
+
+            D3D11_TEXTURE2D_DESC tex2DDesc;
+            ::memset(&tex2DDesc, 0, sizeof(D3D11_TEXTURE2D_DESC));
+            tex2DDesc.Width = size.Width();
+            tex2DDesc.Height = size.Height();
+            tex2DDesc.MipLevels = 1;
+            tex2DDesc.ArraySize = 1;
+            tex2DDesc.Format = ConvertTextureFormat(format);
+            tex2DDesc.SampleDesc.Count = 1;
+            tex2DDesc.Usage = D3D11_USAGE_DEFAULT;
+            tex2DDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+
+            if (device->CreateTexture2D(&tex2DDesc, nullptr, &mTexture2D) == S_OK) {
+                mDepthFormat = format;
+                mSize = size;
+            }
+
+            D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
+            ::memset(&depthStencilViewDesc, 0, sizeof(D3D11_DEPTH_STENCIL_VIEW_DESC));
+            depthStencilViewDesc.Format = tex2DDesc.Format;
+            depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+            if (device->CreateDepthStencilView(mTexture2D, &depthStencilViewDesc, &mDepthStencilView) != S_OK) {
+                Debug::Error("Failed to create depthstencilview");
+                return;
+            }
+        }
+        void CreateRenderTarget(const LEMath::IntSize &size, TEXTURE_COLOR_FORMAT format, uint32 usage) override
+        {
+            if (mShaderResourceView) mShaderResourceView->Release(); mShaderResourceView = NULL;
+            if (mUnorderedAccessView) mUnorderedAccessView->Release(); mUnorderedAccessView = NULL;
+
+            ID3D11Device *device = (ID3D11Device*)LE_DrawManager.GetDeviceHandle();
+            LEASSERT(device);
+
+            D3D11_TEXTURE2D_DESC tex2DDesc;
+            ::memset(&tex2DDesc, 0, sizeof(D3D11_TEXTURE2D_DESC));
+            tex2DDesc.Width = size.Width();
+            tex2DDesc.Height = size.Height();
+            tex2DDesc.MipLevels = 1;
+            tex2DDesc.Format = ConvertTextureFormat(format);
+            tex2DDesc.SampleDesc.Count = 1;
+            tex2DDesc.Usage = D3D11_USAGE_DEFAULT;
+            tex2DDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+            tex2DDesc.ArraySize = 1;
+
+            if (device->CreateTexture2D(&tex2DDesc, nullptr, &mTexture2D) == S_OK) {
+                D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
+                ::memset(&rtvDesc, 0, sizeof(D3D11_RENDER_TARGET_VIEW_DESC));
+                rtvDesc.Format = tex2DDesc.Format;
+                rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+                if (device->CreateRenderTargetView(mTexture2D, &rtvDesc, &mRenderTargetView) != S_OK) {
+                    Debug::Error("[TextureImpl_DirectX11] Failed to create render target view");
+                }
+
+                D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+                ::memset(&srvDesc, 0, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
+                srvDesc.Format = tex2DDesc.Format;
+                srvDesc.ViewDimension = D3D_SRV_DIMENSION_TEXTURE2D;
+                srvDesc.Texture2D.MipLevels = 1;
+                srvDesc.Texture2D.MostDetailedMip = 0;
+                if (device->CreateShaderResourceView(mTexture2D, &srvDesc, &mShaderResourceView) != S_OK) {
+                    Debug::Error("[TextureImpl_DirectX11] Failed to create shader resource view");
+                    return;
+                }
+                mFormat = format;
+                mSize = size;
+
+                //D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+                //::memset(&uavDesc, 0, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
+                //uavDesc.Format = tex2DDesc.Format;
+                //uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+                //if (device->CreateUnorderedAccessView(mTexture2D, &uavDesc, &mUnorderedAccessView) != S_OK) {
+                //    Debug::Error("[TextureImpl_DirectX11] Failed to create unordered access view");
+                //    return;
+                //}
+            }
+        }
         void GenerateMipmap() override { /* unimplemented */ }
 
         void* Lock(const LEMath::IntRect &rect, int mipLevel = 0) override { return nullptr; /* unimplemented */ }
         void Unlock(int mipLevel = 0) override { /* unimplemented */ }
 
-        void* GetShaderResourceView() const override { return mShaderResourceView; }
+        void* GetShaderResourceView() const override  { return mShaderResourceView; }
         void* GetUnorderedAccessView() const override { return mUnorderedAccessView; }
+        void* GetRenderTargetView() const override    { return mRenderTargetView; }
+        void* GetDepthStencilView() const override    { return mDepthStencilView; }
 
     private:
         ID3D11Texture2D                      *mTexture2D;
         ID3D11Texture3D						 *mTexture3D;
         ID3D11ShaderResourceView             *mShaderResourceView;
         ID3D11UnorderedAccessView			 *mUnorderedAccessView;
+        ID3D11RenderTargetView               *mRenderTargetView;
+        ID3D11DepthStencilView               *mDepthStencilView;
         LEMath::IntSize                       mSize;
         uint32								  mDepth;
         TEXTURE_COLOR_FORMAT                  mFormat;
+        TEXTURE_DEPTH_FORMAT                  mDepthFormat;
     };
 }
 #endif

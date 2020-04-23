@@ -38,7 +38,7 @@ namespace LimitEngine {
         }
         void Clear()
         {
-            for(size_t i=0;i<mData.GetSize();i++)
+            for(uint32 i=0;i<mData.GetSize();i++)
             {
                 delete mData[i];
             }
@@ -52,7 +52,7 @@ namespace LimitEngine {
         size_t size() const         { return mData.size(); }
         int FindIndex(const T1 &key) const
         {
-            for(size_t i=0;i<mData.GetSize();i++)
+            for(uint32 i=0;i<mData.GetSize();i++)
             {
                 MapArrayItem *d = mData[i];
                 if (key == d->key) return static_cast<int>(i);
@@ -61,7 +61,7 @@ namespace LimitEngine {
         }
         T2& Find(const T1 &key, T2 defValue = NULL)
         {
-            for (size_t i = 0; i<mData.GetSize(); i++)
+            for (uint32 i = 0; i<mData.GetSize(); i++)
             {
                 MapArrayItem *d = mData[i];
                 if (d->key == key) return d->value;
@@ -75,7 +75,7 @@ namespace LimitEngine {
         Pair<T1, T2>& GetAt(uint32 index) const { return *mData[index]; }
         T2& operator [] (const T1 &key)
         {
-            for (size_t i=0;i<mData.GetSize();i++)
+            for (uint32 i=0;i<mData.GetSize();i++)
             {
                 MapArrayItem *d = mData[i];
                 if (d->key == key) return d->value;
@@ -87,7 +87,7 @@ namespace LimitEngine {
         }
         const T2& operator [] (const T1 &key) const
         {
-            for (size_t i=0;i<mData.GetSize();i++)
+            for (uint32 i=0;i<mData.GetSize();i++)
             {
                 MapArrayItem *d = mData[i];
                 if (d->key == key) return d->value;

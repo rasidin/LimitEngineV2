@@ -18,6 +18,13 @@ namespace LimitEngine {
 		output->setup(mapParam);
 		return output;
 	}
+    ShaderDriver* ShaderDriver::Create(Shader *InShader)
+    {
+        ShaderDriver *output = create();
+        output->mOwnerShader = InShader;
+        output->setup(InShader);
+        return output;
+    }
 	int ShaderDriver::getShaderUniformLocation(const ShaderParameterParser::ParameterMap &mapParam, const String &paramWord)
 	{
 		int paramPos = mapParam.FindIndex(paramWord);

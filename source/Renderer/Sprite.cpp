@@ -44,6 +44,11 @@ namespace LimitEngine {
         return Output;
     }
 
+    template<> Archive& Archive::operator << (Sprite &InSprite) {
+        (*this) << dynamic_cast<SerializableResource*>(this);
+        return *this;
+    }
+
     Sprite::Sprite()
     {}
     Sprite::~Sprite()
@@ -249,11 +254,11 @@ namespace LimitEngine {
     }
     bool Sprite::Serialize(Archive &OutArchive)
     {
-        OutArchive << mFrames;
+        OutArchive << (SerializableResource*)&mFrames;
 
         if (mTexture.IsValid() == false)
             mTexture = new Texture();
-        OutArchive << mTexture.Get();
+        OutArchive << (SerializableResource*)mTexture.Get();
         return true;
     }
   //  

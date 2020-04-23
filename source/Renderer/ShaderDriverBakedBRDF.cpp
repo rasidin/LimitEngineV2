@@ -78,7 +78,7 @@ namespace LimitEngine {
 			mBakedBRDFTexture = NULL;
 		}
 	}
-	bool ShaderDriverBakedBRDF::IsValid(const ShaderParameterParser::ParameterMap &paramMap)
+	bool ShaderDriverBakedBRDF::IsValid(const ShaderParameterParser::ParameterMap &paramMap) const
 	{
 		if (paramMap.FindIndex("BakedBRDFTexture") >= 0)
 			return true;
