@@ -19,6 +19,9 @@ void* TextureFactory::Create(const ResourceSourceFactory *SourceFactory, const v
 
     Texture *output = nullptr;
     if (TextureSourceImage* SourceImage = static_cast<TextureSourceImage*>(SourceFactory->ConvertRawData(data, size))) {
+        if (mImportFilter != TextureImportFilter::None) {
+
+        }
         output = Texture::GenerateFromSourceImage(SourceImage);
         delete SourceImage;
     }
