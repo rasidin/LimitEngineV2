@@ -100,9 +100,9 @@ void TextureFactory::FilterSourceImage(TextureSourceImage *SourceImage)
 
     LEMath::IntSize imageSize = SourceImage->GetSize();
     static constexpr float SampleDelta = 0.025f;
-    LE_TaskManager.ParallelFor(imageSize.Height()/4, [SampleImage, WriteToImage, imageSize](uint32 StepBegin, uint32 StepEnd) {
+    LE_TaskManager.ParallelFor(imageSize.Height(), [SampleImage, WriteToImage, imageSize](uint32 StepBegin, uint32 StepEnd) {
         for (int y = StepBegin; y <= StepEnd; y++) {
-            for (int x = 0; x < 100/*imageSize.Width()*/; x++) {
+            for (int x = 0; x < imageSize.Width(); x++) {
                 LEMath::FloatColorRGBA irradiance(0.0f, 0.0f, 0.0f, 1.0f);
                 uint32 numSamples = 0u;
                 float centerTheta = LEMath::LEMath_PI * y / imageSize.Height();
