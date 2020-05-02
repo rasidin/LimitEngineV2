@@ -367,7 +367,7 @@ void Texture::Create3D(const LEMath::IntSize3 &size, TEXTURE_COLOR_FORMAT format
 {
 	AutoPointer <RendererTask> rt_createTexture = new RendererTask_CreateTexture3D(this, size, format, usage, mipLevels, initializeData, initDataSize);
 	LE_DrawManager.AddRendererTask(rt_createTexture);
-	mSize = size.XY();
+	mSize = LEMath::IntVector2(size.X(), size.Y());
 	mDepth = size.Z();
 }
 void Texture::CreateScreenColor(const LEMath::IntSize &size)

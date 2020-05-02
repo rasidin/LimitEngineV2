@@ -229,8 +229,8 @@ namespace LimitEngine {
             D3D11_SUBRESOURCE_DATA tex3DSubRes;
             ::memset(&tex3DSubRes, 0, sizeof(D3D11_SUBRESOURCE_DATA));
             tex3DSubRes.pSysMem = initializeData;
-            tex3DSubRes.SysMemPitch = CalculatePitchSize(format, size.XY());
-            tex3DSubRes.SysMemSlicePitch = CalculateSlideSize(format, size.XY());
+            tex3DSubRes.SysMemPitch = CalculatePitchSize(format, LEMath::IntVector2(size.X(), size.Y()));
+            tex3DSubRes.SysMemSlicePitch = CalculateSlideSize(format, LEMath::IntVector2(size.X(), size.Y()));
             if (device->CreateTexture3D(&tex3DDesc, initializeData ? (&tex3DSubRes) : NULL, &mTexture3D) == S_OK) {
                 D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
 
@@ -244,7 +244,7 @@ namespace LimitEngine {
                     return false;
                 }
                 mFormat = format;
-                mSize = size.XY();
+                mSize = LEMath::IntVector2(size.X(), size.Y());
                 mDepth = size.Depth();
 
                 D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;

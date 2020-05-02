@@ -52,7 +52,7 @@ namespace LimitEngine {
                                             node_rect->values[3].ToInt()
                                         );
                                         newGlyph.frameIndex = Output->mSprite->AddFrame(frameRect);
-                                        newGlyph.size = frameRect.Size();
+                                        newGlyph.size = LEMath::IntVector2(frameRect.Width(), frameRect.Height());
                                     }
                                     if (TextParser::NODE *node_ascii = child->FindChild("ASCII"))
                                     {
