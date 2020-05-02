@@ -47,16 +47,31 @@ public:
     }
     virtual bool Load(const void *Data, size_t Size) final override {
         memcpy(&mHeader, Data, sizeof(TGAHeader));
-
-        uint32 pitch = GetRowPitch();
-        uint32 imgSize = pitch * mHeader.Height;
         uint8 *mSrcColorData = (uint8*)((TGAHeader*)Data + 1);
 
-        mColorData = MemoryAllocator::Alloc(pitch * mHeader.Height, LimitEngineMemoryCategory_Graphics);
-        uint8* CurrentColorData = static_cast<uint8*>(mColorData);
-        for (int y = static_cast<int>(mHeader.Height) - 1; y >= 0; y--) {
-            memcpy(CurrentColorData, mSrcColorData + pitch * y, pitch);
-            CurrentColorData += pitch;
+        if ((TGAHeader::EColorType)mHeader.ColorType == TGAHeader::EColorType::FullColor && mHeader.ColorDepth == 24) { // Convert colors
+            mHeader.ColorDepth = 32;
+            uint32 pitch = GetRowPitch();
+            mColorData = MemoryAllocator::Alloc(pitch * mHeader.Height, LimitEngineMemoryCategory_Graphics);
+            uint8* CurrentColorDataPtr = (uint8*)mColorData;
+            for (int y = static_cast<int>(mHeader.Height) - 1; y >= 0; y--) {
+                for (int x = 0, width = static_cast<int>(mHeader.Width); x < width; x++) {
+                    CurrentColorDataPtr[0] = (mSrcColorData + (mHeader.Width * 3 * y) + 3 * x)[2];
+                    CurrentColorDataPtr[1] = (mSrcColorData + (mHeader.Width * 3 * y) + 3 * x)[1];
+                    CurrentColorDataPtr[2] = (mSrcColorData + (mHeader.Width * 3 * y) + 3 * x)[0];
+                    CurrentColorDataPtr[3] = 0xff;
+                    CurrentColorDataPtr += 4;
+                }
+            }
+        }
+        else { // Copy through
+            uint32 pitch = GetRowPitch();
+            mColorData = MemoryAllocator::Alloc(pitch * mHeader.Height, LimitEngineMemoryCategory_Graphics);
+            uint8* CurrentColorData = static_cast<uint8*>(mColorData);
+            for (int y = static_cast<int>(mHeader.Height) - 1; y >= 0; y--) {
+                memcpy(CurrentColorData, mSrcColorData + pitch * y, pitch);
+                CurrentColorData += pitch;
+            }
         }
         return true;
     }

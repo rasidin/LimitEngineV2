@@ -317,7 +317,7 @@ namespace LimitEngine
         }
         void SetUniformFloat1(int loc, const float &f) override
         {
-            if (loc >= mShaderVariables.GetSize())
+            if (loc >= static_cast<int>(mShaderVariables.GetSize()))
                 return;
 
             ShaderVariable &variable = mShaderVariables[loc];
@@ -337,7 +337,7 @@ namespace LimitEngine
         }
         void SetUniformFloat2(int loc, const LEMath::FloatVector2 &v) override
         {
-            if (loc >= mShaderVariables.GetSize())
+            if (loc >= static_cast<int>(mShaderVariables.GetSize()))
                 return;
 
             ShaderVariable &variable = mShaderVariables[loc];
@@ -357,7 +357,7 @@ namespace LimitEngine
         }
         void SetUniformFloat4(int loc, const LEMath::FloatVector4 &v) override
         {
-            if (loc >= mShaderVariables.GetSize())
+            if (loc >= static_cast<int>(mShaderVariables.GetSize()))
                 return;
 
             ShaderVariable &variable = mShaderVariables[loc];
@@ -377,7 +377,7 @@ namespace LimitEngine
         }
         void SetUniformMatrix4(int loc, int size, float *f) override
         {
-            if (loc >= mShaderVariables.GetSize())
+            if (loc >= static_cast<int>(mShaderVariables.GetSize()))
                 return;
 
             ShaderVariable &variable = mShaderVariables[loc];

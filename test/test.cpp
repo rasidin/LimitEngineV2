@@ -32,12 +32,18 @@ public:
         mCamera->SetShutterSpeed(1.0f / 8.0f);
         mCamera->SetFStop(1.0f / 4.0f);
         mCamera->SetExposureOffset(-3.0f);
+        mCamera->SetExposureOffset(0.0f);
         Engine->SetMainCamera(mCamera);
+
+        if (LimitEngine::TextureFactory *Factory = (LimitEngine::TextureFactory*)LimitEngine::ResourceManager::GetSingleton().GetFactory(LimitEngine::TextureFactory::ID)) {
+            Factory->SetImportFilter(LimitEngine::TextureFactory::TextureImportFilter::Irradiance);
+        }
 
         //mSphereModel = Engine->LoadModel("models/sphere.model.text", LimitEngine::ModelFactory::ID, false);
         mSphereModel = Engine->LoadModel("models/sphere.model.lea", LimitEngine::ArchiveFactory::ID, false);
         mSphereModel->InitResource();
-        if (mBackgroundImage = Engine->LoadTexture("textures/19F_Background_2K.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
+        //if (mBackgroundImage = Engine->LoadTexture("textures/19F_Background_2K.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
+        if (mBackgroundImage = Engine->LoadTexture("textures/Alexs_Apt_2k.tga", LimitEngine::TextureFactory::ID, false)) {
             mBackgroundImage->InitResource();
             Engine->SetBackgroundImage(mBackgroundImage, LimitEngine::BackgroundImageType::Fullscreen);
         }

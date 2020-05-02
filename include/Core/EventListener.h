@@ -23,7 +23,9 @@ namespace LimitEngine {
 		}
 		void* operator-=(const EventFunctionType &eventFunction)
 		{
-			mEventFunctions.Delete(eventFunction);
+            int32 indexOfEvent = mEventFunctions.IndexOf(eventFunction);
+            if (indexOfEvent >= 0)
+			    mEventFunctions.Delete(indexOfEvent);
 			return this;
 		}
 		void operator()() {

@@ -170,28 +170,28 @@ namespace LimitEngine {
         LEMath::FloatPoint rightBottom(float(rect.Width()), float(rect.Height()));
         LEMath::FloatPoint leftBottom(0.0f, float(rect.Height()));
         LEMath::FloatMatrix4x4 rotmat = LEMath::FloatMatrix4x4::GenerateRotationZ(rotation);
-        rightBottom = rotmat * rightBottom / screenSize;
+        //rightBottom = rotmat * (LEMath::FloatVector4)rightBottom / (LEMath::FloatVector4)screenSize;
         rightBottom += rectInProj.XY();
-        rightTop = rotmat * rightTop / screenSize;
+        //rightTop = rotmat * rightTop / screenSize;
         rightTop += rectInProj.XY();
-        leftBottom = rotmat * leftBottom / screenSize;
+        //leftBottom = rotmat * leftBottom / screenSize;
         leftBottom += rectInProj.XY();
         buffer[0].SetPosition(LEMath::FloatVector3(rectInProj.XY()));
         buffer[0].SetColor(0xffffffff);
         buffer[0].SetTexcoord(LEMath::FloatVector2(frameInProj.XY()));
-        buffer[1].SetPosition(leftBottom);
+        buffer[1].SetPosition((LEMath::FloatVector3)leftBottom);
         buffer[1].SetColor(0xffffffff);
         buffer[1].SetTexcoord(LEMath::FloatVector2(frameInProj.X(), frameInProj.Y()+frameInProj.Height()));
-        buffer[2].SetPosition(rightTop);
+        buffer[2].SetPosition((LEMath::FloatVector3)rightTop);
         buffer[2].SetColor(0xffffffff);
         buffer[2].SetTexcoord(LEMath::FloatVector2(frameInProj.X() + frameInProj.Width(), frameInProj.Y()));
-        buffer[3].SetPosition(leftBottom);
+        buffer[3].SetPosition((LEMath::FloatVector3)leftBottom);
         buffer[3].SetColor(0xffffffff);
         buffer[3].SetTexcoord(LEMath::FloatVector2(frameInProj.X(), frameInProj.Y() + frameInProj.Height()));
-        buffer[4].SetPosition(rightBottom);
+        buffer[4].SetPosition((LEMath::FloatVector3)rightBottom);
         buffer[4].SetColor(0xffffffff);
         buffer[4].SetTexcoord(LEMath::FloatVector2(frameInProj.X() + frameInProj.Width(), frameInProj.Y() + frameInProj.Height()));
-        buffer[5].SetPosition(rightTop);
+        buffer[5].SetPosition((LEMath::FloatVector3)rightTop);
         buffer[5].SetColor(0xffffffff);
         buffer[5].SetTexcoord(LEMath::FloatVector2(frameInProj.X() + frameInProj.Width(), frameInProj.Y()));
         LE_Draw2DManager.FlushDraw2D(RendererFlag::PrimitiveTypes::TRIANGLELIST);
@@ -224,27 +224,27 @@ namespace LimitEngine {
         const LEMath::FloatPoint texLeftBottom(frameInProj.X(), frameInProj.Y() + frameInProj.Height());
         const LEMath::FloatPoint texRightBottom(frameInProj.X() + frameInProj.Width(), frameInProj.Y() + frameInProj.Height());
 
-        buffer[0].SetPosition(posLeftTop);
+        buffer[0].SetPosition((LEMath::FloatVector3)posLeftTop);
         buffer[0].SetColor(0xffffffff);
         buffer[0].SetTexcoord(texLeftTop);
 
-        buffer[1].SetPosition(posLeftBottom);
+        buffer[1].SetPosition((LEMath::FloatVector3)posLeftBottom);
         buffer[1].SetColor(0xffffffff);
         buffer[1].SetTexcoord(texLeftBottom);
 
-        buffer[2].SetPosition(posRightTop);
+        buffer[2].SetPosition((LEMath::FloatVector3)posRightTop);
         buffer[2].SetColor(0xffffffff);
         buffer[2].SetTexcoord(texRightTop);
 
-        buffer[3].SetPosition(posLeftBottom);
+        buffer[3].SetPosition((LEMath::FloatVector3)posLeftBottom);
         buffer[3].SetColor(0xffffffff);
         buffer[3].SetTexcoord(texLeftBottom);
 
-        buffer[4].SetPosition(posRightBottom);
+        buffer[4].SetPosition((LEMath::FloatVector3)posRightBottom);
         buffer[4].SetColor(0xffffffff);
         buffer[4].SetTexcoord(texRightBottom);
 
-        buffer[5].SetPosition(posRightTop);
+        buffer[5].SetPosition((LEMath::FloatVector3)posRightTop);
         buffer[5].SetColor(0xffffffff);
         buffer[5].SetTexcoord(texRightTop);
     }

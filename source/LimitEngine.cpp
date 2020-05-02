@@ -192,9 +192,9 @@ LimitEngine::~LimitEngine()
 
 void LimitEngine::Update()
 {
-    if (mTaskManager) {
-        mTaskManager->Run();
-    }
+    //if (mTaskManager) {
+    //    mTaskManager->Run();
+    //}
 }
 
 void LimitEngine::DrawDebugUI()

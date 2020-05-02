@@ -14,6 +14,7 @@ History:
 #include "Core/Common.h"
 #include "Core/Object.h"
 #include "Core/Function.h"
+#include "Core/String.h"
 
 namespace LimitEngine {
     class Thread;
@@ -22,11 +23,13 @@ namespace LimitEngine {
     {
         ThreadParam()
             : func(NULL)
+            , name()
             , process(-1)
             , priority(5)
             , affinityMask(0)
         {}
         ThreadFunction func;
+        String name;
         uint32 affinityMask;
         uint32 priority;
         int32 process;
@@ -48,7 +51,7 @@ namespace LimitEngine {
         
         ~Thread(){}
         
-        bool IsRunning()
+        bool IsRunning() const
         {
             return mHandle == NULL ? false : true;
         }

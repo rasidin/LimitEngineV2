@@ -28,12 +28,13 @@ TaskManager::TaskID TaskManager::GetIDfromName(const char *name)
 
 TaskManager::TaskID TaskManager::AddTask(const String &name, uint32 prior, void (*func)())
 {
-    TASK task;
-    task.name = name;
-    task.priority = prior;
-	task.func = Function<void>(func);
-    task.startTime = 0;
-    task.elapsedFromLast = 0;
+    TASK *task = new TASK();
+    task->name = name;
+    task->priority = prior;
+	task->func = Function<void>(func);
+    task->startTime = 0;
+    task->elapsedFromLast = 0;
+    task->transient = 0;
     return mInstance->addTask(task);
 }
 
@@ -56,14 +57,51 @@ void TaskManager::Run()
 {
     for (uint32 taskidx = 0; taskidx < mTasks.size(); taskidx++) {
         Mutex::ScopedLock scopedLock(mMutex);
-        mTasks[taskidx].elapsedFromLast = static_cast<float>(Timer::GetTimeDoubleSecond()) - mTasks[0].startTime;
-        mTasks[taskidx].startTime = static_cast<float>(Timer::GetTimeDoubleSecond());
-        mTasks[taskidx].func();
+        mTasks[taskidx]->elapsedFromLast = static_cast<float>(Timer::GetTimeDoubleSecond()) - mTasks[0]->startTime;
+        mTasks[taskidx]->startTime = static_cast<float>(Timer::GetTimeDoubleSecond());
+        mTasks[taskidx]->func();
     }
 }
-// =================================================
-// Private
-// =================================================
+
+void TaskManager::ParallelTask::Init(const String &ThreadName)
+{
+    ThreadParam param;
+    param.func = ThreadFunction(this, &TaskManager::ParallelTask::Run);
+    param.name = ThreadName;
+    mThread.Create(param);
+}
+
+void TaskManager::ParallelTask::Join()
+{
+    mThread.Join();
+}
+
+void TaskManager::ParallelTask::Exit()
+{
+    mExitCode = true;
+    Join();
+}
+
+void TaskManager::ParallelTask::Run()
+{
+    while (!mExitCode)
+    {
+        VectorArray<uint32> removeTasks;
+        for (uint32 taskIndex = 0; taskIndex < mTasks.count(); taskIndex++) {
+            mTasks[taskIndex]->func();
+            if (mTasks[taskIndex]->transient) {
+                removeTasks.Add(taskIndex);
+            }
+        }
+        if (removeTasks.count())
+        for (uint32 removeIdx = 0; removeIdx < removeTasks.count(); removeIdx++) {
+            const uint32 removeTarget = removeTasks[removeIdx];
+            delete mTasks[removeTarget];
+            mTasks.erase(removeTarget);
+        }
+    }
+}
+
 TaskManager::TaskManager()
 	: Singleton()
     , mWorkThread(NULL)
@@ -72,16 +110,21 @@ TaskManager::TaskManager()
     , mId_counter(0)
 {
     mWorkThread = new Thread();
+    for (uint32 ThreadIndex = 0; ThreadIndex < ParallelTaskCount; ThreadIndex++) {
+        mParallelThreads[ThreadIndex] = new ParallelTask();
+    }
 }
 
 TaskManager::~TaskManager()
 {
-    if (mWorkThread->IsRunning()) {
-        mWorkThreadExitCode = true;
-        mWorkThread->Join();
-    }
     delete mWorkThread;
     mWorkThread = NULL;
+
+    for (uint32 ThreadIndex = 0; ThreadIndex < ParallelTaskCount; ThreadIndex++)
+    {
+        delete mParallelThreads[ThreadIndex];
+        mParallelThreads[ThreadIndex] = nullptr;
+    }
 }
 
 void TaskManager::Init()
@@ -89,43 +132,70 @@ void TaskManager::Init()
     if (mWorkThread->IsRunning() == false) {
         ThreadParam param;
         param.func = ThreadFunction(this, &TaskManager::runTasks);
-        //mWorkThread->Create(param);
+        param.name = "MainTask";
+        mWorkThread->Create(param);
+    }
+    for (uint32 ThreadIndex = 0; ThreadIndex < ParallelTaskCount; ThreadIndex++) {
+        if (mParallelThreads[ThreadIndex]->IsRunning() == false) {
+            String threadName = "SubTask";
+            char numBuf[8];
+            sprintf_s<8>(numBuf, "%1d", ThreadIndex);
+            mParallelThreads[ThreadIndex]->Init(threadName + numBuf);
+        }
     }
 }
 
 void TaskManager::Term()
 {
-    mMutex.Lock();
-    mTasks.Clear();
-    mMutex.Unlock();
-
     if (mWorkThread->IsRunning()) {
         mWorkThreadExitCode = true;
         mWorkThread->Join();
+        for (uint32 TaskIndex = 0; TaskIndex < mTasks.count(); TaskIndex++) {
+            delete mTasks[TaskIndex];
+        }
+        mTasks.Clear();
+    }
+    for (uint32 ThreadIndex = 0; ThreadIndex < ParallelTaskCount; ThreadIndex++)
+    {
+        if (mParallelThreads[ThreadIndex]->IsRunning()) {
+            mParallelThreads[ThreadIndex]->Exit();
+        }
     }
 }
 
 void TaskManager::runTasks()
 {
-    while (1) {
+    while (!mWorkThreadExitCode) {
+        VectorArray<uint32> removeTasks;
+        mMutex.Lock();
         for (uint32 taskidx = 0; taskidx < mTasks.size(); taskidx++) {
-            Mutex::ScopedLock scopedLock(mMutex);
-            mTasks[taskidx].elapsedFromLast = static_cast<float>(Timer::GetTimeDoubleSecond()) - mTasks[0].startTime;
-            mTasks[taskidx].startTime = static_cast<float>(Timer::GetTimeDoubleSecond());
-            mTasks[taskidx].func();
+            mTasks[taskidx]->elapsedFromLast = static_cast<float>(Timer::GetTimeDoubleSecond()) - mTasks[0]->startTime;
+            mTasks[taskidx]->startTime = static_cast<float>(Timer::GetTimeDoubleSecond());
+            mTasks[taskidx]->func();
+            if (mTasks[taskidx]->transient) {
+                removeTasks.Add(taskidx);
+            }
             if (mWorkThreadExitCode)
                 break;
         }
-        if (mWorkThreadExitCode)
-            break;
+        mMutex.Unlock();
+        if (removeTasks.count()) {
+            Mutex::ScopedLock scopedLock(mMutex);
+            for (uint32 removeIdx = removeTasks.count() - 1; removeIdx > 0; removeIdx--) {
+                const uint32 removeTarget = removeTasks[removeIdx];
+                delete mTasks[removeTarget];
+                mTasks.erase(removeTarget);
+            }
+        }
+        Sleep(1);
     }
 }
 
 uint32 TaskManager::getIDfromName(const char *name)
 {
-    for(size_t i=0;i<mTasks.GetSize();i++)
+    for(uint32 i=0;i<mTasks.GetSize();i++)
     {
-        if (mTasks[i].name == name) return mTasks[i].id;
+        if (mTasks[i]->name == name) return mTasks[i]->id;
     }
     return 0u;
 }
@@ -135,15 +205,15 @@ bool TaskManager::compareTaskPriority(const TaskManager::TASK &t1, const TaskMan
 	return t1.priority >= t2.priority;
 }
 
-uint32 TaskManager::addTask(TaskManager::TASK &task)
+uint32 TaskManager::addTask(TaskManager::TASK *task)
 {
     Mutex::ScopedLock scopedLock(mMutex);
     mId_counter++;
-    task.id = mId_counter;
+    task->id = mId_counter;
     mTasks.push_back(task);
 
-	mTasks.Sort([](const TASK &t1, const TASK &t2){
-		return t1.priority <= t2.priority;
+	mTasks.Sort([](const TASK *t1, const TASK *t2){
+		return t1->priority <= t2->priority;
 	});
 
     return mId_counter;
@@ -151,8 +221,9 @@ uint32 TaskManager::addTask(TaskManager::TASK &task)
 
 void TaskManager::removeTask(TaskManager::TaskID id)
 {
-	for(uint32 taskidx=0;taskidx<mTasks.count();taskidx++) {
-		if(mTasks[taskidx].id == id) {
+    Mutex::ScopedLock scopedLock(mMutex);
+    for(uint32 taskidx=0;taskidx<mTasks.count();taskidx++) {
+		if(mTasks[taskidx]->id == id) {
 			mTasks.Delete(taskidx);
 		}
 	}
@@ -162,9 +233,9 @@ float TaskManager::getElapsedTime(TaskManager::TaskID id)
 {
     if (!id) 
 		return 0;
-    for(size_t i=0;i<mTasks.GetSize();i++)
+    for(uint32 i=0;i<mTasks.GetSize();i++)
     {
-        if (mTasks[i].id == id) return mTasks[i].elapsedFromLast;
+        if (mTasks[i]->id == id) return mTasks[i]->elapsedFromLast;
     }
     return 0;
 }

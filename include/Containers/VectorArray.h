@@ -169,18 +169,16 @@ public:
             memcpy(&_data[i], &_data[i+1], sizeof(T));
         }
     }
-    
-    inline void Delete(T t)
+
+    int32 IndexOf(const T &t)
     {
-        for(uint32 datacnt=0;datacnt<_size;++datacnt)
-        {
-            if (_data[datacnt] == t) {
-                Delete(datacnt);
-                break;
-            }
+        for (int32 i = 0; i < static_cast<int32>(_size); i++) {
+            if (_data[i] == t)
+                return i;
         }
+        return -1;
     }
-    
+
     inline T* GetData() const { return _data; }
 
     inline void Sort(std::function<bool(const T &t1, const T &t2)> func)

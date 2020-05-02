@@ -178,7 +178,7 @@ namespace LimitEngine {
                     }
                 }
             }
-            mBaseMatrix = LEMath::FloatMatrix4x4::GenerateTransform(mBasePosition) * LEMath::FloatMatrix4x4::GenerateRotationXYZ(mBaseRotation) * LEMath::FloatMatrix4x4::GenerateScaling(mBaseScale);
+            mBaseMatrix = LEMath::FloatMatrix4x4::GenerateTransform((LEMath::FloatVector4)mBasePosition) * LEMath::FloatMatrix4x4::GenerateRotationXYZ((LEMath::FloatVector4)mBaseRotation) * LEMath::FloatMatrix4x4::GenerateScaling((LEMath::FloatVector4)mBaseScale);
         }
         if ((node = root->FindChild("ELEMENTS")))
         {
@@ -399,11 +399,11 @@ namespace LimitEngine {
     }
     LEMath::FloatMatrix4x4 Model::getTransformMatrix()
     {
-        LEMath::FloatMatrix4x4 transMatrix = LEMath::FloatMatrix4x4::GenerateTransform(mPosition).Transpose();
+        LEMath::FloatMatrix4x4 transMatrix = LEMath::FloatMatrix4x4::GenerateTransform((LEMath::FloatVector4)mPosition).Transpose();
         LEMath::FloatMatrix4x4 rotXMatrix = LEMath::FloatMatrix4x4::GenerateRotationX(mRotation.X());
         LEMath::FloatMatrix4x4 rotYMatrix = LEMath::FloatMatrix4x4::GenerateRotationY(mRotation.Y());
         LEMath::FloatMatrix4x4 rotZMatrix = LEMath::FloatMatrix4x4::GenerateRotationZ(mRotation.Z());
-        LEMath::FloatMatrix4x4 sclMatrix = LEMath::FloatMatrix4x4::GenerateScaling(mScale);
+        LEMath::FloatMatrix4x4 sclMatrix = LEMath::FloatMatrix4x4::GenerateScaling((LEMath::FloatVector4)mScale);
         return mBaseMatrix * sclMatrix * rotZMatrix * rotXMatrix * rotYMatrix * transMatrix;
     }
     void Model::setupMaterialShaderParameters()

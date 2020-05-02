@@ -30,6 +30,8 @@ public:
     void Release(void *data) override;
     uint32 GetResourceTypeCode() override { return makeResourceTypeCode("LMDL"); }
 
+    void FilterSourceImage(class TextureSourceImage *SourceImage);
+
     void SetImportFilter(TextureImportFilter Filter) { mImportFilter = Filter; }
 
 private:

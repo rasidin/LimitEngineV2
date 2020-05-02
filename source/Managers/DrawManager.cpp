@@ -126,6 +126,7 @@ namespace LimitEngine
 
         ThreadParam threadParameter;
         threadParameter.func = ThreadFunction(this, &DrawManager::FlushCommandThread);
+        threadParameter.name = "DrawCommand";
         mDrawThread->Create(threadParameter);
         
         mInitialized = true;

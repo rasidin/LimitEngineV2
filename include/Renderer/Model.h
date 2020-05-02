@@ -82,7 +82,7 @@ namespace LimitEngine {
             }
             void Preprocess()
             {
-                worldMatrix = LEMath::FloatMatrix4x4::GenerateTransform(pos) * LEMath::FloatMatrix4x4::GenerateRotationXYZ(rot) * LEMath::FloatMatrix4x4::GenerateScaling(scl);
+                worldMatrix = LEMath::FloatMatrix4x4::GenerateTransform((LEMath::FloatVector4)pos) * LEMath::FloatMatrix4x4::GenerateRotationXYZ((LEMath::FloatVector4)rot) * LEMath::FloatMatrix4x4::GenerateScaling((LEMath::FloatVector4)scl);
             }
             void InitResource();
             DRAWGROUP* AddDrawGroup() {

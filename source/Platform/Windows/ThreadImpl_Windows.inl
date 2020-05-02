@@ -8,6 +8,7 @@ Copyright (C), LIMITGAME, 2020
 ***********************************************************/
 #ifdef WINDOWS
 #include <process.h>
+#include <iostream>
 
 #include "Core/Common.h"
 #include "Core/Thread.h"
@@ -31,6 +32,13 @@ namespace LimitEngine {
         }
         else if (param.process >= 0) {
             ::SetThreadIdealProcessor(threadHandle, param.process);
+        }
+        if (param.name.GetLength()) {
+            static constexpr uint32 MaxThreadNameCount = 0xff;
+            wchar_t threadName[MaxThreadNameCount];
+            size_t convertedSize = 0u;
+            mbstowcs_s(&convertedSize, threadName, param.name.GetCharPtr(), MaxThreadNameCount);
+            ::SetThreadDescription(threadHandle, threadName);
         }
         return threadHandle;
     }
