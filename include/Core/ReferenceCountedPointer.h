@@ -25,7 +25,7 @@ namespace LimitEngine {
             }
         }
         ~ReferenceCountedPointer() {
-            if (mData->SubReferenceCounter() == 0) {
+            if (mData && mData->SubReferenceCounter() == 0) {
                 delete mData;
             }
         }
