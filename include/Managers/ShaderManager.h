@@ -11,6 +11,7 @@
 #include "Core/Singleton.h"
 #include "Containers/VectorArray.h"
 #include "Renderer/Shader.h"
+#include "Core/ReferenceCountedPointer.h"
 
 #define LE_ShaderManager LimitEngine::ShaderManager::GetSingleton()
 
@@ -31,10 +32,10 @@ namespace LimitEngine {
 		void BindShader(const char *name);
         void AddShader(Shader *shader);
         uint32 GetShaderID(const char *shaderName);
-        Shader* GetShader(const char *name);
+        ShaderRefPtr GetShader(const char *name);
         
     private:
 		uint32						mShaderID;
-        VectorArray<Shader *>       mShaders;
+        VectorArray<ShaderRefPtr>   mShaders;
     }; // ShaderManager
 }

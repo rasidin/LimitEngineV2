@@ -83,7 +83,7 @@ namespace LimitEngine {
         if (mSprite.IsValid() == false) {
             mSprite = new Sprite();
         }
-        OutArchive << *mSprite.Get();
+        OutArchive << (SerializableResource*)mSprite.Get();
         return true;
     }
 
@@ -106,7 +106,7 @@ namespace LimitEngine {
 
         DrawCommand::SetBlendFunc(0, RendererFlag::BlendFlags::ALPHABLEND);
 
-        Shader *FontShader = LE_ShaderManager.GetShader("DrawFont");
+        ShaderRefPtr FontShader = LE_ShaderManager.GetShader("DrawFont");
 
         mSprite->BeginBatchDraw();
 
@@ -127,6 +127,6 @@ namespace LimitEngine {
             currentPosition += LEMath::IntPoint(mGlyphs[glyphIndex].size.X(), 0);
         }
 
-        mSprite->EndBatchDraw(FontShader);
+        mSprite->EndBatchDraw(FontShader.Get());
     }
 }

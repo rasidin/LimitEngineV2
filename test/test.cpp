@@ -12,6 +12,7 @@
 #include <Managers/ResourceManager.h>
 #include <Renderer/Model.h>
 #include <Renderer/Texture.h>
+#include <Renderer/LightIBL.h>
 
 #include <iostream>
 
@@ -27,28 +28,42 @@ public:
 	
     void SetupScene() {
         mCamera = new LimitEngine::CinemaCamera();
-        mCamera->SetPosition( LEMath::FloatVector3(0.0f, 0.0f, 5.0f));
-        mCamera->SetDirection(LEMath::FloatVector3(0.0f, 0.0f,-1.0f));
+        mCamera->SetPosition( LEMath::FloatVector3(0.0f, 0.0f,-5.0f));
+        mCamera->SetDirection(LEMath::FloatVector3(0.0f, 0.0f, 1.0f));
         mCamera->SetShutterSpeed(1.0f / 8.0f);
         mCamera->SetFStop(1.0f / 4.0f);
         mCamera->SetExposureOffset(-3.0f);
-        mCamera->SetExposureOffset(0.0f);
-        Engine->SetMainCamera(mCamera);
+        //mCamera->SetExposureOffset(0.0f);
+        Engine->SetMainCamera(mCamera.Get());
 
         if (LimitEngine::TextureFactory *Factory = (LimitEngine::TextureFactory*)LimitEngine::ResourceManager::GetSingleton().GetFactory(LimitEngine::TextureFactory::ID)) {
             Factory->SetImportFilter(LimitEngine::TextureFactory::TextureImportFilter::Irradiance);
         }
 
+        {
+            LimitEngine::LightIBL *DefaultIBL = new LimitEngine::LightIBL();
+            if (LimitEngine::Texture *IBLReflectionTexture = Engine->LoadTexture("textures/19F_Reflection_4K.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
+                IBLReflectionTexture->InitResource();
+                DefaultIBL->SetIBLReflectionTexture(IBLReflectionTexture);
+            }
+            if (LimitEngine::Texture *IBLIrradianceTexture = Engine->LoadTexture("textures/19F_Irradiance_4K.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
+                IBLIrradianceTexture->InitResource();
+                DefaultIBL->SetIBLIrradianceTexture(IBLIrradianceTexture);
+            }
+            Engine->AddLight(DefaultIBL);
+        }
+
         //mSphereModel = Engine->LoadModel("models/sphere.model.text", LimitEngine::ModelFactory::ID, false);
         mSphereModel = Engine->LoadModel("models/sphere.model.lea", LimitEngine::ArchiveFactory::ID, false);
         mSphereModel->InitResource();
-        //if (mBackgroundImage = Engine->LoadTexture("textures/19F_Background_2K.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
-        if (mBackgroundImage = Engine->LoadTexture("textures/Alexs_Apt_2k.tga", LimitEngine::TextureFactory::ID, false)) {
+        //if (mBackgroundImage = Engine->LoadTexture("textures/19F_reflection_4K.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
+        //if (mBackgroundImage = Engine->LoadTexture("textures/19F_Irradiance_4K.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
+        mBackgroundImage = Engine->LoadTexture("textures/19F_Background_2K.texture.lea", LimitEngine::ArchiveFactory::ID, false);
+        //if (mBackgroundImage = Engine->LoadTexture("textures/Alexs_Apt_2k.tga", LimitEngine::TextureFactory::ID, false)) {
+        if (mBackgroundImage.IsValid()) {
             mBackgroundImage->InitResource();
             Engine->SetBackgroundImage(mBackgroundImage, LimitEngine::BackgroundImageType::Fullscreen);
         }
-
-        //LimitEngine::ResourceManager::GetSingleton().SaveResource("models/sphere.model.lea", mSphereModel);
     }
 
 	virtual void FrameUpdate(double frameTime) override {
@@ -57,14 +72,14 @@ public:
 private:
     LimitEngine::LimitEngine    *Engine;
 
-    LimitEngine::CinemaCamera   *mCamera;
-    LimitEngine::Texture        *mBackgroundImage;
-    LimitEngine::Model          *mSphereModel;
+    LimitEngine::ReferenceCountedPointer<LimitEngine::CinemaCamera>   mCamera;
+    LimitEngine::ReferenceCountedPointer<LimitEngine::Texture>        mBackgroundImage;
+    LimitEngine::ReferenceCountedPointer<LimitEngine::Model>          mSphereModel;
 };
 
 int main()
 {    
-    static constexpr size_t TotalMemory = 256 << 20; // 256MiB
+    static constexpr size_t TotalMemory = 1024 << 20; // 1 GiB
 
 	LimitEngine::MemoryAllocator::Init();
 	LimitEngine::MemoryAllocator::InitWithMemoryPool(TotalMemory);

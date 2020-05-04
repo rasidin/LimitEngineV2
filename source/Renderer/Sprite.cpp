@@ -44,11 +44,6 @@ namespace LimitEngine {
         return Output;
     }
 
-    template<> Archive& Archive::operator << (Sprite &InSprite) {
-        (*this) << dynamic_cast<SerializableResource*>(this);
-        return *this;
-    }
-
     Sprite::Sprite()
     {}
     Sprite::~Sprite()

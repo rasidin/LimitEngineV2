@@ -1,0 +1,51 @@
+/***********************************************************
+ LIMITEngine Shader File
+ Copyright (C), LIMITGAME, 2020
+ -----------------------------------------------------------
+ @file  LightingUtilities.shh
+ @brief Utilities for lighting
+ @author minseob (leeminseob@outlook.com)
+***********************************************************/
+
+Texture2D IBLReflectionTexture;
+SamplerState IBLReflectionSampler
+{
+    Filter = MIN_MAG_MIP_LINEAR;
+    AddressU = Wrap;
+    AddressV = Wrap;
+};
+Texture2D IBLIrradianceTexture;
+SamplerState IBLIrradianceSampler
+{
+    Filter = MIN_MAG_MIP_LINEAR;
+    AddressU = Wrap;
+    AddressV = Wrap;
+};
+
+float2 CalcLongLatUV(float3 Direction)
+{
+    float2 longlat = float2(atan2(Direction.x, Direction.z) + PI, acos(Direction.y));
+    return longlat / float2(2.0 * PI, PI);
+}
+
+float3 SampleIBLReflection(float2 uv)
+{
+	return IBLReflectionTexture.Sample(IBLReflectionSampler, uv).rgb;
+}
+
+float3 SampleIBLReflection(float3 dir)
+{
+	float2 uv = CalcLongLatUV(dir);
+	return SampleIBLReflection(uv);
+}
+
+float3 SampleIBLIrradiance(float2 uv)
+{
+	return IBLIrradianceTexture.Sample(IBLIrradianceSampler, uv).rgb;
+}
+
+float3 SampleIBLIrradiance(float3 dir)
+{
+	float2 uv = CalcLongLatUV(dir);
+	return SampleIBLIrradiance(uv);
+}

@@ -12,12 +12,12 @@
 #include <LEFloatVector3.h>
 #include <LEFloatMatrix4x4.h>
 
-#include "Core/Object.h"
+#include "Core/ReferenceCountedObject.h"
 #include "Core/MetaData.h"
 #include "Renderer/Frustum.h"
 
 namespace LimitEngine {
-    class Camera : public Object<LimitEngineMemoryCategory_Graphics>, public MetaData
+    class Camera : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>, public MetaData
     {
         static const float DefaultFOVRadians;
     public:

@@ -21,8 +21,6 @@ namespace LimitEngine {
     Draw2DManager* Draw2DManager::mInstance = nullptr;
     Draw2DManager::Draw2DManager()
         : SingletonDraw2DManager()
-        , mShader_draw2d(nullptr)
-        , mNullTexture(nullptr)
         , mVertex_draw2d_used(0u)
         , mVertex_draw2d_start(0u)
     {
@@ -68,9 +66,9 @@ namespace LimitEngine {
     {
         DrawCommand::SetCulling(static_cast<uint32>(RendererFlag::Culling::ClockWise));
         if (Shader == nullptr) {
-            if (!mShader_draw2d)
+            if (!mShader_draw2d.IsValid())
                 mShader_draw2d = ShaderManager::GetSingleton().GetShader("Draw2D");
-            if (mShader_draw2d) DrawCommand::BindShader(mShader_draw2d);
+            else DrawCommand::BindShader(mShader_draw2d.Get());
         }
         else
             DrawCommand::BindShader(Shader);
@@ -81,9 +79,9 @@ namespace LimitEngine {
     {
         DrawCommand::SetCulling(static_cast<uint32>(RendererFlag::Culling::CounterClockWise));
         if (Shader == nullptr) {
-            if (!mShader_draw2d)
+            if (!mShader_draw2d.IsValid())
                 mShader_draw2d = ShaderManager::GetSingleton().GetShader("Draw2D");
-            if (mShader_draw2d) DrawCommand::BindShader(mShader_draw2d);
+            else DrawCommand::BindShader(mShader_draw2d.Get());
         }
         else
             DrawCommand::BindShader(Shader);

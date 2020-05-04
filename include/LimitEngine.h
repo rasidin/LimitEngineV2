@@ -15,6 +15,7 @@
 
 #include "InitializeOptions.h"
 #include "Core/Singleton.h"
+#include "Core/ReferenceCountedPointer.h"
 #include "Managers/TaskManager.h"
 #include "Factories/ResourceFactory.h"
 //#include "ResourceManager.h"
@@ -34,12 +35,15 @@ public: // Public functions
     void Term();
 
     void SetResourceRootPath(const char *RootPath);
-    void SetBackgroundImage(Texture *Image, BackgroundImageType Type);
+    void SetBackgroundImage(const TextureRefPtr &Image, BackgroundImageType Type);
 
-    void SetMainCamera(Camera *InCamera);
+    void SetMainCamera(const CameraRefPtr &InCamera);
 
     Texture* LoadTexture(const char *filepath, ResourceFactory::ID ResourceID, bool bTransient);
     Model* LoadModel(const char *filepath, ResourceFactory::ID ResourceID, bool bTransient);
+
+    void AddModel(const ModelRefPtr &InModel);
+    void AddLight(const LightRefPtr &InLight);
 
     void Update();
 
@@ -57,19 +61,17 @@ private: // Private members
     TaskManager                     *mTaskManager;
     RenderTargetPoolManager         *mRenderTargetPoolManager;
     ShaderDriverManager             *mShaderDriverManager;
-    //LightManager                    *mLightManager;
     //GUIManager                      *mGuiManager;
     //ProfileManager                  *mProfileManager;
     //PostFilterManager               *mPostFilterManager;
 
-    TaskManager::TaskID              mTaskID_UpdateLight;                //!< Task for updating lights
     TaskManager::TaskID              mTaskID_UpdateScene;                //!< Task for updating scene
     TaskManager::TaskID              mTaskID_DrawScene;                  //!< Task for drawing scene
     TaskManager::TaskID              mTaskID_PostProcess;               //!< Task for post process
     TaskManager::TaskID              mTaskID_DrawManager_Run;            //!< Task for running drawmanager
     TaskManager::TaskID              mTaskID_DrawDebugUI;               //!< Task for drawing debug UI
 
-    Font                            *mSystemFont;
+    FontRefPtr                       mSystemFont;
 
 	class Debug				        *mDebug;
 }; // Main

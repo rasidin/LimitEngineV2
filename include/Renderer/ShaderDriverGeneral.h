@@ -32,7 +32,8 @@ namespace LimitEngine {
     private:
         int mParameter_wvpMat;
         int mParameter_invViewMat;
+        int mParameter_invViewProjMat;
         int mParameter_worldMat;
-        int mParameter_eyePos;
+        int mParameter_camPos;
     };
 } // namespace LimitEngine

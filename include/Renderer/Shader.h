@@ -19,7 +19,7 @@
 #include <LEFloatVector4.h>
 
 #include "Core/Common.h"
-#include "Core/Object.h"
+#include "Core/ReferenceCountedObject.h"
 #include "Core/String.h"
 #include "Core/Mutex.h"
 #include "Containers/VectorArray.h"
@@ -56,7 +56,7 @@ namespace LimitEngine {
 	class ShaderFactory;
     class RendererTask_CompileShader;
     class RendererTask_SetCompiledShader;
-    class Shader : public Object<LimitEngineMemoryCategory_Graphics>
+    class Shader : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>
     {
 		friend ShaderFactory;
         friend RendererTask_CompileShader;

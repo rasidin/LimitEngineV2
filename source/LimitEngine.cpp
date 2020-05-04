@@ -13,6 +13,7 @@
 #include "Core/Common.h"
 #include "Core/Debug.h"
 #include "Core/TaskPriority.h"
+#include "Factories/ArchiveFactory.h"
 #include "Managers/DrawManager.h"
 #include "Managers/SceneManager.h"
 #include "Managers/ShaderDriverManager.h"
@@ -22,10 +23,7 @@
 #include "Managers/ResourceManager.h"
 #include "Managers/RenderTargetPoolManager.h"
 #include "Renderer/Font.h"
- //#include "LightManager.h"
 //#include "Random.h"
-//#include "SceneManager.h"
-//#include "ShaderManager.h"
 //#include "TouchInterface.h"
 //#include "Timer.h"
 
@@ -43,13 +41,12 @@ void LimitEngine::Init(WINDOW_HANDLE handle, const InitializeOptions &Options)
 	mTaskManager->Init();
 
     mSystemFont = Font::GenerateFromFile("fonts/System.tga", "fonts/System.text");
-    //if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("fonts/System.font.lea")) {
+    //if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("fonts/System.font.lea", ArchiveFactory::ID)) {
     //    mSystemFont = (Font*)(LoadedResource->data);
     //}
     mSystemFont->InitResource();
 
 	mTaskID_UpdateScene     = LE_TaskManager.AddTask("SceneManager::Update",    TaskPriority_Renderer_UpdateScene,      mSceneManager, &SceneManager::Update);
-//	mTaskID_UpdateLight     = LE_TaskManager.AddTask("LightManager::Update",    TaskPriority_Renderer_UpdateLight,      mLightManager, &LightManager::Update);
 	mTaskID_DrawScene       = LE_TaskManager.AddTask("SceneManager::Draw",      TaskPriority_Renderer_DrawScene,        mSceneManager, &SceneManager::Draw);
     mTaskID_PostProcess     = LE_TaskManager.AddTask("PostProcess::Process",    TaskPriority_Renderer_PostProcess,      mPostProcessManager, &PostProcessManager::Process);
     mTaskID_DrawDebugUI     = LE_TaskManager.AddTask("LimitEngine::DrawDebugUI",TaskPriority_Renderer_DrawDebugUI, this, &LimitEngine::DrawDebugUI);
@@ -80,13 +77,13 @@ void LimitEngine::SetResourceRootPath(const char *RootPath)
         mResourceManager->SetRootPath(RootPath);
     }
 }
-void LimitEngine::SetBackgroundImage(Texture *Image, BackgroundImageType Type)
+void LimitEngine::SetBackgroundImage(const TextureRefPtr &Image, BackgroundImageType Type)
 {
     if (mSceneManager) {
         mSceneManager->SetBackgroundImage(Image, Type);
     }
 }
-void LimitEngine::SetMainCamera(Camera *InCamera)
+void LimitEngine::SetMainCamera(const CameraRefPtr &InCamera)
 {
     mSceneManager->SetCamera(InCamera);
 }
@@ -122,6 +119,18 @@ Model* LimitEngine::LoadModel(const char *filepath, ResourceFactory::ID ID, bool
     }
     return OutModel;
 }
+void LimitEngine::AddModel(const ModelRefPtr &InModel)
+{
+    if (mSceneManager) {
+        mSceneManager->AddModel(InModel);
+    }
+}
+void LimitEngine::AddLight(const LightRefPtr &InLight)
+{
+    if (mSceneManager) {
+        mSceneManager->AddLight(InLight);
+    }
+}
 void LimitEngine::Suspend()
 {
 }
@@ -143,7 +152,6 @@ LimitEngine::LimitEngine()
 //, mLightManager(NULL)
 //, mPostFilterManager(NULL)
 //, mDebug(NULL)
-, mTaskID_UpdateLight(nullptr)
 , mTaskID_UpdateScene(nullptr)
 , mTaskID_DrawScene(nullptr)
 , mTaskID_DrawManager_Run(nullptr)

@@ -27,7 +27,7 @@
 #include "Renderer/ShaderDriver.h"
 
 namespace LimitEngine {
-    class RendererTask_CompileShader :public RendererTask
+    class RendererTask_CompileShader : public RendererTask
     {
     public:
         RendererTask_CompileShader(Shader *owner, void *bin, size_t size, Shader::TYPE type)

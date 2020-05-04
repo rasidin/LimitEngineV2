@@ -13,14 +13,6 @@
 namespace LimitEngine {
     class ShaderDriverLight : public ShaderDriver
     {
-        enum LightFlag
-        {
-            LightFlagNone = 0,
-            LightFlagDirectional    = 1<<0,
-            LightFlagPoint          = 1<<1,
-            LightFlagSpot           = 1<<2,
-            LightFlagIBL            = 1<<3,
-        };
 	public:
 		bool IsValid(const ShaderParameterParser::ParameterMap &paramMap) const override;
         bool IsValid(const Shader *InShader) const override;
@@ -31,10 +23,7 @@ namespace LimitEngine {
 		void setup(const ShaderParameterParser::ParameterMap &paramMap) override;
         void setup(const Shader *InShader) override;
     private:
-        uint32 mLightFlags;
-        int32 mBRDFLUT_Position;
-        int32 mIBLTexSize_Position;
-        int32 mIBLSpcTex_Position;
-        int32 mIBLDifTex_Position;
+        int32 mIBLRefTex_Position;
+        int32 mIBLIrrTex_Position;
     };
 } // LimitEngine

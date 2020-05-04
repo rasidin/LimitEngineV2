@@ -32,6 +32,13 @@ class Texture;
 class RenderState;
 class RenderContext;
 class RenderTargetPoolManager;
+
+#define CameraRefPtr  ReferenceCountedPointer<Camera> 
+#define FontRefPtr    ReferenceCountedPointer<Font>   
+#define LightRefPtr   ReferenceCountedPointer<Light>  
+#define ModelRefPtr   ReferenceCountedPointer<Model>  
+#define TextureRefPtr ReferenceCountedPointer<Texture>
+#define ShaderRefPtr  ReferenceCountedPointer<Shader> 
 }
 
 #include "Renderer/Definitions.h"

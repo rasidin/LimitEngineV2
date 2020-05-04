@@ -44,6 +44,7 @@ add_library(LimitEngine
 	source/Renderer/Font.cpp
 	source/Renderer/IndexBuffer.cpp
 	source/Renderer/Light.cpp
+	source/Renderer/LightIBL.cpp
 	source/Renderer/Material.cpp
 	source/Renderer/Model.cpp
 	source/Renderer/RenderContext.cpp

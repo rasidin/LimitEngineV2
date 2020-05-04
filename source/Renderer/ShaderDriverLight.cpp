@@ -27,46 +27,29 @@ namespace LimitEngine {
     };
 	bool ShaderDriverLight::IsValid(const ShaderParameterParser::ParameterMap &paramMap) const
     {
-        return paramMap.FindIndex("IBLDiffuseTexture") >= 0;
+        return paramMap.FindIndex("IBLIrradianceTexture") >= 0 || paramMap.FindIndex("IBLReflectionTexture") >= 0;
     }
     bool ShaderDriverLight::IsValid(const Shader *InShader) const
     {
-        return InShader->GetUniformLocation("IBLDiffuseTexture") >= 0;
+        return InShader->GetTextureLocation("IBLIrradianceTexture") >= 0 || InShader->GetTextureLocation("IBLReflectionTexture") >= 0;
     }
 	void ShaderDriverLight::Apply(const RenderState &rs, const Material *material)
     {
-        if(IsValidShaderParameterPosition(mBRDFLUT_Position)) {
-            DrawCommand::BindTexture(mBRDFLUT_Position, rs.GetBRDFLUT());
+        if(IsValidShaderParameterPosition(mIBLRefTex_Position)) {
+            DrawCommand::BindTexture(mIBLRefTex_Position, rs.GetIBLReflectionTexture().Get());
         }
-        if (IsValidShaderParameterPosition(mIBLTexSize_Position)) {
-            if (Texture *iblSpecTex = rs.GetIBLSpecularTexture()) {
-                LEMath::IntSize texSize = iblSpecTex->GetSize();
-                if (texSize.Width() == 0 || texSize.Height() == 0) { // Default設定
-                    texSize.SetWidth(1024);
-                    texSize.SetHeight(1024);
-                }
-                DrawCommand::SetShaderUniformFloat2(material->GetShader(), mIBLTexSize_Position, (LEMath::DataContainer)texSize);
-            }
-        }
-        if(IsValidShaderParameterPosition(mIBLSpcTex_Position)) {
-            DrawCommand::BindTexture(mIBLSpcTex_Position, rs.GetIBLSpecularTexture());
-        }
-        if(IsValidShaderParameterPosition(mIBLDifTex_Position)) {
-            DrawCommand::BindTexture(mIBLDifTex_Position, rs.GetIBLDiffuseTexture());
+        if(IsValidShaderParameterPosition(mIBLIrrTex_Position)) {
+            DrawCommand::BindTexture(mIBLIrrTex_Position, rs.GetIBLIrradianceTexture().Get());
         }
     }
 	void ShaderDriverLight::setup(const ShaderParameterParser::ParameterMap &paramMap)
     {
-        mBRDFLUT_Position =    getShaderTextureLocation(paramMap, "BRDFLUT");
-        mIBLTexSize_Position = getShaderUniformLocation(paramMap, "IBLTextureSize");
-		mIBLSpcTex_Position =  getShaderTextureLocation(paramMap, "IBLSpecularTexture");
-        mIBLDifTex_Position =  getShaderTextureLocation(paramMap, "IBLDiffuseTexture");
+		mIBLRefTex_Position =  getShaderTextureLocation(paramMap, "IBLReflectionTexture");
+        mIBLIrrTex_Position =  getShaderTextureLocation(paramMap, "IBLIrradinaceTexture");
     }
     void ShaderDriverLight::setup(const Shader *InShader)
     {
-        mBRDFLUT_Position = InShader->GetUniformLocation("BRDFLUT");
-        mIBLTexSize_Position = InShader->GetUniformLocation("IBLTextureSize");
-        mIBLSpcTex_Position = InShader->GetUniformLocation("IBLSpecularTexture");
-        mIBLDifTex_Position = InShader->GetUniformLocation("IBLDiffuseTexture");
+        mIBLRefTex_Position = InShader->GetTextureLocation("IBLReflectionTexture");
+        mIBLIrrTex_Position = InShader->GetTextureLocation("IBLIrradianceTexture");
     }
 }

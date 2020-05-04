@@ -15,13 +15,13 @@
 #include "Core/TextParser.h"
 #include "Managers/DrawManager.h"
 #include "Managers/Draw2DManager.h"
-//#include "Managers/LightManager.h"
 #include "Managers/ResourceManager.h"
 #include "Managers/ShaderManager.h"
 #include "Renderer/Camera.h"
 #include "Renderer/DrawCommand.h"
 #include "Renderer/Model.h"
 #include "Renderer/Light.h"
+#include "Renderer/LightIBL.h"
 #include "Renderer/Texture.h"
 
 namespace LimitEngine {
@@ -31,12 +31,12 @@ SceneManager* SingletonSceneManager::mInstance = NULL;
 SceneManager::SceneManager()
     : mCamera(new Camera())
     , mOwnCamera(true)
+    , mEnvironmentLight(nullptr)
 {
 }
 
 SceneManager::~SceneManager()
 {
-    if (mCamera && mOwnCamera) delete mCamera; mCamera = NULL;
 }
 
 void SceneManager::Init(const InitializeOptions &InitOptions)
@@ -50,7 +50,7 @@ void SceneManager::Init(const InitializeOptions &InitOptions)
     mSceneDepth = LE_RenderTargetPoolManager.GetDepthStencil(InitOptions.Resolution, TEXTURE_DEPTH_FORMAT_D32F);
 }
 
-void SceneManager::SetBackgroundImage(Texture *BackgroundImage, BackgroundImageType Type)
+void SceneManager::SetBackgroundImage(const TextureRefPtr &BackgroundImage, BackgroundImageType Type)
 {
     mBackgroundImage = BackgroundImage;
     mBackgroundType = Type;
@@ -154,9 +154,14 @@ void SceneManager::LoadFromText(const char *text)
     }
 }
 
-void SceneManager::AddLight(Light *light)
+void SceneManager::AddLight(const LightRefPtr &light)
 {
-    //LE_LightManager.AddLight(light);
+    mLights.Add(light);
+
+    if (light->GetType() == Light::TYPE_IBL) {
+        mEnvironmentLight = light;
+    }
+
 	mOnChangeEvent();
 }
 
@@ -165,6 +170,10 @@ void SceneManager::Update()
     mCamera->Update();
     LE_DrawManager.SetViewMatrix(mCamera->GetViewMatrix());
     LE_DrawManager.SetProjectionMatrix(mCamera->GetProjectionMatrix());
+    if (mEnvironmentLight.IsValid()) {
+        LE_DrawManager.SetEnvironmentReflectionMap(((LightIBL*)mEnvironmentLight.Get())->GetIBLReflectionTexture());
+        LE_DrawManager.SetEnvironmentIrradianceMap(((LightIBL*)mEnvironmentLight.Get())->GetIBLIrradianceTexture());
+    }
     LE_DrawManager.UpdateMatrices();
 }
 
@@ -210,18 +219,15 @@ void SceneManager::Draw()
     DrawCommand::SetRenderTarget(0, mSceneColor.Get(), mSceneDepth.Get());
     DrawCommand::BeginScene();
     drawBackground();
-    //LE_LightManager.DrawBackground(LE_DrawManager.GetRenderState());
     for(uint32 mdlidx=0;mdlidx<mModels.count();mdlidx++) {
         mModels[mdlidx]->Draw(LE_DrawManager.GetRenderState());
     }
-    //LE_LightManager.DrawForeground(LE_DrawManager.GetRenderState());
     DrawCommand::EndScene();
     DrawCommand::SetRenderTarget(0, nullptr, nullptr);
 }
     
-void SceneManager::SetCamera(Camera *c)
+void SceneManager::SetCamera(const CameraRefPtr &c)
 {
-    if (mCamera && mOwnCamera) delete mCamera;
     mCamera = c;
     mOwnCamera = false;
 	mOnChangeEvent();

@@ -331,7 +331,7 @@ namespace LimitEngine {
     }
     void Model::Draw(const RenderState &rs)
     {
-        DrawCommand::SetCulling(static_cast<uint32>(RendererFlag::Culling::CounterClockWise));
+        DrawCommand::SetCulling(static_cast<uint32>(RendererFlag::Culling::ClockWise));
         DrawCommand::BeginDrawing();
         // Calculate Matrix
         LEMath::FloatMatrix4x4 globalTransMatrix = getTransformMatrix();

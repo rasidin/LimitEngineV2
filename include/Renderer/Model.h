@@ -12,7 +12,7 @@
 #include <LEFloatVector3.h>
 #include <LEFloatMatrix4x4.h>
 
-#include "Core/Object.h"
+#include "Core/ReferenceCountedObject.h"
 #include "Core/TextParser.h"
 #include "Core/SerializableResource.h"
 #include "Renderer/AABB.h"
@@ -33,7 +33,7 @@ namespace LimitEngine {
     class IndexBuffer;
     class Material;
     class Shader;
-    class Model : public Object<LimitEngineMemoryCategory_Graphics>, public SerializableResource, public MetaData
+    class Model : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>, public SerializableResource, public MetaData
     {
         friend ModelFactory;
     public:

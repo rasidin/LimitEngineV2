@@ -16,6 +16,8 @@
 #include <LEFloatMatrix4x4.h>
 
 #include "Core/Object.h"
+#include "Core/ReferenceCountedPointer.h"
+#include "Renderer/Texture.h"
 
 namespace LimitEngine {
     class RenderState : public Object<LimitEngineMemoryCategory_Graphics>
@@ -54,12 +56,10 @@ namespace LimitEngine {
         // ----------------------------------------------------
         // Environment textures
         // ----------------------------------------------------
-        void SetBRDFLUT(Texture *brdflut)                       { mEnvironmentTextures.brdfLut = brdflut; }
-        Texture* GetBRDFLUT() const                             { return mEnvironmentTextures.brdfLut; }
-        void SetIBLSpecularTexture(Texture *ibltex)             { mEnvironmentTextures.iblSpecularTexture = ibltex; }
-        Texture* GetIBLSpecularTexture() const                  { return mEnvironmentTextures.iblSpecularTexture; }
-        void SetIBLDiffuseTexture(Texture *ibltex)              { mEnvironmentTextures.iblDiffuseTexture = ibltex; }
-        Texture* GetIBLDiffuseTexture() const                   { return mEnvironmentTextures.iblDiffuseTexture; }
+        void SetIBLReflectionTexture(const TextureRefPtr &ibltex)               { mEnvironmentTextures.iblReflectionTexture = ibltex; }
+        TextureRefPtr GetIBLReflectionTexture() const                           { return mEnvironmentTextures.iblReflectionTexture; }
+        void SetIBLIrradianceTexture(const TextureRefPtr &ibltex)               { mEnvironmentTextures.iblIrradianceTexture = ibltex; }
+        TextureRefPtr GetIBLIrradianceTexture() const                           { return mEnvironmentTextures.iblIrradianceTexture; }
 
     private:
         bool mSceneBegan;
@@ -85,15 +85,10 @@ namespace LimitEngine {
                 , worldViewProjMatrix()
             {}
         } mGeneralMatrices;
+
         struct EnvironmentTextures {
-            Texture    *brdfLut;
-            Texture    *iblDiffuseTexture;
-            Texture    *iblSpecularTexture;
-            EnvironmentTextures()
-                : brdfLut(NULL)
-                , iblDiffuseTexture(NULL)
-                , iblSpecularTexture(NULL)
-            {}
+            TextureRefPtr    iblReflectionTexture;
+            TextureRefPtr    iblIrradianceTexture;
         } mEnvironmentTextures;
     };
 }

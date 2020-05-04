@@ -37,7 +37,7 @@ private:
     void ResolveFinalResult(const PostProcessContext &Context);
 
 private:
-    Shader *mResolveShader = nullptr;
+    ShaderRefPtr mResolveShader;
 };
 #define LE_PostProcessManager PostProcessManager::GetSingleton()
 }

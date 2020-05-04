@@ -40,8 +40,8 @@ namespace LimitEngine {
         VertexBuffer2D   mVertexbuffer_draw2d;     //!< Vertex buffer for drawing 2D
         VertexBuffer2D   mVertexbuffer_drawscr;    //!< Vertex buffer for drawing screen (ex.post filter)
     
-        Shader          *mShader_draw2d;           //!< Shader for drawing 2D
-        Texture         *mNullTexture;             //!< Null texture for initializing
+        ShaderRefPtr     mShader_draw2d;           //!< Shader for drawing 2D
+        TextureRefPtr    mNullTexture;             //!< Null texture for initializing
 
         uint32           mVertex_draw2d_used;      //!< Used size of vertex buffer for drawing 2D
         uint32           mVertex_draw2d_start;     //!< Start offset of vertex buffer for drawing 2D

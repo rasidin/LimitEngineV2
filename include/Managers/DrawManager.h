@@ -153,6 +153,8 @@ public:                    // Interfaces
     const LEMath::FloatMatrix4x4&   GetProjectionMatrix()                               { return mRenderState->GetProjMatrix(); }
     void                SetViewProjMatrix(const LEMath::FloatMatrix4x4 &viewProj)       { mRenderState->SetViewProjMatrix(viewProj); }
     void                SetInvViewProjMatrix(const LEMath::FloatMatrix4x4 &invViewProj) { mRenderState->SetInvViewProjMatrix(invViewProj); }
+    void                SetEnvironmentReflectionMap(const TextureRefPtr &InTexture)     { mRenderState->SetIBLReflectionTexture(InTexture); }
+    void                SetEnvironmentIrradianceMap(const TextureRefPtr &InTexture)     { mRenderState->SetIBLIrradianceTexture(InTexture); }
     void                UpdateMatrices();
 
     // RenderState

@@ -1,0 +1,66 @@
+/***********************************************************
+ LIMITEngine Shader File
+ Copyright (C), LIMITGAME, 2020
+ -----------------------------------------------------------
+ @file  BRDF.shh
+ @brief BRDF model
+ @author minseob (leeminseob@outlook.com)
+***********************************************************/
+
+float Fresnel(float f0, float d)
+{
+	if (d > 0.999)
+		return f0;
+	return f0 + (1.0 - f0) * pow(1.0 - d, 5.0);
+}
+
+float2 DGgxSkew(vec2 e, float r)
+{
+	float2 out = (float2)0;
+	float sqr = r * r;
+	out.x = atan(sqrt((sqr * e.x) / (1.0 - e.x)));
+	out.y = pi2 * e.y + randAngle();
+	return out;
+}
+
+float3 SkewDirection()
+{
+}
+
+float3 Irradiance(float3 n)
+{
+	float3 irradianceColor = SampleIBLIrradiance(n);
+	return irradianceColor;
+}
+
+float3 Radiance(float3 N, float3 V)
+{
+  float3 Up = abs(N.z) < 0.999 ? float3(0,0,1) : float3(1,0,0);
+  float3 TangentX = normalize(cross( Up, N ));
+  float3 TangentY = cross(N, TangentX);
+
+  float NoV = abs(dot(N, V));
+
+  float3 fColor = float3(0.0);
+  const uint NumSamples = 16;
+  for (uint i = 0; i < NumSamples; ++i)
+  {
+    float2 Xi = Hammersley(i, NumSamples);
+    float3 Li = S(Xi);
+    vec3 H  = normalize(Li.x * TangentX + Li.y * TangentY + Li.z * N);
+    vec3 L  = normalize(-reflect(V, H));
+
+    float NoL = abs(dot(N, L));
+    float NoH = abs(dot(N, H));
+    float VoH = abs(dot(V, H));
+    float lod = compute_lod(NumSamples, NoH);
+
+    float F = F(VoH);
+    float G = G(NoL, NoV, NoH, VoH);
+    vec3 LColor = textureSphereLod(environment, L, lod).rgb;
+
+    fColor += F_ * G_ * LColor * VoH / (NoH * NoV);
+  }
+
+  return fColor / float(NumSamples);
+}

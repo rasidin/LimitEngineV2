@@ -10,7 +10,7 @@
 
 #include <LEFloatVector3.h>
 
-#include "Core/Object.h"
+#include "Core/ReferenceCountedObject.h"
 #include "Core/String.h"
 #include "Core/MetaData.h"
 #include "Renderer/RenderState.h"
@@ -19,7 +19,7 @@ namespace LimitEngine {
 /*
  *!@class Light (Common)
  */
-class Light : public Object<LimitEngineMemoryCategory_Graphics>, public MetaData
+class Light : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>, public MetaData
 {
 public:
     enum TYPE 

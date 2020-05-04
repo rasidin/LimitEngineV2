@@ -37,7 +37,7 @@ namespace LimitEngine {
         *this << InMaterial.mId;
         *this << InMaterial.mName;
         String shaderName;
-        if (InMaterial.mShader) {
+        if (InMaterial.mShader.IsValid()) {
             shaderName = InMaterial.mShader->GetName();
         }
         *this << shaderName;
@@ -67,9 +67,6 @@ namespace LimitEngine {
     void Material::Load(TextParser::NODE *root)
     {
         // TODO : Share shader between materials...
-        if (mShader) {
-            delete mShader;
-        }
         mShader = nullptr;
 
         bool CompiledShaders = false;
@@ -87,12 +84,12 @@ namespace LimitEngine {
                 mShader = LE_ShaderManager.GetShader(node->values[0]);
             }
             else if (node->name == "VERTEXSHADER") {
-                if (mShader == nullptr) mShader = new Shader();
+                if (!mShader.IsValid()) mShader = new Shader();
                 CompiledShaders = true;
 				SucceedCompilingVS = mShader->Compile(node->values[0], Shader::TYPE_VERTEX);
             }
             else if (node->name == "PIXELSHADER") {
-                if (mShader == nullptr) mShader = new Shader();
+                if (!mShader.IsValid()) mShader = new Shader();
                 CompiledShaders = true;
                 SucceedCompilingPS = mShader->Compile(node->values[0], Shader::TYPE_PIXEL);
             }
@@ -122,16 +119,15 @@ namespace LimitEngine {
             }
         }
 		if (CompiledShaders && SucceedCompilingVS && SucceedCompilingPS) {
-			LE_ShaderManager.AddShader(mShader);
+			LE_ShaderManager.AddShader(mShader.Get());
 		}
 		else if (CompiledShaders) {
-			delete mShader;
-			mShader = NULL;
+			mShader = nullptr;
 		}
     }
     void Material::setupShaderParameters()
     {
-        if (mShader == NULL)
+        if (!mShader.IsValid())
             return;
         if (mShaderDriverParameter = dynamic_cast<ShaderDriverParameter*>(mShader->GetDriver("ShaderDriverParameter"))) {
             for (uint32 prmidx = 0; prmidx < mShaderDriverParameter->GetParameterCount(); prmidx++) {
@@ -150,8 +146,8 @@ namespace LimitEngine {
     }
     void Material::Bind(const RenderState &rs)
     {
-        if (mShader) {
-            DrawCommand::BindShader(mShader);
+        if (mShader.IsValid()) {
+            DrawCommand::BindShader(mShader.Get());
 
             for (uint32 prmidx = 0; prmidx < mParameters.size(); prmidx++) {
                 if (mParameters.GetAt(prmidx).value.IndexOfShaderParameter() >= 0) {

@@ -411,7 +411,7 @@ void DrawCommand::BindShader(Shader *sh)
 
 void DrawCommand::BindShader(const char *name)
 {
-    Shader *sh = ShaderManager::GetSingleton().GetShader(name);
+    Shader *sh = ShaderManager::GetSingleton().GetShader(name).Get();
     if (sh)
     {
         COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDSHADER(sh);

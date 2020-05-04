@@ -167,7 +167,7 @@ namespace LimitEngine {
     {
         for(uint32 i=0;i<mShaders.GetSize();i++)
         {
-            delete mShaders[i];
+            mShaders[i] = nullptr;
         }
         mShaders.Clear();
     }
@@ -181,7 +181,7 @@ namespace LimitEngine {
         {
             if (mShaders[i]->GetID() == shaderID)
             {
-                BindShader(mShaders[i]);
+                BindShader(mShaders[i].Get());
                 break;
             }
         }
@@ -192,7 +192,7 @@ namespace LimitEngine {
         {
             if (mShaders[i]->GetName() == name)
             {
-                BindShader(mShaders[i]);
+                BindShader(mShaders[i].Get());
                 break;
             }
         }
@@ -202,7 +202,7 @@ namespace LimitEngine {
         for(uint32 shidx=0;shidx<mShaders.GetSize();shidx++)
         {
             if (mShaders[shidx]->GetName() == sh->GetName()) {
-                delete mShaders[shidx];
+                mShaders[shidx] = nullptr;
                 mShaders.Delete(shidx);
                 break;
             }
@@ -226,7 +226,7 @@ namespace LimitEngine {
         }
         return -1;
     }
-    Shader* ShaderManager::GetShader(const char *name)
+    ShaderRefPtr ShaderManager::GetShader(const char *name)
     {
         for(uint32 i=0;i<mShaders.GetSize();i++)
         {

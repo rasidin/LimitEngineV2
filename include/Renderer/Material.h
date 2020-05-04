@@ -41,7 +41,7 @@ namespace LimitEngine {
         const String& GetName() const { return mName; }
         
 		void SetShader(Shader *shader) { mShader = shader; setupShaderParameters(); }
-        Shader* GetShader() const { return mShader; }
+        ShaderRefPtr GetShader() const { return mShader; }
 
 		void SetParameter(const String &name, const ShaderParameter &param) { mParameters.Add(name, param); }
 		ShaderParameter GetParameter(const String &name) const { return mParameters[name]; }
@@ -55,7 +55,7 @@ namespace LimitEngine {
         MapArray<String, ShaderParameter>   mParameters;
         ShaderDriverParameter              *mShaderDriverParameter;
 
-        Shader                             *mShader;
+        ShaderRefPtr                        mShader;
 
         friend Archive;
     };

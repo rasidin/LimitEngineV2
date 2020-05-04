@@ -22,9 +22,6 @@ PostProcessManager::PostProcessManager()
 }
 PostProcessManager::~PostProcessManager()
 {
-    if (mResolveShader) {
-        delete mResolveShader;
-    }
 }
 void PostProcessManager::Init(const InitializeOptions &Options)
 {
@@ -48,17 +45,18 @@ void PostProcessManager::Process()
 }
 void PostProcessManager::ResolveFinalResult(const PostProcessContext &Context)
 {
-    if (!mResolveShader) return;
+    if (!mResolveShader.IsValid()) return;
     DrawCommand::SetRenderTarget(0, nullptr, nullptr);
     DrawCommand::BindTexture(0, Context.SceneColor.Get());
 
     DrawCommand::SetDepthFunc(RendererFlag::TestFlags::ALWAYS);
     DrawCommand::SetBlendFunc(0, RendererFlag::BlendFlags::SOURCE);
-
-    if (Camera *MainCamera = LE_SceneManager.GetCamera()) {
+    
+    CameraRefPtr MainCamera = LE_SceneManager.GetCamera();
+    if (MainCamera.IsValid()) {
         int EVOffsetParam = mResolveShader->GetUniformLocation("EVOffset");
         if (EVOffsetParam >= 0) {
-            DrawCommand::SetShaderUniformFloat1(mResolveShader, EVOffsetParam, MainCamera->GetExposure());
+            DrawCommand::SetShaderUniformFloat1(mResolveShader.Get(), EVOffsetParam, MainCamera->GetExposure());
         }
     }
 
@@ -81,6 +79,6 @@ void PostProcessManager::ResolveFinalResult(const PostProcessContext &Context)
     buffer[5].SetPosition(LEMath::FloatVector3(1.0f, 0.0f, 0.0f));
     buffer[5].SetColor(0xffffffff);
     buffer[5].SetTexcoord(LEMath::FloatVector2(1.0f, 0.0f));
-    LE_Draw2DManager.FlushDraw2D(RendererFlag::PrimitiveTypes::TRIANGLELIST, mResolveShader);
+    LE_Draw2DManager.FlushDraw2D(RendererFlag::PrimitiveTypes::TRIANGLELIST, mResolveShader.Get());
 }
 }

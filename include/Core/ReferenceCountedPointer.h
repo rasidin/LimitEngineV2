@@ -44,13 +44,15 @@ namespace LimitEngine {
         ReferenceCountedPointer& operator = (const ReferenceCountedPointer &InPointer) {
             Release();
             mData = InPointer.mData;
-            mData->AddReferenceCounter();
+            if (mData)
+                mData->AddReferenceCounter();
             return *this;
         }
         ReferenceCountedPointer& operator = (T *InPointer) {
             Release();
             mData = InPointer;
-            mData->AddReferenceCounter();
+            if (mData)
+                mData->AddReferenceCounter();
             return *this;
         }
         T* operator ->() const {
