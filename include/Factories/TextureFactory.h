@@ -18,6 +18,7 @@ public:
     {
         None = 0,
         Irradiance,
+        Reflection
     };
 
 public:
@@ -31,10 +32,12 @@ public:
     uint32 GetResourceTypeCode() override { return makeResourceTypeCode("LMDL"); }
 
     void FilterSourceImage(class TextureSourceImage *SourceImage);
+    void SetSizeFilteredImage(const LEMath::IntVector2 &InSize) { mFilteredImageSize = InSize; }
 
     void SetImportFilter(TextureImportFilter Filter) { mImportFilter = Filter; }
 
 private:
     TextureImportFilter mImportFilter = TextureImportFilter::None;
+    LEMath::IntVector2  mFilteredImageSize = LEMath::IntVector2::Zero;
 };
 }

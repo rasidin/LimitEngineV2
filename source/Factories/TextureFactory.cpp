@@ -200,7 +200,7 @@ void TextureFactory::FilterSourceImage(TextureSourceImage *SourceImage)
         }
     };
 
-    LEMath::IntSize imageSize = SourceImage->GetSize();
+    LEMath::IntSize imageSize = (mFilteredImageSize != LEMath::IntVector2::Zero)?mFilteredImageSize:SourceImage->GetSize();
     static constexpr float SampleDelta = 0.025f;
     LE_TaskManager.ParallelFor(imageSize.Height(), [SampleImage, WriteToImage, imageSize](uint32 StepBegin, uint32 StepEnd) {
         for (uint32 y = StepBegin; y <= StepEnd; y++) {
@@ -210,9 +210,9 @@ void TextureFactory::FilterSourceImage(TextureSourceImage *SourceImage)
                 float centerTheta = LEMath::LEMath_PI * y / imageSize.Height();
                 float centerPhi = LEMath::LEMath_PI * 2.0f * x / imageSize.Width();
                 LEMath::FloatVector3 normal = LEMath::FloatVector3(-sinf(centerTheta) * cosf(centerPhi), cosf(centerTheta), sinf(centerTheta) * sinf(centerPhi));
-                LEMath::FloatVector3 tangent = (y == 0 || y == imageSize.Height() - 1) ? (LEMath::FloatVector3(1.0f, 0.0f, 0.0f)) : LEMath::FloatVector3(0.0f, 1.0f, 0.0f);
-                LEMath::FloatVector3 binormal = normal ^ tangent;
-                tangent = binormal ^ normal;
+                LEMath::FloatVector3 up = (y == 0 || y == imageSize.Height() - 1) ? (LEMath::FloatVector3(1.0f, 0.0f, 0.0f)) : LEMath::FloatVector3(0.0f, 1.0f, 0.0f);
+                LEMath::FloatVector3 tangent = (up ^ normal).Normalize();
+                LEMath::FloatVector3 binormal = (normal ^ tangent).Normalize();
 
                 for (float phi = 0.0f; phi < 2.0f * LEMath::LEMath_PI; phi += SampleDelta) {
                     for (float theta = 0.0f; theta < 0.5f * LEMath::LEMath_PI; theta += SampleDelta) {
