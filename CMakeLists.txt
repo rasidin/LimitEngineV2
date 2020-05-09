@@ -4,7 +4,10 @@ project(LimitEngine)
 
 include(LEMath.cmake)
 
-add_subdirectory(test)
+option(MAKE_TEST "Make test program" OFF)
+if (MAKE_TEST)
+	add_subdirectory(test)
+endif()
 
 add_definitions(-DWINDOWS -DUSE_DX11)
 
