@@ -17,32 +17,49 @@ PooledRenderTarget::PooledRenderTarget(const PooledRenderTarget &RenderTarget)
 {
     mTexture->AddReferenceCounter();
 }
-PooledRenderTarget::~PooledRenderTarget()
+void PooledRenderTarget::Release()
 {
+    if (mTexture)
     if (mTexture->SubReferenceCounter() == 0) {
         LE_RenderTargetPoolManager.ReleaseRenderTarget(*this);
     }
+    mTexture = nullptr;
 }
 PooledDepthStencil::PooledDepthStencil(const PooledDepthStencil &DepthStencil)
     : mTexture(DepthStencil.mTexture), mDesc(DepthStencil.mDesc)
 {
     mTexture->AddReferenceCounter();
 }
-PooledDepthStencil::~PooledDepthStencil()
+void PooledDepthStencil::Release()
 {
+    if (mTexture)
     if (mTexture->SubReferenceCounter() == 0) {
         LE_RenderTargetPoolManager.ReleaseDepthStencil(*this);
     }
+    mTexture = nullptr;
 }
 RenderTargetPoolManager::RenderTargetPoolManager()
     : SingletonRenderTaregtPoolManager()
 {}
 RenderTargetPoolManager::~RenderTargetPoolManager()
 {}
+PooledRenderTarget RenderTargetPoolManager::GetRenderTarget(const RenderTargetDesc &InDesc)
+{
+    return GetRenderTarget(InDesc.Size, InDesc.Depth, InDesc.Format);
+}
 PooledRenderTarget RenderTargetPoolManager::GetRenderTarget(const LEMath::IntSize Size, uint32 Depth, TEXTURE_COLOR_FORMAT Format)
 {
     RenderTargetDesc Desc(Size, Depth, Format);
-    if (Texture *FoundRenderTarget = mRTBuckets.Find(Desc)) {
+    Texture *FoundRenderTarget = nullptr;
+    uint32 rtbidx = 0u;
+    for (; rtbidx < mRTBuckets.count(); rtbidx++) {
+        if (mRTBuckets[rtbidx].key == Desc) {
+            FoundRenderTarget = mRTBuckets[rtbidx].value;
+            break;
+        }
+    }
+    if (FoundRenderTarget) {
+        mRTBuckets.erase(rtbidx);
         return PooledRenderTarget(FoundRenderTarget, Desc);
     } else {
         Texture *newRenderTarget = new Texture();
@@ -53,12 +70,20 @@ PooledRenderTarget RenderTargetPoolManager::GetRenderTarget(const LEMath::IntSiz
 }
 void RenderTargetPoolManager::ReleaseRenderTarget(PooledRenderTarget &RenderTarget)
 {
-    mRTBuckets.Add(RenderTarget.mDesc, RenderTarget.mTexture);
+    if (RenderTarget.mTexture)
+        mRTBuckets.Add(RTBucketType(RenderTarget.mDesc, RenderTarget.mTexture));
 }
 PooledDepthStencil RenderTargetPoolManager::GetDepthStencil(const LEMath::IntSize Size, TEXTURE_DEPTH_FORMAT Format)
 {
     DepthStencilDesc Desc(Size, Format);
-    if (Texture *FoundDepthStencil = mDSBuckets.Find(Desc)) {
+    Texture *FoundDepthStencil = nullptr;
+    for (uint32 dsbidx = 0; dsbidx < mDSBuckets.count(); dsbidx++) {
+        if (mDSBuckets[dsbidx].key == Desc) {
+            FoundDepthStencil = mDSBuckets[dsbidx].value;
+            break;
+        }
+    }
+    if (FoundDepthStencil) {
         return PooledDepthStencil(FoundDepthStencil, Desc);
     }
     else {
@@ -69,6 +94,6 @@ PooledDepthStencil RenderTargetPoolManager::GetDepthStencil(const LEMath::IntSiz
 }
 void RenderTargetPoolManager::ReleaseDepthStencil(PooledDepthStencil &DepthStencil)
 {
-    mDSBuckets.Add(DepthStencil.mDesc, DepthStencil.mTexture);
+    mDSBuckets.Add(DSBucketType(DepthStencil.mDesc, DepthStencil.mTexture));
 }
 }

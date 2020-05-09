@@ -12,18 +12,15 @@ Copyright (C), LIMITGAME, 2020
 #include "Core/TextParser.h"
 
 namespace LimitEngine {
-void* ModelFactory::Create(const ResourceSourceFactory *SourceFactory, const void *data, size_t size)
+IReferenceCountedObject* ModelFactory::Create(const ResourceSourceFactory *SourceFactory, const FileData &Data)
 {
     static ResourceSourceFactory::ID TextParserID = GENERATE_RESOURCEFACTORY_ID("TEPA");
 
     if (SourceFactory->GetID() == TextParserID) {
-        if (TextParser *Parser = (TextParser*)SourceFactory->ConvertRawData(data, size)) {
-            return dynamic_cast<void*>(Model::GenerateFromTextParser(Parser));
+        if (TextParser *Parser = (TextParser*)SourceFactory->ConvertRawData(Data.Data, Data.Size)) {
+            return dynamic_cast<IReferenceCountedObject*>(Model::GenerateFromTextParser(Parser));
         }
     }
-
-    //if (strcmp(format, "text") == 0)
-    //    return createFromText(static_cast<const char*>(data));
     return NULL;
 }
 void ModelFactory::Release(void *data)

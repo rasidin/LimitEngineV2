@@ -14,6 +14,7 @@
 #include "Core/Debug.h"
 #include "Core/TaskPriority.h"
 #include "Factories/ArchiveFactory.h"
+#include "Factories/TextureFactory.h"
 #include "Managers/DrawManager.h"
 #include "Managers/SceneManager.h"
 #include "Managers/ShaderDriverManager.h"
@@ -23,9 +24,6 @@
 #include "Managers/ResourceManager.h"
 #include "Managers/RenderTargetPoolManager.h"
 #include "Renderer/Font.h"
-//#include "Random.h"
-//#include "TouchInterface.h"
-//#include "Timer.h"
 
 namespace LimitEngine {
 // =============================================================
@@ -46,6 +44,11 @@ void LimitEngine::Init(WINDOW_HANDLE handle, const InitializeOptions &Options)
     //}
     mSystemFont->InitResource();
 
+    if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("textures/BlueNoise.texture.text", TextureFactory::ID)) {
+        mBlueNoiseTexture = (Texture*)(LoadedResource->data);
+        mBlueNoiseTexture->InitResource();
+    }
+
 	mTaskID_UpdateScene     = LE_TaskManager.AddTask("SceneManager::Update",    TaskPriority_Renderer_UpdateScene,      mSceneManager, &SceneManager::Update);
 	mTaskID_DrawScene       = LE_TaskManager.AddTask("SceneManager::Draw",      TaskPriority_Renderer_DrawScene,        mSceneManager, &SceneManager::Draw);
     mTaskID_PostProcess     = LE_TaskManager.AddTask("PostProcess::Process",    TaskPriority_Renderer_PostProcess,      mPostProcessManager, &PostProcessManager::Process);
@@ -57,8 +60,6 @@ void LimitEngine::Term()
 {
 	if (mTaskID_UpdateScene)
 		LE_TaskManager.RemoveTask(mTaskID_UpdateScene);
-//	if (mTaskID_UpdateLight)
-//		LE_TaskManager.RemoveTask(mTaskID_UpdateLight);
 	if (mTaskID_DrawScene)
 		LE_TaskManager.RemoveTask(mTaskID_DrawScene);
 	if (mTaskID_DrawManager_Run)

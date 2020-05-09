@@ -397,7 +397,10 @@ void Texture::CreateRenderTarget(const LEMath::IntSize &size, TEXTURE_COLOR_FORM
 void Texture::CreateUsingSourceData()
 {
     if (!mSource) return;
-    Create(mSource->GetSize(), mSource->GetFormat(), 0u, mSource->GetMipCount(), mSource->GetColorData(), mSource->GetColorDataSize());
+    if (mSource->GetDepth() == 1)
+        Create(mSource->GetSize(), mSource->GetFormat(), 0u, mSource->GetMipCount(), mSource->GetColorData(), mSource->GetColorDataSize());
+    else if (mSource->GetDepth() > 1)
+        Create3D(LEMath::IntSize3(mSource->GetSize().X(), mSource->GetSize().Y(), mSource->GetDepth()), mSource->GetFormat(), 0u, mSource->GetMipCount(), mSource->GetColorData(), mSource->GetColorDataSize());
 }
 void Texture::LoadFromMemory(const void *data, size_t size)
 {

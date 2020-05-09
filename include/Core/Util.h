@@ -41,6 +41,11 @@ namespace LimitEngine {
      * @param text [In/Out] Target text
      */
     void UpperCase(char *text);
+    /* @brief Get BaseFolder from path
+     * @param path [In] source path
+     * @param basefolderpath [Out] base folder path
+     */
+    void GetBaseFolderPath(const char *path, char *basefolderpath);
     /* @brief Get filename from path
      * @param path [In] Source path
      * @param containExtension [In] Filename has extension

@@ -16,11 +16,12 @@
 #include <LEFloatMatrix4x4.h>
 
 #include "Core/String.h"
+#include "Core/ReferenceCountedObject.h"
 #include "Containers/VectorArray.h"
 #include "Renderer/ByteColorRGBA.h"
 
 namespace LimitEngine {
-    class TextParser
+    class TextParser : public ReferenceCountedObject<LimitEngineMemoryCategory_Common>
     {
     public:
         typedef struct _NODE
@@ -130,7 +131,7 @@ namespace LimitEngine {
     public:
         TextParser();
         TextParser(const char *text);
-        ~TextParser();
+        virtual ~TextParser();
         
         bool Parse(const char *text);
         bool Save(const char *filename);

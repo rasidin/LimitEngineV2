@@ -13,6 +13,7 @@
 #include "Core/SerializableResource.h"
 #include "Core/Singleton.h"
 #include "Core/String.h"
+#include "Core/ReferenceCountedObject.h"
 #include "Containers/MapArray.h"
 #include "Containers/VectorArray.h"
 #include "Factories/ResourceFactory.h"
@@ -40,18 +41,18 @@ public:
     {
         friend ResourceManager;
 
-        String               id;
-        ResourceFactory*     factory;
-        uint32               type;
-        uint32               useCount;
-        size_t               size;
-        void                *data;
-        void                *orgData;
+        String                      id;
+        ResourceFactory*            factory;
+        uint32                      type;
+        size_t                      size;
+        IReferenceCountedObject    *data;
         
-        _RESOURCE() : useCount(1u), type(0), data(NULL), orgData(NULL) {}
-        _RESOURCE(const String &i, ResourceFactory *f, size_t s, void *d, void *o)
-            : id(i), factory(f), useCount(1u), type(f ? f->GetResourceTypeCode() : 0), size(s), data(d), orgData(o)
-        {}
+        _RESOURCE() : type(0), data(NULL) {}
+        _RESOURCE(const String &i, ResourceFactory *f, size_t s, IReferenceCountedObject *d)
+            : id(i), factory(f), type(f ? f->GetResourceTypeCode() : 0), size(s), data(d)
+        {
+            if (data) data->AddReferenceCounter();
+        }
 
         void* PopData() { void *output = data; data = nullptr; return output; }
         void Release();
@@ -85,14 +86,11 @@ public:
 
     bool IsExist(const char *filename);
 
-    void  ReleaseResource(const char* filename);
-    void  ReleaseResource(void *data);
-    void  ReleaseAll();
-
     void AddFactory(ResourceFactory::ID ID, ResourceFactory *Factory) { mFactories.Add(ID, Factory); }
     void AddSourceFactory(const char *Extension, ResourceSourceFactory *Factory) { mSourceFactories.Add(Extension, Factory); }
 
     ResourceFactory* GetFactory(ResourceFactory::ID ID) { return findFactory(ID); }
+    ResourceSourceFactory* GetSourceFactory(const String &ext) { return mSourceFactories.Find(ext); }
 
 protected:
     RESOURCE* getResource(const char* Filename, bool NeedRegister, ResourceFactory *Factory);

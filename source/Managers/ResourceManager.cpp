@@ -41,30 +41,13 @@ namespace LimitEngine {
     
     void ResourceManager::_RESOURCE::ForceRelease()
     {
-        if (useCount) {
-            useCount = 0;
-            Release();
-        }
+        Release();
     }
     void ResourceManager::_RESOURCE::Release()
     {
-        if (useCount) useCount--;
-        if (useCount == 0) {
-            if (data) {
-                if (factory) {
-                    factory->Release(data);
-                }
-                else {
-                    free(data);
-                }
-                data = NULL;
-            }
-
-            if (orgData) {
-                free(orgData);
-                orgData = NULL;
-            }
-            delete this;
+        if (data) {
+            data->SubReferenceCounter();
+            data = nullptr;
         }
     }
 
@@ -177,7 +160,6 @@ namespace LimitEngine {
         if (NeedRegister) {
             for (uint32 residx = 0; residx < mResources.count(); residx++) {
                 if (mResources[residx]->id == Filename) {
-                    mResources[residx]->useCount++;
                     return mResources[residx];
                 }
             }
@@ -193,10 +175,9 @@ namespace LimitEngine {
         char *convertedPath = GetConvertedPath(Filename);
         size_t size = 0;
         if (void *data = mLoader->GetResource(convertedPath, &size)) {
-            void *createdData = NULL;
             ResourceSourceFactory *sourceFactory = mSourceFactories.Find(fileFormat);
-            if (createdData = Factory->Create(sourceFactory, data, size)) {
-                RESOURCE *newRes = new RESOURCE(Filename, Factory, size, createdData, data);
+            if (IReferenceCountedObject *createdData = Factory->Create(sourceFactory, ResourceFactory::FileData(Filename, data, size))) {
+                RESOURCE *newRes = new RESOURCE(Filename, Factory, size, createdData);
                 if (NeedRegister)
                     mResources.Add(newRes);
                 free(convertedPath);
@@ -210,44 +191,6 @@ namespace LimitEngine {
     ResourceFactory* ResourceManager::findFactory(ResourceFactory::ID ID)
     {
         return mFactories.Find(ID);
-    }
-    void ResourceManager::ReleaseResource(const char* filename)
-    {
-        for(uint32 i=0;i<mResources.GetSize();i++)
-        {
-            if (mResources[i]->id == filename)
-            {
-                mResources[i]->useCount--;
-                if (mResources[i]->useCount == 0)
-                {
-                    mResources[i]->Release();
-                    mResources.Delete(i);
-                }
-            }
-        }
-    }
-    void ResourceManager::ReleaseResource(void *data)
-    {
-        for(uint32 i=0;i<mResources.GetSize();i++)
-        {
-            if (mResources[i]->data == data)
-            {
-                mResources[i]->useCount--;
-                if (mResources[i]->useCount == 0)
-                {
-					mResources[i]->Release();
-                    mResources.Delete(i);
-                }
-            }
-        }
-    }
-    void ResourceManager::ReleaseAll()
-    {
-        for (uint32 i = 0; i < mResources.GetSize(); i++)
-        {
-            mResources[i]->Release();
-        }
-        mResources.Clear();
     }
     void ResourceManager::SaveResource(const char *FilePath, SerializableResource *Resource)
     {

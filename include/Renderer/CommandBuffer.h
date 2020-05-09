@@ -13,6 +13,7 @@ Copyright (C), LIMITGAME, 2020
 
 #include <LEFloatVector2.h>
 #include <LEFloatVector4.h>
+#include <LEIntVector4.h>
 
 #include "Core/Singleton.h"
 #include "Core/Mutex.h"
@@ -84,6 +85,8 @@ private:            // Private Structure
             cSetShaderUniformFloat1,
             cSetShaderUniformFloat2,
             cSetShaderUniformFloat4,
+            cSetShaderUniformInt1,
+            cSetShaderUniformInt4,
             cSetShaderUniformMatrix4,
             cSetFVF,
             cSetCulling,
@@ -237,6 +240,32 @@ private:            // Private Structure
         int                     location;
         LEMath::FloatVector4    value;
     } COMMAND_SETSHADERUNIFORMFLOAT4;
+    typedef struct _COMMAND_SETSHADERUNIFORMINT1 : public _COMMAND_COMMON
+    {
+        _COMMAND_SETSHADERUNIFORMINT1(Shader *sh, int l, const int32 v)
+            : _COMMAND_COMMON(cSetShaderUniformInt1)
+            , shader(sh)
+            , location(l)
+            , value(v)
+        {
+        };
+        Shader                  *shader;
+        int                      location;
+        int32                    value;
+    } COMMAND_SETSHADERUNIFORMINT1;
+    typedef struct _COMMAND_SETSHADERUNIFORMINT4 : public _COMMAND_COMMON
+    {
+        _COMMAND_SETSHADERUNIFORMINT4(Shader *sh, int l, const LEMath::IntVector4 &v)
+            : _COMMAND_COMMON(cSetShaderUniformInt4)
+            , shader(sh)
+            , location(l)
+            , value(v)
+        {
+        };
+        Shader                  *shader;
+        int                      location;
+        LEMath::IntVector4       value;
+    } COMMAND_SETSHADERUNIFORMINT4;
     // Set matrix4 value to shader
     typedef struct _COMMAND_SETSHADERUNIFORMMATRIX4 : public _COMMAND_COMMON
     {

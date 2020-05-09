@@ -22,7 +22,7 @@ public:
 	ShaderFactory() {}
 	virtual ~ShaderFactory() {}
 
-	void* Create(const ResourceSourceFactory *format, const void *data, size_t size) override;
+    IReferenceCountedObject* Create(const ResourceSourceFactory *format, const FileData &Data) override;
 	void* CreateFromShaderText(const char *shaderName, const char *vstext, const char *pstext);
 	void Release(void *data) override;
 	uint32 GetResourceTypeCode() override { return makeResourceTypeCode("SHAD"); }

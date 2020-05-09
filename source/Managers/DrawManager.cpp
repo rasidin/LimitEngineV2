@@ -51,6 +51,7 @@ namespace LimitEngine
 
     DrawManager::DrawManager()
         : SingletonDrawManager()
+        , mFrameCounter(0u)
         , mCommandBuffer(nullptr)
         , mRenderContext(nullptr)
         , mRenderState(nullptr)
@@ -66,6 +67,7 @@ namespace LimitEngine
         , mModelDrawingBegan(false)
         , mReadyToRender(false)
         , mScreenSize(0, 0)
+        , mTemporalAASamples(16u)
     {
         mCommandBuffer = new CommandBuffer();
         mRenderState = new RenderState();
@@ -175,8 +177,10 @@ namespace LimitEngine
         double lastTime = Timer::GetTimeDoubleSecond();
         while (1)
         {
-            if (mDrawThreadExitCode)
+            if (mDrawThreadExitCode) {
+                mReadyCommandBufferEvent.Signal();
                 break;
+            }
             mDrawEvent.Wait();
             mReadyCommandBufferEvent.Signal();
 
@@ -220,25 +224,69 @@ namespace LimitEngine
     {
         Mutex::ScopedLock scopedLock(mCommandFlushMutex);
     }
+    LEMath::FloatPoint DrawManager::getJitterPosition(uint32 Index, uint32 NumOfSamples)
+    {
+        switch (NumOfSamples)
+        {
+        case 1:
+            return LEMath::FloatPoint(0, 0);
+        case 2: {
+            return (Index == 0)?LEMath::FloatPoint( 4.0f/8.0f, 4.0f/8.0f):LEMath::FloatPoint(-4.0f/8.0f,-4.0f/8.0f);
+        }
+        case 4: {
+            static constexpr float SampleX[] = {-2.0f/8.0f, 6.0f/8.0f,-6.0f/8.0f, 2.0f/8.0f };
+            static constexpr float SampleY[] = {-6.0f/8.0f,-2.0f/8.0f, 2.0f/8.0f, 6.0f/8.0f };
+            return LEMath::FloatPoint(SampleX[Index], SampleY[Index]);
+        }
+        case 8: {
+            static constexpr float SampleX[] = { 1.0f / 8.0f,-1.0f / 8.0f, 5.0f / 8.0f,-3.0f / 8.0f,-5.0f / 8.0f,-7.0f / 8.0f, 3.0f / 8.0f, 7.0f / 8.0f };
+            static constexpr float SampleY[] = {-3.0f / 8.0f, 3.0f / 8.0f, 1.0f / 8.0f,-5.0f / 8.0f, 5.0f / 8.0f,-1.0f / 8.0f, 7.0f / 8.0f,-7.0f / 8.0f };
+            return LEMath::FloatPoint(SampleX[Index], SampleY[Index]);
+        }
+        case 16: {
+            static constexpr float SampleX[] = { 1.0f / 8.0f,-1.0f / 8.0f,-3.0f / 8.0f,-4.0f / 8.0f,-5.0f / 8.0f, 2.0f / 8.0f, 5.0f / 8.0f, 3.0f / 8.0f,-2.0f / 8.0f, 0.0f / 8.0f,-4.0f / 8.0f,-6.0f / 8.0f,-8.0f / 8.0f, 7.0f / 8.0f, 6.0f / 8.0f,-7.0f / 8.0f };
+            static constexpr float SampleY[] = { 1.0f / 8.0f,-3.0f / 8.0f, 2.0f / 8.0f,-1.0f / 8.0f,-2.0f / 8.0f, 5.0f / 8.0f, 3.0f / 8.0f,-5.0f / 8.0f, 6.0f / 8.0f,-7.0f / 8.0f,-6.0f / 8.0f, 4.0f / 8.0f,-8.0f / 8.0f,-4.0f / 8.0f, 7.0f / 8.0f,-8.0f / 8.0f };
+            return LEMath::FloatPoint(SampleX[Index], SampleY[Index]);
+        }
+        default:
+            LEASSERT(0);
+            break;
+        }
+        return LEMath::FloatPoint::Zero;
+    }
     // Update matrices for rendering scene
     void DrawManager::UpdateMatrices()
     {
+        uint32 temporalAAIndex = mFrameCounter % mTemporalAASamples;
+        LEMath::FloatPoint jitter = getJitterPosition(temporalAAIndex, mTemporalAASamples);
+
         LEMath::FloatMatrix4x4 viewMatrix = mRenderState->GetViewMatrix();
         LEMath::FloatMatrix4x4 projMatrix = mRenderState->GetProjMatrix();
-        LEMath::FloatMatrix4x4 viewProjMatrix = viewMatrix * projMatrix;
+        LEMath::FloatMatrix4x4 projMatrixWithJitter = projMatrix;
+        if (mRealScreenSize.Size()) {
+            projMatrixWithJitter.Set(2, 0, jitter.X() / mRealScreenSize.Width());
+            projMatrixWithJitter.Set(2, 1, jitter.Y() / mRealScreenSize.Height());
+        }
+        LEMath::FloatMatrix4x4 viewProjMatrix = viewMatrix * projMatrixWithJitter;
 
         mRenderState->SetViewProjMatrix(viewProjMatrix.Transpose());
         mRenderState->SetInvViewMatrix(viewMatrix.Inverse());
-        mRenderState->SetInvProjMatrix(projMatrix.Inverse());
+        mRenderState->SetInvProjMatrix(projMatrixWithJitter.Inverse());
         mRenderState->SetInvViewProjMatrix(viewProjMatrix.Inverse());
+
+        mRenderState->SetTemporalContext(
+            temporalAAIndex, mTemporalAASamples, 32, 32 * mTemporalAASamples
+        );
+
+        mFrameCounter++;
     }
     // Initialize before rendering scene
     void DrawManager::initFrameBuffers()
     {
-        LEMath::IntSize screenSize = mImpl->GetScreenSize();
-        if (screenSize.Width() <= 0 || screenSize.Height() <= 0) return;
+        mRealScreenSize = mImpl->GetScreenSize();
+        if (mRealScreenSize.Width() <= 0 || mRealScreenSize.Height() <= 0) return;
 
-        mScreenSize = ConvertReal2Virtual(screenSize);
+        mScreenSize = ConvertReal2Virtual(mRealScreenSize);
         //SceneManager::GetSingleton().GetCamera()->SetScreenSize(mScreen_size.width, mScreen_size.height);
         //
         //PostFilterManager::GetSingleton().Init();

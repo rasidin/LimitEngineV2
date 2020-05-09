@@ -41,6 +41,9 @@ static const unsigned char Shader_DrawFullscreen_PS[] = {
 static const unsigned char Shader_ResolveSceneColorSRGB_PS[] = {
 #include "shader/DirectX11/bin/ResolveSceneColorSRGB.ps.txt"
 };
+static const unsigned char Shader_TemporalAA_PS[] = {
+#include "shader/DirectX11/bin/TemporalAA.ps.txt"
+};
 //static const unsigned char Shader_DrawIBL_PS[] = {
 //#include "shader/DirectX11/bin/DrawIBL.ps.txt"
 //};
@@ -116,6 +119,14 @@ namespace LimitEngine {
             shader = new Shader("ResolveSceneColorSRGB");
             shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
             shader->SetCompiledBinary(Shader_ResolveSceneColorSRGB_PS, sizeof(Shader_ResolveSceneColorSRGB_PS), Shader::TYPE_PIXEL);
+            AddShader(shader);
+        }
+
+        // PostProcess TemporalAA
+        {
+            shader = new Shader("TemporalAA");
+            shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
+            shader->SetCompiledBinary(Shader_TemporalAA_PS, sizeof(Shader_TemporalAA_PS), Shader::TYPE_PIXEL);
             AddShader(shader);
         }
 

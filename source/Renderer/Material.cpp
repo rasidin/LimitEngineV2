@@ -57,9 +57,6 @@ namespace LimitEngine {
     Material::~Material()
     {
         for (uint32 paramidx = 0; paramidx < mParameters.GetSize(); paramidx++) {
-            if (mParameters.GetAt(paramidx).value.GetType() == ShaderParameter::Type_Texture) {
-                LE_ResourceManager.ReleaseResource((Texture*)(mParameters.GetAt(paramidx).value));
-            }
 			mParameters.GetAt(paramidx).value.Release();
         }
         mParameters.Clear();
@@ -101,7 +98,7 @@ namespace LimitEngine {
                     else { // texture
                         const ResourceManager::RESOURCE *resource = LE_ResourceManager.GetResourceWithRegister(node->values[0], TextureFactory::ID);
                         if (resource)
-                            mParameters[node->name] = static_cast<Texture*>(resource->data);
+                            mParameters[node->name] = reinterpret_cast<Texture*>(resource->data);
                     }
                 }
                 else if (node->values.count() == 2) { // fVector3

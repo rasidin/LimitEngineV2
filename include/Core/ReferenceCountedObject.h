@@ -11,14 +11,22 @@
 #include "Object.h"
 
 namespace LimitEngine {
-    template<uint32 category = LimitEngineMemoryCategory_Unknown>
-    class ReferenceCountedObject : public Object<category>
+    class IReferenceCountedObject
     {
     public:
-        uint32 GetReferenceCounter() const { return mReferenceCounter; }
+        virtual uint32 GetReferenceCounter() const = 0;
+        virtual uint32 AddReferenceCounter() = 0;
+        virtual uint32 SubReferenceCounter() = 0;
+    };
 
-        uint32 AddReferenceCounter() { return ++mReferenceCounter; }
-        uint32 SubReferenceCounter() { LEASSERT(mReferenceCounter > 0); return --mReferenceCounter; }
+    template<uint32 category = LimitEngineMemoryCategory_Unknown>
+    class ReferenceCountedObject : public IReferenceCountedObject, public Object<category>
+    {
+    public:
+        uint32 GetReferenceCounter() const override { return mReferenceCounter; }
+
+        uint32 AddReferenceCounter() override { return ++mReferenceCounter; }
+        uint32 SubReferenceCounter() override { LEASSERT(mReferenceCounter > 0); return --mReferenceCounter; }
     protected:
         ReferenceCountedObject() : mReferenceCounter(0u) {}
         virtual ~ReferenceCountedObject() {}

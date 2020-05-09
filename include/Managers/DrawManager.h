@@ -181,7 +181,13 @@ private:            // Private members
     // Get command buffer
     CommandBuffer* getCommandBuffer() { return mCommandBuffer; }
 
+    // Calculation for getting jitter position using sample count (from msdn document for msaa)
+    // https://docs.microsoft.com/ja-jp/windows/win32/api/d3d11/ne-d3d11-d3d11_standard_multisample_quality_levels?redirectedfrom=MSDN
+    LEMath::FloatPoint getJitterPosition(uint32 Index, uint32 NumOfSamples);
+
 private:            // Private Properties
+    uint32                                    mFrameCounter;            //!< FrameCounter
+
     CommandBuffer                            *mCommandBuffer;           //!< Command buffer for rendering order
     RenderContext                            *mRenderContext;           //!< Render context data
     RenderState                              *mRenderState;             //!< Statement for rendering
@@ -202,7 +208,10 @@ private:            // Private Properties
     bool                                      mModelDrawingBegan;       //!< Is drawing model began?
     bool                                      mReadyToRender;           //!< Is it ready to render?
     
-    LEMath::IntSize                           mScreenSize;             //!< Current screen size
+    LEMath::IntSize                           mScreenSize;              //!< Current screen size
+    LEMath::IntSize                           mRealScreenSize;          //!< Current real screen size
+
+    uint32                                    mTemporalAASamples;       //!< Number of samples for TemporalAA
 };    // DrawManager
 #define sDrawManager LimitEngine::DrawManager::GetSingletonPtr()
 #define LE_DrawManager LimitEngine::DrawManager::GetSingleton()

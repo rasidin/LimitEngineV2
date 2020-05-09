@@ -9,22 +9,35 @@
 
 float Fresnel(float f0, float d)
 {
-	if (d > 0.999)
+	if (d > 0.9999)
 		return f0;
-	return f0 + (1.0 - f0) * pow(1.0 - d, 5.0);
+	return f0 + (1.0 - f0) * pow(1.0 - d, 2.0);
 }
 
-float2 DGgxSkew(vec2 e, float r)
+float3 SampleHalfDirection(float2 xi, float r, float3 normal)
 {
-	float2 out = (float2)0;
-	float sqr = r * r;
-	out.x = atan(sqrt((sqr * e.x) / (1.0 - e.x)));
-	out.y = pi2 * e.y + randAngle();
-	return out;
+	float r2 = r * r;
+	float phi = 2 * PI * xi.x;
+	float costheta = sqrt(max(1.0e-4, (1 - xi.y) / (1 + (r2 * r2 - 1) * xi.y)));
+	float sintheta = sqrt(max(1.0e-4, 1 - costheta * costheta));
+
+	float3 li = normalize(float3(sintheta * cos(phi), sintheta * sin(phi), costheta));
+	
+	float3 up = abs(normal.z) < 0.999 ? float3(0,0,1) : float3(1,0,0);
+	float3 tanX = normalize(cross( up, normal ));
+	float3 tanY = cross(normal, tanX);
+
+	return normalize(tanX * li.x + tanY * li.y + normal * li.z);
 }
 
-float3 SkewDirection()
+float Geometry_Smith_GGX(float i, float r)
 {
+	return 2.0 * i / (i + sqrt(i * i + r * r * (1.0 - i * i)));
+}
+
+float Geometry(float NoH, float VoH, float r)
+{
+	return Geometry_Smith_GGX(NoH, r) * Geometry_Smith_GGX(VoH, r);
 }
 
 float3 Irradiance(float3 n)
@@ -33,34 +46,27 @@ float3 Irradiance(float3 n)
 	return irradianceColor;
 }
 
-float3 Radiance(float3 N, float3 V)
+float3 Radiance(uint4 Context, float f0, float r, float3 N, float3 V)
 {
-  float3 Up = abs(N.z) < 0.999 ? float3(0,0,1) : float3(1,0,0);
-  float3 TangentX = normalize(cross( Up, N ));
-  float3 TangentY = cross(N, TangentX);
-
-  float NoV = abs(dot(N, V));
-
-  float3 fColor = float3(0.0);
-  const uint NumSamples = 16;
-  for (uint i = 0; i < NumSamples; ++i)
-  {
-    float2 Xi = Hammersley(i, NumSamples);
-    float3 Li = S(Xi);
-    vec3 H  = normalize(Li.x * TangentX + Li.y * TangentY + Li.z * N);
-    vec3 L  = normalize(-reflect(V, H));
-
-    float NoL = abs(dot(N, L));
-    float NoH = abs(dot(N, H));
-    float VoH = abs(dot(V, H));
-    float lod = compute_lod(NumSamples, NoH);
-
-    float F = F(VoH);
-    float G = G(NoL, NoV, NoH, VoH);
-    vec3 LColor = textureSphereLod(environment, L, lod).rgb;
-
-    fColor += F_ * G_ * LColor * VoH / (NoH * NoV);
-  }
-
-  return fColor / float(NumSamples);
+	float NoV = abs(dot(N, V));
+	
+	float3 fColor = (float3)0.0;
+	for (uint i = Context.x; i < Context.w; i += Context.y)
+	{
+		float2 Xi = Hammersley(i, Context.w);
+		float3 H  = SampleHalfDirection(Xi, r, N);
+		float3 L  = normalize(-reflect(V, H));
+		
+		float NoL = abs(dot(N, L));
+		float NoH = abs(dot(N, H));
+		float VoH = abs(dot(V, H));
+		
+		float  F = max(1.0e-4, Fresnel(f0, VoH));
+		float  G = Geometry(NoH, VoH, r);
+		float3 LColor = SampleIBLReflection(L);
+		
+		fColor += F * G * LColor * VoH / (NoH * NoV);
+	}
+	
+	return fColor / float(Context.z);
 }

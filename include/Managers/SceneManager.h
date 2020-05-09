@@ -15,6 +15,7 @@
 #include "Core/Singleton.h"
 #include "Core/EventListener.h"
 #include "Core/ReferenceCountedPointer.h"
+#include "Core/Mutex.h"
 #include "Containers/VectorArray.h"
 #include "Renderer/Camera.h"
 #include "Renderer/Model.h"
@@ -36,12 +37,20 @@ class SceneManager : public SingletonSceneManager
     friend SceneFactory;
 
 public:
+    struct SceneUpdateTask : public Object<LimitEngineMemoryCategory_Graphics>
+    {
+    public:
+        virtual ~SceneUpdateTask() {}
+        virtual void Run(class SceneManager *Manager) = 0;
+    };
+
+public:
     SceneManager();
     ~SceneManager();
 
 	size_t       GetModelCount()				 { return mModels.size();}
 	ModelRefPtr  GetModel(uint32 n)				 { return mModels[n];}
-    void         AddModel(const ModelRefPtr &m)  { mModels.push_back(m); mOnChangeEvent(); }
+    void         AddModel(const ModelRefPtr &m);
     void         AddLight(const LightRefPtr &l);
     CameraRefPtr GetCamera() const               { return mCamera; }
     void         SetCamera(const CameraRefPtr &c);
@@ -58,14 +67,20 @@ public:
     void Update();
     void Draw();
 
+    void AddModel_UpdateTask(Model *InModel);
+    void AddLight_UpdateTask(Light *InLight);
+    void SetCamera_UpdateTask(Camera *InCamera);
+
 private:
     void LoadFromText(const char *text);
 
+    void updateSceneTasks();
     void drawBackground();
 
 private:
+    Mutex                            mUpdateSceneMutex;
+
     CameraRefPtr                     mCamera;
-    bool                             mOwnCamera;
     VectorArray<ModelRefPtr>         mModels;
     VectorArray<LightRefPtr>         mLights;
     LightRefPtr                      mEnvironmentLight;
@@ -77,8 +92,12 @@ private:
     PooledRenderTarget               mSceneColor;
     PooledDepthStencil               mSceneDepth;
 
+    VectorArray<SceneUpdateTask*>    mUpdateTasks;
+
 private:
 	EventListener				     mOnChangeEvent;
+
+    friend SceneUpdateTask;
 };
 #define LE_SceneManager LimitEngine::SceneManager::GetSingleton()
 }

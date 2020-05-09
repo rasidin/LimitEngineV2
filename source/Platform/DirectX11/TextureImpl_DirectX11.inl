@@ -226,14 +226,20 @@ namespace LimitEngine {
             tex3DDesc.Usage = D3D11_USAGE_DEFAULT;
             tex3DDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
 
-            D3D11_SUBRESOURCE_DATA tex3DSubRes;
-            ::memset(&tex3DSubRes, 0, sizeof(D3D11_SUBRESOURCE_DATA));
-            tex3DSubRes.pSysMem = initializeData;
-            tex3DSubRes.SysMemPitch = CalculatePitchSize(format, LEMath::IntVector2(size.X(), size.Y()));
-            tex3DSubRes.SysMemSlicePitch = CalculateSlideSize(format, LEMath::IntVector2(size.X(), size.Y()));
-            if (device->CreateTexture3D(&tex3DDesc, initializeData ? (&tex3DSubRes) : NULL, &mTexture3D) == S_OK) {
+            D3D11_SUBRESOURCE_DATA *tex3DSubRes = new D3D11_SUBRESOURCE_DATA[size.Depth() + 1];
+            ::memset(tex3DSubRes, 0, sizeof(D3D11_SUBRESOURCE_DATA) * size.Depth());
+            uint32 SliceSize = CalculateSlideSize(format, LEMath::IntVector2(size.X(), size.Y()));
+            for (int depthIndex = 0; depthIndex < size.Depth(); depthIndex++) {
+                tex3DSubRes[depthIndex].pSysMem = (uint8*)initializeData + SliceSize * depthIndex;
+                tex3DSubRes[depthIndex].SysMemPitch = CalculatePitchSize(format, LEMath::IntVector2(size.X(), size.Y()));
+                tex3DSubRes[depthIndex].SysMemSlicePitch = CalculateSlideSize(format, LEMath::IntVector2(size.X(), size.Y()));
+            }
+            tex3DSubRes[size.Depth()].pSysMem = initializeData;
+            tex3DSubRes[size.Depth()].SysMemPitch = CalculatePitchSize(format, LEMath::IntVector2(size.X(), size.Y()));
+            tex3DSubRes[size.Depth()].SysMemSlicePitch = CalculateSlideSize(format, LEMath::IntVector2(size.X(), size.Y()));
+            if (device->CreateTexture3D(&tex3DDesc, initializeData ? (tex3DSubRes) : NULL, &mTexture3D) == S_OK) {
+                delete[] tex3DSubRes;
                 D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-
                 ::memset(&srvDesc, 0, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
                 srvDesc.Format = tex3DDesc.Format;
                 srvDesc.ViewDimension = D3D_SRV_DIMENSION_TEXTURE3D;
@@ -260,6 +266,7 @@ namespace LimitEngine {
                 }
                 return true;
             }
+            delete tex3DSubRes;
             return false;
         }
         void CreateScreenColor(const LEMath::IntSize &size) override { /* unimplemented */ }

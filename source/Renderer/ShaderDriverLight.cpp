@@ -41,15 +41,20 @@ namespace LimitEngine {
         if(IsValidShaderParameterPosition(mIBLIrrTex_Position)) {
             DrawCommand::BindTexture(mIBLIrrTex_Position, rs.GetIBLIrradianceTexture().Get());
         }
+        if (IsValidShaderParameterPosition(mTemporalContext_Position)) {
+            DrawCommand::SetShaderUniformInt4(material->GetShader().Get(), mTemporalContext_Position, rs.GetTemporalContext());
+        }
     }
 	void ShaderDriverLight::setup(const ShaderParameterParser::ParameterMap &paramMap)
     {
 		mIBLRefTex_Position =  getShaderTextureLocation(paramMap, "IBLReflectionTexture");
         mIBLIrrTex_Position =  getShaderTextureLocation(paramMap, "IBLIrradinaceTexture");
+        mTemporalContext_Position = getShaderUniformLocation(paramMap, "TemporalContext");
     }
     void ShaderDriverLight::setup(const Shader *InShader)
     {
         mIBLRefTex_Position = InShader->GetTextureLocation("IBLReflectionTexture");
         mIBLIrrTex_Position = InShader->GetTextureLocation("IBLIrradianceTexture");
+        mTemporalContext_Position = InShader->GetUniformLocation("TemporalContext");
     }
 }

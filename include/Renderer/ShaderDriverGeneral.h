@@ -35,5 +35,6 @@ namespace LimitEngine {
         int mParameter_invViewProjMat;
         int mParameter_worldMat;
         int mParameter_camPos;
+        int mParameter_bluenoise;
     };
 } // namespace LimitEngine

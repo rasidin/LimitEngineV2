@@ -12,12 +12,12 @@ Copyright (C), LIMITGAME, 2020
 #include "Managers/ShaderManager.h"
 
 namespace LimitEngine {
-void* ShaderFactory::Create(const ResourceSourceFactory*, const void *data, size_t size)
+IReferenceCountedObject* ShaderFactory::Create(const ResourceSourceFactory*, const FileData &Data)
 {
-	if (data == NULL)
+	if (Data.Data == NULL)
 		return NULL;
-	Shader *output = new Shader();
-	return output;
+	Shader* output = new Shader();
+	return dynamic_cast<IReferenceCountedObject*>(output);
 }
 void* ShaderFactory::CreateFromShaderText(const char *shaderName, const char *vstext, const char *pstext)
 {

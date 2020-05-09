@@ -17,10 +17,10 @@ namespace LimitEngine {
     TextParserFactory::~TextParserFactory()
     {}
 
-    void* TextParserFactory::Create(const ResourceSourceFactory *Format, const void *Data, size_t Size)
+    IReferenceCountedObject* TextParserFactory::Create(const ResourceSourceFactory *Format, const FileData &Data)
     {
-        if (!Data || !Size) return nullptr;
-        return Format->ConvertRawData(Data, Size);
+        if (!Data.IsValid()) return nullptr;
+        return dynamic_cast<ReferenceCountedObject<>*>((TextParser*)Format->ConvertRawData(Data.Data, Data.Size));
     }
     void TextParserFactory::Release(void *Data)
     {

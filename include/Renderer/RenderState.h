@@ -32,6 +32,21 @@ namespace LimitEngine {
         bool IsSceneBegan() const { return mSceneBegan; }
         bool IsModelDrawingBegan() const { return mModelDrawingBegan; }
 
+        void SetTemporalContext(int FrameIndex, int NumTemporalFrames, int SamplesInFrame, int AllSamplesNum)
+        {
+            mTemporalContext.SetX(FrameIndex);
+            mTemporalContext.SetY(NumTemporalFrames);
+            mTemporalContext.SetZ(SamplesInFrame);
+            mTemporalContext.SetW(AllSamplesNum);
+        }
+        const LEMath::IntVector4& GetTemporalContext() const { return mTemporalContext; }
+
+        void SetBlueNoiseContext(float PerTextureSize)
+        {
+            mBlueNoiseContext.SetX(PerTextureSize);
+        }
+        const LEMath::FloatVector4& GetBlueNoiseContext() const { return mBlueNoiseContext; }
+
         // ----------------------------------------------------
         // General matrices
         // ----------------------------------------------------
@@ -64,6 +79,9 @@ namespace LimitEngine {
     private:
         bool mSceneBegan;
         bool mModelDrawingBegan;
+
+        LEMath::IntVector4 mTemporalContext; // x = FrameIndex, y = NumTemporalFrames, z = Samples in one frame, w = All Samples
+        LEMath::FloatVector4 mBlueNoiseContext;
 
         struct GeneralMatrices {
             LEMath::FloatMatrix4x4  viewMatrix;

@@ -34,10 +34,14 @@ public:
     void Process();
 
 private:
+    bool ProcessTemporalAA(const PostProcessContext &Context, PooledRenderTarget &Result);
     void ResolveFinalResult(const PostProcessContext &Context);
 
 private:
+    ShaderRefPtr mTemporalAAShader;
     ShaderRefPtr mResolveShader;
+
+    PooledRenderTarget mHistorySceneColor;
 };
 #define LE_PostProcessManager PostProcessManager::GetSingleton()
 }

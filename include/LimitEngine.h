@@ -72,6 +72,7 @@ private: // Private members
     TaskManager::TaskID              mTaskID_DrawDebugUI;               //!< Task for drawing debug UI
 
     FontRefPtr                       mSystemFont;
+    TextureRefPtr                    mBlueNoiseTexture; 
 
 	class Debug				        *mDebug;
 }; // Main

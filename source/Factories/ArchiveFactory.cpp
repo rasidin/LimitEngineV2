@@ -27,9 +27,9 @@ ArchiveFactory::~ArchiveFactory()
     }
     Generators.Clear();
 }
-void* ArchiveFactory::Create(const ResourceSourceFactory*, const void *Data, size_t Size)
+IReferenceCountedObject* ArchiveFactory::Create(const ResourceSourceFactory*, const FileData &Data)
 {
-    if (!Data || Size == 0u) return nullptr;
+    if (!Data.Data || Data.Size == 0u) return nullptr;
 
     struct ArchiveHeader
     {
@@ -37,10 +37,10 @@ void* ArchiveFactory::Create(const ResourceSourceFactory*, const void *Data, siz
         uint32 Version;
     };
 
-    uint32 FileType = ((ArchiveHeader*)Data)->FileType;
-    uint32 Version = ((ArchiveHeader*)Data)->Version;
+    uint32 FileType = ((ArchiveHeader*)Data.Data)->FileType;
+    uint32 Version = ((ArchiveHeader*)Data.Data)->Version;
 
-    Archive LoadedArchive((uint8*)Data + sizeof(ArchiveHeader), Size - sizeof(ArchiveHeader));
+    Archive LoadedArchive((uint8*)Data.Data + sizeof(ArchiveHeader), Data.Size - sizeof(ArchiveHeader));
     SerializableResource *Generator = nullptr;
     SerializableResource *newObject = nullptr;
     for (uint32 generatorIndex = 0; generatorIndex < Generators.count(); generatorIndex++) {
@@ -54,6 +54,6 @@ void* ArchiveFactory::Create(const ResourceSourceFactory*, const void *Data, siz
         newObject->Serialize(LoadedArchive);
     }
 
-    return dynamic_cast<void*>(newObject);
+    return dynamic_cast<IReferenceCountedObject*>(newObject);
 }
 }

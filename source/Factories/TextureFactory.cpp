@@ -7,11 +7,14 @@ Copyright (C), LIMITGAME, 2020
 @author minseob (leeminseob@outlook.com)
 ***********************************************************/
 #include "Core/Debug.h"
+#include "Core/Util.h"
+#include "Core/TextParser.h"
 #include "Factories/TextureFactory.h"
 #include "Factories/ResourceSourceFactory.h"
 #include "Renderer/Texture.h"
 #include "Managers/DrawManager.h"
 #include "Managers/TaskManager.h"
+#include "Managers/ResourceManager.h"
 
 #include <LEIntVector2.h>
 #include <LEFloatVector2.h>
@@ -19,21 +22,120 @@ Copyright (C), LIMITGAME, 2020
 #include <LEHalfVector4.h>
 
 namespace LimitEngine {
-void* TextureFactory::Create(const ResourceSourceFactory *SourceFactory, const void *data, size_t size)
+IReferenceCountedObject* TextureFactory::Create(const ResourceSourceFactory *SourceFactory, const ResourceFactory::FileData &Data)
 {
-    if (!data || !SourceFactory)
+    if (!Data.IsValid() || !SourceFactory)
         return NULL;
 
     Texture *output = nullptr;
-    if (TextureSourceImage* SourceImage = static_cast<TextureSourceImage*>(SourceFactory->ConvertRawData(data, size))) {
-        if (mImportFilter != TextureImportFilter::None) {
-            FilterSourceImage(SourceImage);
+    if (SourceFactory->GetID() == GENERATE_RESOURCEFACTORY_ID("TEPA")) {
+        if (TextParser *parser = static_cast<TextParser*>(SourceFactory->ConvertRawData(Data.Data, Data.Size))) {
+            TextParser::NODE *typenode = parser->GetNode("FILETYPE");
+            if (typenode && typenode->values[0] == "TEXTURE") {
+                SerializedTextureSource *SourceImage = new SerializedTextureSource();
+                if (TextParser::NODE *datanode = parser->GetNode("DATA")) {
+                    if (TextParser::NODE *widthnode = datanode->FindChild("WIDTH")) {
+                        SourceImage->mSize.SetX(widthnode->ToInt());
+                    }
+                    if (TextParser::NODE *heightnode = datanode->FindChild("HEIGHT")) {
+                        SourceImage->mSize.SetY(heightnode->ToInt());
+                    }
+                    if (TextParser::NODE *depthnode = datanode->FindChild("DEPTH")) {
+                        SourceImage->mSize.SetZ(depthnode->ToInt());
+                    }
+                    if (TextParser::NODE *formatnode = datanode->FindChild("FORMAT")) {
+                        if (formatnode->values[0] == "A8R8G8B8") {
+                            SourceImage->mFormat = static_cast<uint32>(TEXTURE_COLOR_FORMAT_A8R8G8B8);
+                        }
+                        else if (formatnode->values[0] == "R8G8B8") {
+                            SourceImage->mFormat = static_cast<uint32>(TEXTURE_COLOR_FORMAT_R8G8B8);
+                        }
+                        else if (formatnode->values[0] == "R8") {
+                            SourceImage->mFormat = static_cast<uint32>(TEXTURE_COLOR_FORMAT_R8);
+                        }
+                        else if (formatnode->values[0] == "R16F") {
+                            SourceImage->mFormat = static_cast<uint32>(TEXTURE_COLOR_FORMAT_R16F);
+                        }
+                        else if (formatnode->values[0] == "R32F") {
+                            SourceImage->mFormat = static_cast<uint32>(TEXTURE_COLOR_FORMAT_R32F);
+                        }
+                        else if (formatnode->values[0] == "A16B16G16R16F") {
+                            SourceImage->mFormat = static_cast<uint32>(TEXTURE_COLOR_FORMAT_A16B16G16R16F);
+                        }
+                        else if (formatnode->values[0] == "A32B32G32R32F") {
+                            SourceImage->mFormat = static_cast<uint32>(TEXTURE_COLOR_FORMAT_A32B32G32R32F);
+                        }
+                    }
+                    switch (static_cast<TEXTURE_COLOR_FORMAT>(SourceImage->mFormat))
+                    {
+                    case TEXTURE_COLOR_FORMAT_R8G8B8:
+                        SourceImage->mRowPitch = 3 * SourceImage->GetSize().X();
+                        break;
+                    case TEXTURE_COLOR_FORMAT_A8R8G8B8:
+                        SourceImage->mRowPitch = 4 * SourceImage->GetSize().X();
+                        break;
+                    case TEXTURE_COLOR_FORMAT_R8:
+                        SourceImage->mRowPitch = 1 * SourceImage->GetSize().X();
+                        break;
+                    case TEXTURE_COLOR_FORMAT_R16F:
+                        SourceImage->mRowPitch = 2 * SourceImage->GetSize().X();
+                        break;
+                    case TEXTURE_COLOR_FORMAT_G16R16F:
+                        SourceImage->mRowPitch = 4 * SourceImage->GetSize().X();
+                        break;
+                    case TEXTURE_COLOR_FORMAT_R32F:
+                        SourceImage->mRowPitch = 4 * SourceImage->GetSize().X();
+                        break;
+                    case TEXTURE_COLOR_FORMAT_A16B16G16R16F:
+                        SourceImage->mRowPitch = 8 * SourceImage->GetSize().X();
+                        break;
+                    case TEXTURE_COLOR_FORMAT_A32B32G32R32F:
+                        SourceImage->mRowPitch = 16 * SourceImage->GetSize().X();
+                        break;
+                    default:
+                        LEASSERT(0);
+                    }
+                    SourceImage->mIsCubemap = false;
+                    SourceImage->mColorData.Resize(SourceImage->GetRowPitch() * SourceImage->GetSize().Y() * SourceImage->GetDepth());
+                    char baseFolderPath[0xff];
+                    GetBaseFolderPath(Data.Filename, baseFolderPath);
+                    if (TextParser::NODE *filesnode = datanode->FindChild("FILES")) {
+                        uint32 ImageSliceSize = SourceImage->GetRowPitch() * SourceImage->GetSize().Y();
+                        for (uint32 fileindex = 0; fileindex < filesnode->children.count(); fileindex++) {
+                            TextParser::NODE *filenode = filesnode->children[fileindex];
+                            if (TextParser::NODE *filenamenode = filenode->FindChild("NAME")) {
+                                if (const char *filename = filenamenode->values[0]) {
+                                    String filepath(baseFolderPath);
+                                    filepath += "\\";
+                                    filepath += filename;
+                                    if (AutoPointer<ResourceManager::RESOURCE> Resource = LE_ResourceManager.GetResourceWithoutRegister(filepath.GetCharPtr(), TextureFactory::ID)) {
+                                        TextureRefPtr LoadedTexture = static_cast<Texture*>(Resource->data);
+                                        SerializedTextureSource *TextureSource = LoadedTexture->GetSourceImage();
+                                        if (SourceImage->GetSize() == TextureSource->GetSize() && TextureSource->GetFormat() == SourceImage->mFormat) {
+                                            ::memcpy(SourceImage->mColorData.GetData() + ImageSliceSize * fileindex, TextureSource->GetColorData(), ImageSliceSize);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                output = Texture::GenerateFromSourceImage(SourceImage);
+                delete SourceImage;
+            }
         }
-        output = Texture::GenerateFromSourceImage(SourceImage);
-        delete SourceImage;
     }
+    else if (SourceFactory->GetID() == GENERATE_RESOURCEFACTORY_ID("TGAS")) {
+        if (TextureSourceImage* SourceImage = static_cast<TextureSourceImage*>(SourceFactory->ConvertRawData(Data.Data, Data.Size))) {
+            if (mImportFilter != TextureImportFilter::None) {
+                FilterSourceImage(SourceImage);
+            }
+            output = Texture::GenerateFromSourceImage(SourceImage);
+            delete SourceImage;
+        }
+    } 
 
-    return output;
+    return dynamic_cast<IReferenceCountedObject*>(output);
 }
 void TextureFactory::FilterSourceImage(TextureSourceImage *SourceImage)
 {

@@ -55,7 +55,10 @@ public:
 
         //mSphereModel = Engine->LoadModel("models/sphere.model.text", LimitEngine::ModelFactory::ID, false);
         mSphereModel = Engine->LoadModel("models/sphere.model.lea", LimitEngine::ArchiveFactory::ID, false);
-        mSphereModel->InitResource();
+        if (mSphereModel.IsValid()) 
+        {
+            mSphereModel->InitResource();
+        }
         //if (mBackgroundImage = Engine->LoadTexture("textures/19F_reflection_4K.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
         //if (mBackgroundImage = Engine->LoadTexture("textures/19F_Irradiance_4K.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
         mBackgroundImage = Engine->LoadTexture("textures/19F_Background_2K.texture.lea", LimitEngine::ArchiveFactory::ID, false);

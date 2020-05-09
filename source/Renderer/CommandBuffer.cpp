@@ -280,6 +280,18 @@ void CommandBuffer::Flush(RenderState *rs)
                 if (command->shader)
                     command->shader->SetUniformFloat4(command->location, command->value);
             } break;
+            case COMMAND::cSetShaderUniformInt1:
+            {
+                COMMAND_SETSHADERUNIFORMINT1 *command = reinterpret_cast<COMMAND_SETSHADERUNIFORMINT1*>(currentCommand);
+                if (command->shader)
+                    command->shader->SetUniformInt1(command->location, command->value);
+            } break;
+            case COMMAND::cSetShaderUniformInt4:
+            {
+                COMMAND_SETSHADERUNIFORMINT4 *command = reinterpret_cast<COMMAND_SETSHADERUNIFORMINT4*>(currentCommand);
+                if (command->shader)
+                    command->shader->SetUniformInt4(command->location, command->value);
+            } break;
             case COMMAND::cSetShaderUniformMatrix4:
             {
                 COMMAND_SETSHADERUNIFORMMATRIX4 *command = reinterpret_cast<COMMAND_SETSHADERUNIFORMMATRIX4*>(currentCommand);
@@ -431,6 +443,16 @@ void DrawCommand::SetShaderUniformFloat2(Shader *shader, int location, const LEM
 void DrawCommand::SetShaderUniformFloat4(Shader *shader, int location, const LEMath::FloatVector4 &value)
 {
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETSHADERUNIFORMFLOAT4(shader, location, value);
+}
+
+void DrawCommand::SetShaderUniformInt1(Shader *shader, int location, const int value)
+{
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETSHADERUNIFORMINT1(shader, location, value);
+}
+
+void DrawCommand::SetShaderUniformInt4(Shader *shader, int location, const LEMath::IntVector4 &value)
+{
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETSHADERUNIFORMINT4(shader, location, value);
 }
 
 void DrawCommand::SetShaderUniformMatrix4(Shader *shader, int location, int size, float *pointer)

@@ -48,6 +48,9 @@ namespace LimitEngine {
         virtual void SetUniformFloat1(int loc, const float &f) = 0;
         virtual void SetUniformFloat2(int loc, const LEMath::FloatVector2 &v) = 0;
         virtual void SetUniformFloat4(int loc, const LEMath::FloatVector4 &v) = 0;
+        virtual void SetUniformInt1(int loc, const int32 &n) = 0;
+        virtual void SetUniformInt4(int loc, const LEMath::IntVector4 &v) = 0;
+
         virtual void SetUniformMatrix4(int loc, int size, float *f) = 0;
         virtual void* GetInputLayout(void *device, uint32 flag) = 0;
         
@@ -131,6 +134,10 @@ namespace LimitEngine {
         { if (mImpl) mImpl->SetUniformFloat2(location, v); }
         void SetUniformFloat4(int location, const LEMath::FloatVector4& v)
         { if (mImpl) mImpl->SetUniformFloat4(location, v); }
+        void SetUniformInt1(int location, const int32 v)
+        { if (mImpl) mImpl->SetUniformInt1(location, v); }
+        void SetUniformInt4(int location, const LEMath::IntVector4 &v)
+        { if (mImpl) mImpl->SetUniformInt4(location, v); }
         void SetUniformMatrix4(int location, int size, float *pointer)
         { if (mImpl) mImpl->SetUniformMatrix4(location, size, pointer); }
         void* GetInputLayout(void *device, uint32 flag) const

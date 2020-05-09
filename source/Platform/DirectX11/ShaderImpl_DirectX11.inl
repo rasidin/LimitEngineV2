@@ -375,6 +375,45 @@ namespace LimitEngine
             default: break;
             }
         }
+        void SetUniformInt1(int loc, const int32 &n) override
+        {
+            if (loc >= static_cast<int>(mShaderVariables.GetSize()))
+                return;
+            ShaderVariable &variable = mShaderVariables[loc];
+            switch (variable.shaderType)
+            {
+            case SHADER_VS:
+                *(int32*)(((uint8*)mVertexShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = n;
+                break;
+            case SHADER_PS:
+                *(int32*)(((uint8*)mPixelShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = n;
+                break;
+            case SHADER_CS:
+                *(int32*)(((uint8*)mComputeShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = n;
+                break;
+            default: break;
+            }
+        }
+        void SetUniformInt4(int loc, const LEMath::IntVector4 &v)
+        {
+            if (loc >= static_cast<int>(mShaderVariables.GetSize()))
+                return;
+
+            ShaderVariable &variable = mShaderVariables[loc];
+            switch (variable.shaderType)
+            {
+            case SHADER_VS:
+                *(LEMath::IntVector4*)(((uint8*)mVertexShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = v;
+                break;
+            case SHADER_PS:
+                *(LEMath::IntVector4*)(((uint8*)mPixelShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = v;
+                break;
+            case SHADER_CS:
+                *(LEMath::IntVector4*)(((uint8*)mComputeShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = v;
+                break;
+            default: break;
+            }
+        }
         void SetUniformMatrix4(int loc, int size, float *f) override
         {
             if (loc >= static_cast<int>(mShaderVariables.GetSize()))

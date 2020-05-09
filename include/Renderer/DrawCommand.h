@@ -41,6 +41,8 @@ class DrawCommand
     static void SetShaderUniformFloat1(Shader *shader, int location, const float v);
     static void SetShaderUniformFloat2(Shader *shader, int location, const LEMath::FloatVector2 &value);
     static void SetShaderUniformFloat4(Shader *shader, int location, const LEMath::FloatVector4 &v);
+    static void SetShaderUniformInt1(Shader *shader, int location, const int32 v);
+    static void SetShaderUniformInt4(Shader *shader, int location, const LEMath::IntVector4 &v);
     static void SetShaderUniformMatrix4(Shader *shader, int location, int size, float *pointer);
     static void SetCulling(uint32 cull);
     static void SetEnable(uint32 f);

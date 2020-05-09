@@ -122,6 +122,7 @@ private:
 
     bool mIsCubemap;
 
+    friend class TextureFactory;
     friend TextureSourceImage;
     friend Archive;
 };
@@ -179,6 +180,7 @@ public:
     void* GetDepthStencilView() const                   { return (mImpl)?mImpl->GetDepthStencilView():nullptr; }
 
     void SetSourceImage(SerializedTextureSource *InSource) { mSource = InSource; if (InSource) { mSize = InSource->GetSize(); mDepth = InSource->GetDepth(); mFormat = InSource->GetFormat(); } }
+    SerializedTextureSource* GetSourceImage() const     { return mSource; }
 
     virtual bool Serialize(Archive &OutArchive) override;
 
@@ -201,5 +203,4 @@ private:
 
     friend class TextureFactory;
 };
-typedef ReferenceCountedPointer<Texture> ReferenceCountedTexture;
 }

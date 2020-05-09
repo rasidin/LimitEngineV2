@@ -99,6 +99,7 @@ void TaskManager::ParallelTask::Run()
             delete mTasks[removeTarget];
             mTasks.erase(removeTarget);
         }
+        Sleep(1);
     }
 }
 

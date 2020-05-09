@@ -6,8 +6,8 @@
  @brief Draw Fullscreen (used by scenemanager)
  @author minseob (leeminseob@outlook.com)
  ***********************************************************/
- struct PS_INPUT
- {
+struct PS_INPUT
+{
  	float4 pos : SV_POSITION;
 	float4 color : COLOR;
 	float2 uv : TEXCOORD0;

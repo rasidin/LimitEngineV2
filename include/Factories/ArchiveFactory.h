@@ -19,7 +19,7 @@ public:
     ArchiveFactory();
     virtual ~ArchiveFactory();
 
-    void* Create(const ResourceSourceFactory *Format, const void *Data, size_t Size) override;
+    IReferenceCountedObject* Create(const ResourceSourceFactory *Format, const FileData &Data) override;
     void Release(void *Data) override {}
     uint32 GetResourceTypeCode() override { return 0u; }
 

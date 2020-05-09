@@ -9,6 +9,8 @@
 
 #define PI 3.14159265359
 
+// Hammersley on hemisphere
+// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
 float radicalInverse_VdC(uint bits) 
 {
     bits = (bits << 16u) | (bits >> 16u);
@@ -19,7 +21,7 @@ float radicalInverse_VdC(uint bits)
     return float(bits) * 2.3283064365386963e-10; // / 0x100000000
 }
 
-float2 Hammerslay2D(uint i, uint num)
+float2 Hammersley(uint i, uint num)
 {
 	return float2(float(i) / float(num), radicalInverse_VdC(i));
 }
@@ -33,4 +35,32 @@ float3 MakeDirectionFromLongLat(float2 longlat)
   float z = cos(longlat.x);
 
   return float3(x, y, z);
+}
+
+float3 RGBToYCoCg(float3 RGB)
+{
+	return float3(dot(RGB, float3( 1, 2, 1)), dot(RGB, float3( 2, 0,-2)), dot(RGB, float3(-1, 2,-1)));
+}
+
+float3 YCoCgToRGB(float3 YCoCg)
+{
+	float Y  = YCoCg.x * 0.25;
+	float Co = YCoCg.y * 0.25;
+	float Cg = YCoCg.z * 0.25;
+
+	return float3(Y + Co - Cg, Y + Cg, Y - Co - Cg);
+}
+
+Texture3D BlueNoiseTexture;
+SamplerState BlueNoiseSampler
+{
+	Filter = MIN_MAG_MIP_POINT;
+	AddressU = Wrap;
+	AddressV = Wrap;
+};
+float4 BlueNoiseContext;
+
+float GetBlueNoiseValue1(float3 pos)
+{
+	BlueNoiseTexture.Sample(BlueNoiseSampler, pos * BlueNoiseContext.x).r;
 }

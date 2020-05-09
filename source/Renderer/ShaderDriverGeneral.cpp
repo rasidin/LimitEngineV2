@@ -33,6 +33,7 @@ namespace LimitEngine {
         mParameter_invViewProjMat = getShaderUniformLocation(paramMap, "InvViewProjMatrix");
         mParameter_worldMat = getShaderUniformLocation(paramMap, "WorldMatrix");
         mParameter_camPos = getShaderUniformLocation(paramMap, "CameraPosition");
+        mParameter_bluenoise = getShaderUniformLocation(paramMap, "BlueNoiseContext");
 	}
     void ShaderDriverGeneral::setup(const Shader *InShader)
     {
@@ -41,26 +42,30 @@ namespace LimitEngine {
         mParameter_invViewProjMat = InShader->GetUniformLocation("InvViewProjMatrix");
         mParameter_worldMat = InShader->GetUniformLocation("WorldMatrix");
         mParameter_camPos = InShader->GetUniformLocation("CameraPosition");
+        mParameter_bluenoise = InShader->GetUniformLocation("BlueNoiseContext");
     }
 	void ShaderDriverGeneral::Apply(const RenderState &rs, const Material *material)
 	{
 		if(mOwnerShader == NULL)
 			return;
-		if(mParameter_wvpMat>=0) {
+		if(IsValidShaderParameterPosition(mParameter_wvpMat)) {
 			DrawCommand::SetShaderUniformMatrix4(mOwnerShader, mParameter_wvpMat, 1, (float*)&rs.GetWorldViewProjMatrix());
 		}
-		if(mParameter_invViewMat>=0) {
+		if(IsValidShaderParameterPosition(mParameter_invViewMat)) {
             DrawCommand::SetShaderUniformMatrix4(mOwnerShader, mParameter_invViewMat, 1, (float*)&rs.GetInvViewMatrix());
 		}
-        if (mParameter_invViewProjMat >= 0) {
+        if(IsValidShaderParameterPosition(mParameter_invViewProjMat)) {
             DrawCommand::SetShaderUniformMatrix4(mOwnerShader, mParameter_invViewProjMat, 1, (float*)&rs.GetInvViewProjMatrix());
         }
-        if(mParameter_worldMat>=0) {
+        if(IsValidShaderParameterPosition(mParameter_worldMat)) {
             DrawCommand::SetShaderUniformMatrix4(mOwnerShader, mParameter_worldMat, 1, (float*)&rs.GetWorldMatrix());
         }
-        if(mParameter_camPos >=0) {
+        if(IsValidShaderParameterPosition(mParameter_camPos)) {
             const LEMath::FloatVector3 &camPos = LE_SceneManager.GetCamera()->GetPosition();
             DrawCommand::SetShaderUniformFloat4(mOwnerShader, mParameter_camPos, (LEMath::DataContainer)camPos);
+        }
+        if(IsValidShaderParameterPosition(mParameter_bluenoise)) {
+            DrawCommand::SetShaderUniformFloat4(mOwnerShader, mParameter_bluenoise, rs.GetBlueNoiseContext());
         }
 	}
 } // namespace LimitEngine

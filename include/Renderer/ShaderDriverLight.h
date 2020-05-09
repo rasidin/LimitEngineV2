@@ -25,5 +25,6 @@ namespace LimitEngine {
     private:
         int32 mIBLRefTex_Position;
         int32 mIBLIrrTex_Position;
+        int32 mTemporalContext_Position;
     };
 } // LimitEngine

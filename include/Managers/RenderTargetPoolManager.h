@@ -75,7 +75,9 @@ class PooledRenderTarget
 public:
     PooledRenderTarget() : mTexture(nullptr) {}
     PooledRenderTarget(const PooledRenderTarget &RenderTarget);
-    ~PooledRenderTarget();
+    ~PooledRenderTarget() { Release(); }
+
+    void Release();
 
     Texture* Get() const {
         return mTexture;
@@ -83,11 +85,15 @@ public:
 
     PooledRenderTarget& operator = (const PooledRenderTarget &In)
     {
+        Release();
+
         mTexture = In.mTexture;
         mDesc = In.mDesc;
         mTexture->AddReferenceCounter();
         return *this;
     }
+
+    const RenderTargetDesc& GetDesc() const { return mDesc; }
 
     friend RenderTargetPoolManager;
 };
@@ -102,7 +108,9 @@ class PooledDepthStencil
 public:
     PooledDepthStencil() : mTexture(nullptr) {}
     PooledDepthStencil(const PooledDepthStencil &DepthStencil);
-    ~PooledDepthStencil();
+    ~PooledDepthStencil() { Release(); }
+
+    void Release();
 
     Texture* Get() const {
         return mTexture;
@@ -110,6 +118,8 @@ public:
 
     PooledDepthStencil& operator = (const PooledDepthStencil &In)
     {
+        Release();
+
         mTexture = In.mTexture;
         mDesc = In.mDesc;
         mTexture->AddReferenceCounter();
@@ -124,6 +134,7 @@ public:
     RenderTargetPoolManager();
     virtual ~RenderTargetPoolManager();
 
+    PooledRenderTarget GetRenderTarget(const RenderTargetDesc &InDesc);
     PooledRenderTarget GetRenderTarget(const LEMath::IntSize Size, uint32 Depth, TEXTURE_COLOR_FORMAT Format);
     void ReleaseRenderTarget(PooledRenderTarget &RenderTarget);
 
@@ -131,8 +142,10 @@ public:
     void ReleaseDepthStencil(PooledDepthStencil &DepthStencil);
 
 private:
-    MapArray<RenderTargetDesc, Texture*> mRTBuckets;
-    MapArray<DepthStencilDesc, Texture*> mDSBuckets;
+    typedef Pair<RenderTargetDesc, Texture*> RTBucketType;
+    VectorArray<RTBucketType> mRTBuckets;
+    typedef Pair<DepthStencilDesc, Texture*> DSBucketType;
+    VectorArray<DSBucketType> mDSBuckets;
 };
 #define LE_RenderTargetPoolManager RenderTargetPoolManager::GetSingleton()
 }

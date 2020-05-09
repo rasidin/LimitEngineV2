@@ -25,12 +25,47 @@
 #include "Renderer/Texture.h"
 
 namespace LimitEngine {
+class SceneUpdateTask_AddModel : public SceneManager::SceneUpdateTask
+{
+    ModelRefPtr mModel;
+
+public:
+    SceneUpdateTask_AddModel(Model *InModel) : mModel(InModel) {}
+    void Run(SceneManager *Manager) override
+    {
+        Manager->AddModel_UpdateTask(mModel.Get());
+    }
+};
+
+class SceneUpdateTask_AddLight : public SceneManager::SceneUpdateTask
+{
+    LightRefPtr mLight;
+
+public:
+    SceneUpdateTask_AddLight(Light *InLight) : mLight(InLight) {}
+    void Run(SceneManager *Manager) override
+    {
+        Manager->AddLight_UpdateTask(mLight.Get());
+    }
+};
+
+class SceneUpdateTask_SetCamera : public SceneManager::SceneUpdateTask
+{
+    CameraRefPtr mCamera;
+
+public:
+    SceneUpdateTask_SetCamera(Camera *InCamera) : mCamera(InCamera) {}
+    void Run(SceneManager *Manager) override
+    {
+        Manager->SetCamera_UpdateTask(mCamera.Get());
+    }
+};
+
 #ifdef WIN32
 SceneManager* SingletonSceneManager::mInstance = NULL;
 #endif
 SceneManager::SceneManager()
     : mCamera(new Camera())
-    , mOwnCamera(true)
     , mEnvironmentLight(nullptr)
 {
 }
@@ -154,19 +189,53 @@ void SceneManager::LoadFromText(const char *text)
     }
 }
 
-void SceneManager::AddLight(const LightRefPtr &light)
+void SceneManager::AddModel_UpdateTask(Model *InModel)
 {
-    mLights.Add(light);
+    mModels.push_back(InModel);
+}
 
-    if (light->GetType() == Light::TYPE_IBL) {
-        mEnvironmentLight = light;
+void SceneManager::AddModel(const ModelRefPtr &model)
+{
+    Mutex::ScopedLock lock(mUpdateSceneMutex);
+    mUpdateTasks.Add(new SceneUpdateTask_AddModel(model.Get()));
+}
+
+void SceneManager::AddLight_UpdateTask(Light *InLight)
+{
+    mLights.Add(InLight);
+
+    if (InLight->GetType() == Light::TYPE_IBL) {
+        mEnvironmentLight = InLight;
     }
 
-	mOnChangeEvent();
+    mOnChangeEvent();
+}
+
+void SceneManager::AddLight(const LightRefPtr &light)
+{
+    Mutex::ScopedLock lock(mUpdateSceneMutex);
+    mUpdateTasks.Add(new SceneUpdateTask_AddLight(light.Get()));
+}
+
+void SceneManager::SetCamera_UpdateTask(Camera *InCamera)
+{
+    mCamera = InCamera;
+    mOnChangeEvent();
+}
+
+void SceneManager::SetCamera(const CameraRefPtr &camera)
+{
+    Mutex::ScopedLock lock(mUpdateSceneMutex);
+    mUpdateTasks.Add(new SceneUpdateTask_SetCamera(camera.Get()));
 }
 
 void SceneManager::Update()
 {
+    updateSceneTasks();
+
+    // Get new render target
+    mSceneColor = LE_RenderTargetPoolManager.GetRenderTarget(mSceneColor.GetDesc());
+
     mCamera->Update();
     LE_DrawManager.SetViewMatrix(mCamera->GetViewMatrix());
     LE_DrawManager.SetProjectionMatrix(mCamera->GetProjectionMatrix());
@@ -175,6 +244,16 @@ void SceneManager::Update()
         LE_DrawManager.SetEnvironmentIrradianceMap(((LightIBL*)mEnvironmentLight.Get())->GetIBLIrradianceTexture());
     }
     LE_DrawManager.UpdateMatrices();
+}
+
+void SceneManager::updateSceneTasks()
+{
+    Mutex::ScopedLock lock(mUpdateSceneMutex);
+    for (uint32 i = 0; i < mUpdateTasks.count(); i++) {
+        mUpdateTasks[i]->Run(this);
+        delete mUpdateTasks[i];
+    }
+    mUpdateTasks.Clear();
 }
 
 void SceneManager::drawBackground()
@@ -189,7 +268,7 @@ void SceneManager::drawBackground()
         if (mBackgroundImage.IsValid()) DrawCommand::BindTexture(0, mBackgroundImage.Get());
         DrawCommand::SetBlendFunc(0, RendererFlag::BlendFlags::SOURCE);
         DrawCommand::SetDepthFunc(RendererFlag::TestFlags::ALWAYS);
-
+         
         Vertex2D *buffer = LE_Draw2DManager.GetVertexBuffer2D(6);
         buffer[0].SetPosition(LEMath::FloatVector3(0.0f, 0.0f, 0.0f));
         buffer[0].SetColor(0xffffffff);
@@ -224,12 +303,5 @@ void SceneManager::Draw()
     }
     DrawCommand::EndScene();
     DrawCommand::SetRenderTarget(0, nullptr, nullptr);
-}
-    
-void SceneManager::SetCamera(const CameraRefPtr &c)
-{
-    mCamera = c;
-    mOwnCamera = false;
-	mOnChangeEvent();
 }
 }
