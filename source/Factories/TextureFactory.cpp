@@ -125,7 +125,7 @@ IReferenceCountedObject* TextureFactory::Create(const ResourceSourceFactory *Sou
             }
         }
     }
-    else if (SourceFactory->GetID() == GENERATE_RESOURCEFACTORY_ID("TGAS")) {
+    else {
         if (TextureSourceImage* SourceImage = static_cast<TextureSourceImage*>(SourceFactory->ConvertRawData(Data.Data, Data.Size))) {
             if (mImportFilter != TextureImportFilter::None) {
                 FilterSourceImage(SourceImage);
