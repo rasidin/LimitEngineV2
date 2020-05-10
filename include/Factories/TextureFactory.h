@@ -31,7 +31,7 @@ public:
     void Release(void *data) override;
     uint32 GetResourceTypeCode() override { return makeResourceTypeCode("LMDL"); }
 
-    void FilterSourceImage(class TextureSourceImage *SourceImage);
+    class TextureSourceImage* FilterSourceImage(class TextureSourceImage *SourceImage);
     void SetSizeFilteredImage(const LEMath::IntVector2 &InSize) { mFilteredImageSize = InSize; }
 
     void SetImportFilter(TextureImportFilter Filter) { mImportFilter = Filter; }

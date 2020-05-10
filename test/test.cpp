@@ -36,10 +36,6 @@ public:
         //mCamera->SetExposureOffset(0.0f);
         Engine->SetMainCamera(mCamera.Get());
 
-        if (LimitEngine::TextureFactory *Factory = (LimitEngine::TextureFactory*)LimitEngine::ResourceManager::GetSingleton().GetFactory(LimitEngine::TextureFactory::ID)) {
-            Factory->SetImportFilter(LimitEngine::TextureFactory::TextureImportFilter::Irradiance);
-        }
-
         {
             LimitEngine::LightIBL *DefaultIBL = new LimitEngine::LightIBL();
             if (LimitEngine::Texture *IBLReflectionTexture = Engine->LoadTexture("textures/19F_Reflection_4K.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
@@ -61,8 +57,13 @@ public:
         }
         //if (mBackgroundImage = Engine->LoadTexture("textures/19F_reflection_4K.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
         //if (mBackgroundImage = Engine->LoadTexture("textures/19F_Irradiance_4K.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
-        mBackgroundImage = Engine->LoadTexture("textures/19F_Background_2K.texture.lea", LimitEngine::ArchiveFactory::ID, false);
-        //if (mBackgroundImage = Engine->LoadTexture("textures/Alexs_Apt_2k.tga", LimitEngine::TextureFactory::ID, false)) {
+        //mBackgroundImage = Engine->LoadTexture("textures/19F_Background_2K.texture.lea", LimitEngine::ArchiveFactory::ID, false);
+
+        if (LimitEngine::TextureFactory *Factory = (LimitEngine::TextureFactory*)LimitEngine::ResourceManager::GetSingleton().GetFactory(LimitEngine::TextureFactory::ID)) {
+            Factory->SetImportFilter(LimitEngine::TextureFactory::TextureImportFilter::Irradiance);
+            Factory->SetSizeFilteredImage(LEMath::IntVector2(128, 64));
+        }
+        mBackgroundImage = Engine->LoadTexture("textures/Alexs_Apt_2k.tga", LimitEngine::TextureFactory::ID, false);
         if (mBackgroundImage.IsValid()) {
             mBackgroundImage->InitResource();
             Engine->SetBackgroundImage(mBackgroundImage, LimitEngine::BackgroundImageType::Fullscreen);

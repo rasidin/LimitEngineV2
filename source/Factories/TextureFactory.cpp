@@ -128,7 +128,10 @@ IReferenceCountedObject* TextureFactory::Create(const ResourceSourceFactory *Sou
     else {
         if (TextureSourceImage* SourceImage = static_cast<TextureSourceImage*>(SourceFactory->ConvertRawData(Data.Data, Data.Size))) {
             if (mImportFilter != TextureImportFilter::None) {
-                FilterSourceImage(SourceImage);
+                if (TextureSourceImage *FilteredSourceImage = FilterSourceImage(SourceImage)) {
+                    delete SourceImage;
+                    SourceImage = FilteredSourceImage;
+                }
             }
             output = Texture::GenerateFromSourceImage(SourceImage);
             delete SourceImage;
@@ -137,7 +140,7 @@ IReferenceCountedObject* TextureFactory::Create(const ResourceSourceFactory *Sou
 
     return dynamic_cast<IReferenceCountedObject*>(output);
 }
-void TextureFactory::FilterSourceImage(TextureSourceImage *SourceImage)
+TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *SourceImage)
 {
     void *OrgData = malloc(SourceImage->GetColorDataSize());
     ::memcpy(OrgData, SourceImage->GetColorData(), SourceImage->GetColorDataSize());
@@ -177,19 +180,20 @@ void TextureFactory::FilterSourceImage(TextureSourceImage *SourceImage)
         }
         return OutColor;
     };
-    auto WriteToImage = [SourceImage](const LEMath::IntPoint &pos, LEMath::FloatColorRGBA color) {
-        switch (SourceImage->GetFormat())
+    SerializedTextureSource *filteredSourceImage = new SerializedTextureSource();
+    auto WriteToImage = [filteredSourceImage](const LEMath::IntPoint &pos, LEMath::FloatColorRGBA color) {
+        switch (filteredSourceImage->GetFormat())
         {
         case TEXTURE_COLOR_FORMAT_A16B16G16R16F: {
-            uint8* ColorDataPtr = (uint8*)SourceImage->GetColorData() + SourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(LEMath::half) * 4;
+            uint8* ColorDataPtr = (uint8*)filteredSourceImage->GetColorData() + filteredSourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(LEMath::half) * 4;
             *(LEMath::HalfVector4*)ColorDataPtr = (LEMath::HalfVector4)color;
         } break;
         case TEXTURE_COLOR_FORMAT_A32B32G32R32F: {
-            uint8* ColorDataPtr = (uint8*)SourceImage->GetColorData() + SourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(float) * 4;
+            uint8* ColorDataPtr = (uint8*)filteredSourceImage->GetColorData() + filteredSourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(float) * 4;
             *(LEMath::FloatColorRGBA*)ColorDataPtr = color;
         } break;
         case TEXTURE_COLOR_FORMAT_A8R8G8B8: {
-            uint8* ColorDataPtr = (uint8*)SourceImage->GetColorData() + SourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(uint8) * 4;
+            uint8* ColorDataPtr = (uint8*)filteredSourceImage->GetColorData() + filteredSourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(uint8) * 4;
             ColorDataPtr[0] = (uint8)(color.X() * 255);
             ColorDataPtr[1] = (uint8)(color.Y() * 255);
             ColorDataPtr[2] = (uint8)(color.Z() * 255);
@@ -201,6 +205,38 @@ void TextureFactory::FilterSourceImage(TextureSourceImage *SourceImage)
     };
 
     LEMath::IntSize imageSize = (mFilteredImageSize != LEMath::IntVector2::Zero)?mFilteredImageSize:SourceImage->GetSize();
+    filteredSourceImage->mSize = LEMath::IntVector3(imageSize.X(), imageSize.Y(), 1);
+    filteredSourceImage->mMipCount = 1;
+    filteredSourceImage->mIsCubemap = false;
+    filteredSourceImage->mFormat = SourceImage->GetFormat();
+    switch (filteredSourceImage->GetFormat())
+    {
+    case TEXTURE_COLOR_FORMAT_R8:
+        filteredSourceImage->mRowPitch = filteredSourceImage->mSize.X() * 1;
+        break;
+    case TEXTURE_COLOR_FORMAT_R16F:
+        filteredSourceImage->mRowPitch = filteredSourceImage->mSize.X() * 2;
+        break;
+    case TEXTURE_COLOR_FORMAT_R8G8B8:
+        filteredSourceImage->mRowPitch = filteredSourceImage->mSize.X() * 3;
+        break;
+    case TEXTURE_COLOR_FORMAT_R32F:
+    case TEXTURE_COLOR_FORMAT_G16R16F:
+    case TEXTURE_COLOR_FORMAT_A8R8G8B8:
+        filteredSourceImage->mRowPitch = filteredSourceImage->mSize.X() * 4;
+        break;
+    case TEXTURE_COLOR_FORMAT_A16B16G16R16F:
+        filteredSourceImage->mRowPitch = filteredSourceImage->mSize.X() * 8;
+        break;
+    case TEXTURE_COLOR_FORMAT_A32B32G32R32F:
+        filteredSourceImage->mRowPitch = filteredSourceImage->mSize.X() * 16;
+        break;
+    default:
+        delete filteredSourceImage;
+        return nullptr;
+    }
+    filteredSourceImage->mColorData.Resize(filteredSourceImage->mRowPitch * filteredSourceImage->GetSize().Y());
+
     static constexpr float SampleDelta = 0.025f;
     LE_TaskManager.ParallelFor(imageSize.Height(), [SampleImage, WriteToImage, imageSize](uint32 StepBegin, uint32 StepEnd) {
         for (uint32 y = StepBegin; y <= StepEnd; y++) {
@@ -214,13 +250,15 @@ void TextureFactory::FilterSourceImage(TextureSourceImage *SourceImage)
                 LEMath::FloatVector3 tangent = (up ^ normal).Normalize();
                 LEMath::FloatVector3 binormal = (normal ^ tangent).Normalize();
 
+                float theta = 0.0f;
+                float phi = 0.0f;
                 for (float phi = 0.0f; phi < 2.0f * LEMath::LEMath_PI; phi += SampleDelta) {
                     for (float theta = 0.0f; theta < 0.5f * LEMath::LEMath_PI; theta += SampleDelta) {
                         LEMath::FloatVector3 tangentNormal(sinf(theta) * cosf(phi), sinf(theta) * sinf(phi), cosf(theta));
                         LEMath::FloatVector3 sampleDirection = tangentNormal.X() * tangent + tangentNormal.Y() * binormal + tangentNormal.Z() * normal;
                         LEMath::FloatVector2 longlat = LEMath::FloatVector2(atan2f(sampleDirection.X(), sampleDirection.Z()), acos(sampleDirection.Y()));
                         LEMath::FloatPoint sampleUV = (longlat + LEMath::FloatVector2(0.5f * LEMath::LEMath_PI, 0.0f)) / LEMath::FloatVector2(2.0f * LEMath::LEMath_PI, LEMath::LEMath_PI);
-                        irradiance += SampleImage(sampleUV) * cos(theta) * sin(theta);
+                        irradiance += SampleImage(sampleUV) *cos(theta) * sin(theta);
                         numSamples++;
                     }
                 }
@@ -231,6 +269,8 @@ void TextureFactory::FilterSourceImage(TextureSourceImage *SourceImage)
             }
         }
     });
+
+    return dynamic_cast<TextureSourceImage*>(filteredSourceImage);
 }
 void TextureFactory::Release(void *data)
 {
