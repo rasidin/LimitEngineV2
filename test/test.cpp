@@ -42,7 +42,7 @@ public:
                 IBLReflectionTexture->InitResource();
                 DefaultIBL->SetIBLReflectionTexture(IBLReflectionTexture);
             }
-            if (LimitEngine::Texture *IBLIrradianceTexture = Engine->LoadTexture("textures/19F_Irradiance_4K.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
+            if (LimitEngine::Texture *IBLIrradianceTexture = Engine->LoadTexture("textures/19F_Irradiance.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
                 IBLIrradianceTexture->InitResource();
                 DefaultIBL->SetIBLIrradianceTexture(IBLIrradianceTexture);
             }
@@ -57,6 +57,7 @@ public:
         }
         //if (mBackgroundImage = Engine->LoadTexture("textures/19F_reflection_4K.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
         //if (mBackgroundImage = Engine->LoadTexture("textures/19F_Irradiance_4K.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
+
         //mBackgroundImage = Engine->LoadTexture("textures/19F_Background_2K.texture.lea", LimitEngine::ArchiveFactory::ID, false);
 
         if (LimitEngine::TextureFactory *Factory = (LimitEngine::TextureFactory*)LimitEngine::ResourceManager::GetSingleton().GetFactory(LimitEngine::TextureFactory::ID)) {
