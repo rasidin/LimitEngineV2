@@ -33,11 +33,13 @@ public:
 
     class TextureSourceImage* FilterSourceImage(class TextureSourceImage *SourceImage);
     void SetSizeFilteredImage(const LEMath::IntVector2 &InSize) { mFilteredImageSize = InSize; }
+    void SetIrrdianceSampleCount(uint32 count) { mIrradianceSampleCount = count; }
 
     void SetImportFilter(TextureImportFilter Filter) { mImportFilter = Filter; }
 
 private:
     TextureImportFilter mImportFilter = TextureImportFilter::None;
     LEMath::IntVector2  mFilteredImageSize = LEMath::IntVector2::Zero;
+    uint32 mIrradianceSampleCount = 1024u;
 };
 }

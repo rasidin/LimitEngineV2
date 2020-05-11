@@ -249,8 +249,8 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
         return LEMath::FloatVector2(float(i) / float(N), radicalInverse_VdC(i));
     };
 
-    LE_TaskManager.ParallelFor(imageSize.Height(), [SampleImage, WriteToImage, hammersley2d, imageSize](uint32 StepBegin, uint32 StepEnd) {
-        static constexpr uint32 NumSamples = 1024;
+    uint32 numSamples = mIrradianceSampleCount;
+    LE_TaskManager.ParallelFor(imageSize.Height(), [SampleImage, WriteToImage, hammersley2d, imageSize, numSamples](uint32 StepBegin, uint32 StepEnd) {
         for (uint32 y = StepBegin; y <= StepEnd; y++) {
             for (int x = 0; x < imageSize.Width(); x++) {
                 LEMath::FloatColorRGBA irradiance(0.0f, 0.0f, 0.0f, 1.0f);
@@ -262,9 +262,9 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
                 LEMath::FloatVector3 tangent = (up ^ normal).Normalize();
                 LEMath::FloatVector3 binormal = (normal ^ tangent).Normalize();
 
-                for (uint32 sample = 0; sample < NumSamples; sample++) {
-                    LEMath::FloatVector2 xi = hammersley2d(sample, NumSamples);
-                    float phi = xi.Y() * 2.0 * PI;
+                for (uint32 sample = 0; sample < numSamples; sample++) {
+                    LEMath::FloatVector2 xi = hammersley2d(sample, numSamples);
+                    float phi = xi.Y() * 2.0f * PI;
                     float cosTheta = sqrtf(1.0f - xi.X());
                     float sinTheta = (sample > 0)?sqrtf(1.0f - cosTheta * cosTheta):0.0f;
                     LEMath::FloatVector3 sampleDirectionInTangent(cosf(phi) * sinTheta, sinf(phi) * sinTheta, cosTheta);
@@ -273,7 +273,7 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
                     LEMath::FloatPoint sampleUV = (longlat + LEMath::FloatVector2(0.5f * LEMath::LEMath_PI, 0.0f)) / LEMath::FloatVector2(2.0f * LEMath::LEMath_PI, LEMath::LEMath_PI);
                     irradiance += SampleImage(sampleUV) * cosTheta * sinTheta;
                 }
-                irradiance /= (float)NumSamples;
+                irradiance /= (float)numSamples;
 
                 irradiance *= LEMath::LEMath_PI;
                 irradiance.SetW(1.0f);
