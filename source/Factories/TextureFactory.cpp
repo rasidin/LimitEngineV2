@@ -148,13 +148,13 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
         while (uv.X() < 0.0f) {
             uv.SetX(uv.X() + 1.0f);
         }
-        while (uv.X() > 1.0f) {
+        while (uv.X() >= 1.0f) {
             uv.SetX(uv.X() - 1.0f);
         }
         while (uv.Y() < 0.0f) {
             uv.SetY(uv.Y() + 1.0f);
         }
-        while (uv.Y() > 1.0f) {
+        while (uv.Y() >= 1.0f) {
             uv.SetY(uv.Y() - 1.0f);
         }
         LEMath::IntPoint pixelPos((int)(floorf(uv.X() * SourceImage->GetSize().X())), (int)(floorf(uv.Y() * SourceImage->GetSize().Y())));
