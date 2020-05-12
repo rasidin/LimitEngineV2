@@ -254,7 +254,6 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
         for (uint32 y = StepBegin; y <= StepEnd; y++) {
             for (int x = 0; x < imageSize.Width(); x++) {
                 LEMath::FloatColorRGBA irradiance(0.0f, 0.0f, 0.0f, 1.0f);
-                uint32 numSamples = 0u;
                 float centerTheta = LEMath::LEMath_PI * y / imageSize.Height();
                 float centerPhi = LEMath::LEMath_PI * 2.0f * x / imageSize.Width();
                 LEMath::FloatVector3 normal = LEMath::FloatVector3(-sinf(centerTheta) * cosf(centerPhi), cosf(centerTheta), sinf(centerTheta) * sinf(centerPhi));
