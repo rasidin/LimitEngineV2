@@ -263,18 +263,16 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
 
                 for (uint32 sample = 0; sample < numSamples; sample++) {
                     LEMath::FloatVector2 xi = hammersley2d(sample, numSamples);
-                    float phi = xi.Y() * 2.0f * PI;
-                    float cosTheta = sqrtf(1.0f - xi.X());
+                    float phi = xi.Y() * 2.0f * LEMath::LEMath_PI;
+                    float cosTheta = 1.0f - xi.X();
                     float sinTheta = (sample > 0)?sqrtf(1.0f - cosTheta * cosTheta):0.0f;
                     LEMath::FloatVector3 sampleDirectionInTangent(cosf(phi) * sinTheta, sinf(phi) * sinTheta, cosTheta);
                     LEMath::FloatVector3 sampleDirection = sampleDirectionInTangent.X() * tangent + sampleDirectionInTangent.Y() * binormal + sampleDirectionInTangent.Z() * normal;
                     LEMath::FloatVector2 longlat = LEMath::FloatVector2(atan2f(sampleDirection.X(), sampleDirection.Z()), acos(sampleDirection.Y()));
                     LEMath::FloatPoint sampleUV = (longlat + LEMath::FloatVector2(0.5f * LEMath::LEMath_PI, 0.0f)) / LEMath::FloatVector2(2.0f * LEMath::LEMath_PI, LEMath::LEMath_PI);
-                    irradiance += SampleImage(sampleUV) * cosTheta * sinTheta;
+                    irradiance += SampleImage(sampleUV) * cosTheta;
                 }
-                irradiance /= (float)numSamples;
-
-                irradiance *= LEMath::LEMath_PI;
+                irradiance *= 2.0f / (float)numSamples;
                 irradiance.SetW(1.0f);
                 WriteToImage(LEMath::IntPoint(x, y), irradiance);
             }
