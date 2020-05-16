@@ -73,6 +73,7 @@ private: // Private members
 
     FontRefPtr                       mSystemFont;
     TextureRefPtr                    mBlueNoiseTexture; 
+    TextureRefPtr                    mEnvironmentBRDF;
 
 	class Debug				        *mDebug;
 }; // Main

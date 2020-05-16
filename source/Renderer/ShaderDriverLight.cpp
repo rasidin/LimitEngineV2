@@ -44,17 +44,22 @@ namespace LimitEngine {
         if (IsValidShaderParameterPosition(mTemporalContext_Position)) {
             DrawCommand::SetShaderUniformInt4(material->GetShader().Get(), mTemporalContext_Position, rs.GetTemporalContext());
         }
+        if (IsValidShaderParameterPosition(mEnvBRDFTex_Position)) {
+            DrawCommand::BindTexture(mEnvBRDFTex_Position, rs.GetEnvironmentBRDFTexture().Get());
+        }
     }
 	void ShaderDriverLight::setup(const ShaderParameterParser::ParameterMap &paramMap)
     {
 		mIBLRefTex_Position =  getShaderTextureLocation(paramMap, "IBLReflectionTexture");
         mIBLIrrTex_Position =  getShaderTextureLocation(paramMap, "IBLIrradinaceTexture");
+        mEnvBRDFTex_Position = getShaderTextureLocation(paramMap, "EnvironmentBRDFTexture");
         mTemporalContext_Position = getShaderUniformLocation(paramMap, "TemporalContext");
     }
     void ShaderDriverLight::setup(const Shader *InShader)
     {
-        mIBLRefTex_Position = InShader->GetTextureLocation("IBLReflectionTexture");
-        mIBLIrrTex_Position = InShader->GetTextureLocation("IBLIrradianceTexture");
+        mIBLRefTex_Position       = InShader->GetTextureLocation("IBLReflectionTexture");
+        mIBLIrrTex_Position       = InShader->GetTextureLocation("IBLIrradianceTexture");
+        mEnvBRDFTex_Position      = InShader->GetTextureLocation("EnvironmentBRDFTexture");
         mTemporalContext_Position = InShader->GetUniformLocation("TemporalContext");
     }
 }

@@ -19,6 +19,7 @@ Copyright (C), LIMITGAME, 2020
 #include <LEIntVector2.h>
 #include <LEFloatVector2.h>
 #include <LEFloatVector3.h>
+#include <LEHalfVector2.h>
 #include <LEHalfVector4.h>
 
 namespace LimitEngine {
@@ -161,6 +162,16 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
         LEMath::FloatColorRGBA OutColor = LEMath::FloatColorRGBA::Zero;
         switch (SourceImage->GetFormat())
         {
+        case TEXTURE_COLOR_FORMAT_G16R16F: {
+            uint8* ColorDataPtr = (uint8*)OrgData + SourceImage->GetRowPitch() * pixelPos.Y() + pixelPos.X() * sizeof(LEMath::half) * 2;
+            LEMath::half *ColorDataHalfPtr = (LEMath::half*)ColorDataPtr;
+            OutColor = (LEMath::FloatColorRGBA)LEMath::HalfVector4(ColorDataHalfPtr[0], ColorDataHalfPtr[1], 0, 0);
+        } break;
+        case TEXTURE_COLOR_FORMAT_G32R32F: {
+            uint8* ColorDataPtr = (uint8*)OrgData + SourceImage->GetRowPitch() * pixelPos.Y() + pixelPos.X() * sizeof(float) * 2;
+            float *ColorDataFloatPtr = (float*)ColorDataPtr;
+            OutColor = LEMath::FloatColorRGBA(ColorDataFloatPtr[0], ColorDataFloatPtr[1], 0.0f, 0.0f);
+        }
         case TEXTURE_COLOR_FORMAT_A16B16G16R16F: {
             uint8* ColorDataPtr = (uint8*)OrgData + SourceImage->GetRowPitch() * pixelPos.Y() + pixelPos.X() * sizeof(LEMath::half) * 4;
             LEMath::half *ColorDataHalfPtr = (LEMath::half*)ColorDataPtr;
@@ -185,6 +196,18 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
         uint32 sliceStride = filteredSourceImage->GetRowPitch() * filteredSourceImage->GetSize().Y();
         switch (filteredSourceImage->GetFormat())
         {
+        case TEXTURE_COLOR_FORMAT_G16R16F: {
+            uint32 colorDataOffset = sliceStride * pos.Z() + filteredSourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(LEMath::half) * 2;
+            LEASSERT(colorDataOffset < filteredSourceImage->GetColorDataSize());
+            uint8* ColorDataPtr = (uint8*)filteredSourceImage->GetColorData() + colorDataOffset;
+            *(LEMath::HalfVector2*)ColorDataPtr = (LEMath::HalfVector2)color;
+        } break;
+        case TEXTURE_COLOR_FORMAT_G32R32F: {
+            uint32 colorDataOffset = sliceStride * pos.Z() + filteredSourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(float) * 2;
+            LEASSERT(colorDataOffset < filteredSourceImage->GetColorDataSize());
+            uint8* ColorDataPtr = (uint8*)filteredSourceImage->GetColorData() + colorDataOffset;
+            *(LEMath::FloatVector2*)ColorDataPtr = LEMath::FloatVector2(color.X(), color.Y());
+        } break;
         case TEXTURE_COLOR_FORMAT_A16B16G16R16F: {
             uint32 colorDataOffset = sliceStride * pos.Z() + filteredSourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(LEMath::half) * 4;
             LEASSERT(colorDataOffset < filteredSourceImage->GetColorDataSize());
@@ -215,7 +238,7 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
     filteredSourceImage->mSize = LEMath::IntVector3(imageSize.X(), imageSize.Y(), (mImportFilter==TextureImportFilter::Reflection)?5:1);
     filteredSourceImage->mMipCount = 1;
     filteredSourceImage->mIsCubemap = false;
-    filteredSourceImage->mFormat = SourceImage->GetFormat();
+    filteredSourceImage->mFormat = (mImportFilter == TextureImportFilter::EnvironmentBRDF)?TEXTURE_COLOR_FORMAT_G32R32F:SourceImage->GetFormat();
     switch (filteredSourceImage->GetFormat())
     {
     case TEXTURE_COLOR_FORMAT_R8:
@@ -232,6 +255,7 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
     case TEXTURE_COLOR_FORMAT_A8R8G8B8:
         filteredSourceImage->mRowPitch = filteredSourceImage->mSize.X() * 4;
         break;
+    case TEXTURE_COLOR_FORMAT_G32R32F:
     case TEXTURE_COLOR_FORMAT_A16B16G16R16F:
         filteredSourceImage->mRowPitch = filteredSourceImage->mSize.X() * 8;
         break;
@@ -245,6 +269,10 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
     uint32 sliceStride = filteredSourceImage->mRowPitch * filteredSourceImage->GetSize().Y();
     filteredSourceImage->mColorData.Resize(sliceStride * filteredSourceImage->mSize.Z());
 
+    auto saturate = [](float v) {
+        return min(1.0f, max(0.0f, v));
+    };
+
     auto radicalInverse_VdC = [](uint32 bits) {
         bits = (bits << 16u) | (bits >> 16u);
         bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
@@ -257,7 +285,47 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
         return LEMath::FloatVector2(float(i) / float(N), radicalInverse_VdC(i));
     };
 
-    uint32 numSamples = mIrradianceSampleCount;
+    auto GSmith = [](float d, float r) {
+        float k = (r + 1) * (r + 1) / 8;
+        return d / ((1 - k) * d + k);
+    };
+
+    uint32 numSamples = mSampleCount;
+
+    auto IntergrateBRDF = [numSamples, hammersley2d, GSmith, saturate](float Roughness, float NoV) {
+        float r2 = Roughness * Roughness;
+        LEMath::FloatVector3 V((NoV>=1.0f)?0.0f:sqrtf(1.0f - NoV * NoV), NoV, 0.0f);
+
+        LEMath::FloatVector3 N(0.0f, 1.0f, 0.0f);
+        LEMath::FloatVector3 T(1.0f, 0.0f, 0.0f);
+        LEMath::FloatVector3 B(0.0f, 0.0f, 1.0f);
+
+        float X = 0.0f, Y = 0.0f;
+        for (uint32 sampleIndex = 0; sampleIndex < numSamples; sampleIndex++) {
+            LEMath::FloatVector2 xi = hammersley2d(sampleIndex, numSamples);
+            float phi = xi.Y() * 2.0f * LEMath::LEMath_PI;
+            float cosTheta = sqrtf((1.0f - xi.X()) / (1.0f + (r2 * r2 - 1.0f) * xi.X()));
+            float sinTheta = (cosTheta >= 1.0f)?0.0f:sqrtf(1.0f - cosTheta * cosTheta);
+            LEMath::FloatVector3 sampleDirectionInTangent(cosf(phi) * sinTheta, sinf(phi) * sinTheta, cosTheta);
+            LEMath::FloatVector3 H = sampleDirectionInTangent.X() * T + sampleDirectionInTangent.Y() * B + sampleDirectionInTangent.Z() * N;
+            LEMath::FloatVector3 L = 2 * (N | H) * H - N;
+
+            float NoL = saturate(N | L);
+            float NoV = saturate(N | V);
+            float VoH = saturate(V | H);
+            float NoH = saturate(N | H);
+            if (NoL > 0.0f) {
+                float G = GSmith(NoL, Roughness) * GSmith(NoV, Roughness);
+                float Visualization = (NoH == 0 || NoV == 0)?0.0f:(G * VoH / (NoH * NoV));
+                float FresnelFactor = powf(1.0f - VoH, 5.0f);
+                X += (1.0f - FresnelFactor) * Visualization;
+                Y += FresnelFactor * Visualization;
+            }
+        }
+
+        return LEMath::FloatVector2(X, Y) / numSamples;
+    };
+
     switch (mImportFilter) {
     case TextureImportFilter::Irradiance: {
         LE_TaskManager.ParallelFor(imageSize.Height(), [SampleImage, WriteToImage, hammersley2d, imageSize, numSamples](uint32 StepBegin, uint32 StepEnd) {
@@ -331,6 +399,16 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
                 }
             }
         });
+    } break;
+    case TextureImportFilter::EnvironmentBRDF: {
+        for (uint32 y = 0; y < imageSize.Height(); y++) {
+            for (int x = 0; x < imageSize.Width(); x++) {
+                float roughness = (float)y / imageSize.Height();
+                float NoV = 1.0f - (float)x / imageSize.Width();
+                LEMath::FloatVector2 envBRDF = IntergrateBRDF(roughness, NoV);
+                WriteToImage(LEMath::IntVector3(x, y, 0), LEMath::FloatVector4(envBRDF.X(), envBRDF.Y(), 0.0f, 0.0f));
+            }
+        }
     } break;
     }
 

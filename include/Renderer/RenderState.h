@@ -75,6 +75,8 @@ namespace LimitEngine {
         TextureRefPtr GetIBLReflectionTexture() const                           { return mEnvironmentTextures.iblReflectionTexture; }
         void SetIBLIrradianceTexture(const TextureRefPtr &ibltex)               { mEnvironmentTextures.iblIrradianceTexture = ibltex; }
         TextureRefPtr GetIBLIrradianceTexture() const                           { return mEnvironmentTextures.iblIrradianceTexture; }
+        void SetEnvironmentBRDFTexture(const TextureRefPtr &envBRDFtex)         { mEnvironmentTextures.environmentBRDFTexture = envBRDFtex; }
+        TextureRefPtr GetEnvironmentBRDFTexture() const                         { return mEnvironmentTextures.environmentBRDFTexture; }
 
     private:
         bool mSceneBegan;
@@ -107,6 +109,7 @@ namespace LimitEngine {
         struct EnvironmentTextures {
             TextureRefPtr    iblReflectionTexture;
             TextureRefPtr    iblIrradianceTexture;
+            TextureRefPtr    environmentBRDFTexture;
         } mEnvironmentTextures;
     };
 }

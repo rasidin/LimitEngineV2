@@ -157,6 +157,8 @@ public:                    // Interfaces
     void                SetEnvironmentIrradianceMap(const TextureRefPtr &InTexture)     { mRenderState->SetIBLIrradianceTexture(InTexture); }
     void                UpdateMatrices();
 
+    void                SetEnvironmentBRDFTexture(const TextureRefPtr &InTexture)       { mRenderState->SetEnvironmentBRDFTexture(InTexture); }
+
     // RenderState
     const RenderState& GetRenderState() const { return *mRenderState; }
 

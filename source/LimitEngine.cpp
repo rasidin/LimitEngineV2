@@ -44,6 +44,17 @@ void LimitEngine::Init(WINDOW_HANDLE handle, const InitializeOptions &Options)
     //}
     mSystemFont->InitResource();
 
+    if (TextureFactory *Factory = (TextureFactory*)ResourceManager::GetSingleton().GetFactory(TextureFactory::ID)) {
+        Factory->SetImportFilter(TextureFactory::TextureImportFilter::EnvironmentBRDF);
+        Factory->SetSizeFilteredImage(LEMath::IntVector2(128, 128));
+        Factory->SetSampleCount(256);
+    }
+    if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("textures/Alexs_Apt_2k.tga", TextureFactory::ID)) {
+        mEnvironmentBRDF = (Texture*)(LoadedResource->data);
+        mEnvironmentBRDF->InitResource();
+        mDrawManager->SetEnvironmentBRDFTexture(mEnvironmentBRDF);
+    }
+
     if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("textures/BlueNoise.texture.text", TextureFactory::ID)) {
         mBlueNoiseTexture = (Texture*)(LoadedResource->data);
         mBlueNoiseTexture->InitResource();
