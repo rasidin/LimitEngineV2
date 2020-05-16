@@ -401,14 +401,16 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
         });
     } break;
     case TextureImportFilter::EnvironmentBRDF: {
-        for (uint32 y = 0; y < imageSize.Height(); y++) {
-            for (int x = 0; x < imageSize.Width(); x++) {
-                float roughness = (float)y / imageSize.Height();
-                float NoV = 1.0f - (float)x / imageSize.Width();
-                LEMath::FloatVector2 envBRDF = IntergrateBRDF(roughness, NoV);
-                WriteToImage(LEMath::IntVector3(x, y, 0), LEMath::FloatVector4(envBRDF.X(), envBRDF.Y(), 0.0f, 0.0f));
+        LE_TaskManager.ParallelFor(imageSize.Height(), [WriteToImage, IntergrateBRDF, imageSize](uint32 StepBegin, uint32 StepEnd) {
+            for (uint32 y = StepBegin; y <= StepEnd; y++) {
+                for (int x = 0; x < imageSize.Width(); x++) {
+                    float roughness = (float)y / imageSize.Height();
+                    float NoV = 1.0f - (float)x / imageSize.Width();
+                    LEMath::FloatVector2 envBRDF = IntergrateBRDF(roughness, NoV);
+                    WriteToImage(LEMath::IntVector3(x, y, 0), LEMath::FloatVector4(envBRDF.X(), envBRDF.Y(), 0.0f, 0.0f));
+                }
             }
-        }
+        });
     } break;
     }
 
