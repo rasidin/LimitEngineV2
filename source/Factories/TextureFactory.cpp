@@ -181,19 +181,26 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
         return OutColor;
     };
     SerializedTextureSource *filteredSourceImage = new SerializedTextureSource();
-    auto WriteToImage = [filteredSourceImage](const LEMath::IntPoint &pos, LEMath::FloatColorRGBA color) {
+    auto WriteToImage = [filteredSourceImage](const LEMath::IntVector3 &pos, LEMath::FloatColorRGBA color) {
+        uint32 sliceStride = filteredSourceImage->GetRowPitch() * filteredSourceImage->GetSize().Y();
         switch (filteredSourceImage->GetFormat())
         {
         case TEXTURE_COLOR_FORMAT_A16B16G16R16F: {
-            uint8* ColorDataPtr = (uint8*)filteredSourceImage->GetColorData() + filteredSourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(LEMath::half) * 4;
+            uint32 colorDataOffset = sliceStride * pos.Z() + filteredSourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(LEMath::half) * 4;
+            LEASSERT(colorDataOffset < filteredSourceImage->GetColorDataSize());
+            uint8* ColorDataPtr = (uint8*)filteredSourceImage->GetColorData() + colorDataOffset;
             *(LEMath::HalfVector4*)ColorDataPtr = (LEMath::HalfVector4)color;
         } break;
         case TEXTURE_COLOR_FORMAT_A32B32G32R32F: {
-            uint8* ColorDataPtr = (uint8*)filteredSourceImage->GetColorData() + filteredSourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(float) * 4;
+            uint32 colorDataOffset = sliceStride * pos.Z() + filteredSourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(float) * 4;
+            LEASSERT(colorDataOffset < filteredSourceImage->GetColorDataSize());
+            uint8* ColorDataPtr = (uint8*)filteredSourceImage->GetColorData() + colorDataOffset;
             *(LEMath::FloatColorRGBA*)ColorDataPtr = color;
         } break;
         case TEXTURE_COLOR_FORMAT_A8R8G8B8: {
-            uint8* ColorDataPtr = (uint8*)filteredSourceImage->GetColorData() + filteredSourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(uint8) * 4;
+            uint32 colorDataOffset = sliceStride * pos.Z() + filteredSourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(uint8) * 4;
+            LEASSERT(colorDataOffset < filteredSourceImage->GetColorDataSize());
+            uint8* ColorDataPtr = (uint8*)filteredSourceImage->GetColorData() + colorDataOffset;
             ColorDataPtr[0] = (uint8)(color.X() * 255);
             ColorDataPtr[1] = (uint8)(color.Y() * 255);
             ColorDataPtr[2] = (uint8)(color.Z() * 255);
@@ -205,7 +212,7 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
     };
 
     LEMath::IntSize imageSize = (mFilteredImageSize != LEMath::IntVector2::Zero)?mFilteredImageSize:SourceImage->GetSize();
-    filteredSourceImage->mSize = LEMath::IntVector3(imageSize.X(), imageSize.Y(), 1);
+    filteredSourceImage->mSize = LEMath::IntVector3(imageSize.X(), imageSize.Y(), (mImportFilter==TextureImportFilter::Reflection)?5:1);
     filteredSourceImage->mMipCount = 1;
     filteredSourceImage->mIsCubemap = false;
     filteredSourceImage->mFormat = SourceImage->GetFormat();
@@ -235,7 +242,8 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
         delete filteredSourceImage;
         return nullptr;
     }
-    filteredSourceImage->mColorData.Resize(filteredSourceImage->mRowPitch * filteredSourceImage->GetSize().Y());
+    uint32 sliceStride = filteredSourceImage->mRowPitch * filteredSourceImage->GetSize().Y();
+    filteredSourceImage->mColorData.Resize(sliceStride * filteredSourceImage->mSize.Z());
 
     auto radicalInverse_VdC = [](uint32 bits) {
         bits = (bits << 16u) | (bits >> 16u);
@@ -250,34 +258,81 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
     };
 
     uint32 numSamples = mIrradianceSampleCount;
-    LE_TaskManager.ParallelFor(imageSize.Height(), [SampleImage, WriteToImage, hammersley2d, imageSize, numSamples](uint32 StepBegin, uint32 StepEnd) {
-        for (uint32 y = StepBegin; y <= StepEnd; y++) {
-            for (int x = 0; x < imageSize.Width(); x++) {
-                LEMath::FloatColorRGBA irradiance(0.0f, 0.0f, 0.0f, 1.0f);
-                float centerTheta = LEMath::LEMath_PI * y / imageSize.Height();
-                float centerPhi = LEMath::LEMath_PI * 2.0f * x / imageSize.Width();
-                LEMath::FloatVector3 normal = LEMath::FloatVector3(-sinf(centerTheta) * cosf(centerPhi), cosf(centerTheta), sinf(centerTheta) * sinf(centerPhi));
-                LEMath::FloatVector3 up = (y == 0 || y == imageSize.Height() - 1) ? (LEMath::FloatVector3(1.0f, 0.0f, 0.0f)) : LEMath::FloatVector3(0.0f, 1.0f, 0.0f);
-                LEMath::FloatVector3 tangent = (up ^ normal).Normalize();
-                LEMath::FloatVector3 binormal = (normal ^ tangent).Normalize();
+    switch (mImportFilter) {
+    case TextureImportFilter::Irradiance: {
+        LE_TaskManager.ParallelFor(imageSize.Height(), [SampleImage, WriteToImage, hammersley2d, imageSize, numSamples](uint32 StepBegin, uint32 StepEnd) {
+            for (uint32 y = StepBegin; y <= StepEnd; y++) {
+                for (int x = 0; x < imageSize.Width(); x++) {
+                    LEMath::FloatColorRGBA irradiance(0.0f, 0.0f, 0.0f, 1.0f);
+                    float centerTheta = LEMath::LEMath_PI * y / imageSize.Height();
+                    float centerPhi = LEMath::LEMath_PI * 2.0f * x / imageSize.Width();
+                    LEMath::FloatVector3 normal = LEMath::FloatVector3(-sinf(centerTheta) * cosf(centerPhi), cosf(centerTheta), sinf(centerTheta) * sinf(centerPhi));
+                    LEMath::FloatVector3 up = (y == 0 || y == imageSize.Height() - 1) ? (LEMath::FloatVector3(1.0f, 0.0f, 0.0f)) : LEMath::FloatVector3(0.0f, 1.0f, 0.0f);
+                    LEMath::FloatVector3 tangent = (up ^ normal).Normalize();
+                    LEMath::FloatVector3 binormal = (normal ^ tangent).Normalize();
 
-                for (uint32 sample = 0; sample < numSamples; sample++) {
-                    LEMath::FloatVector2 xi = hammersley2d(sample, numSamples);
-                    float phi = xi.Y() * 2.0f * LEMath::LEMath_PI;
-                    float cosTheta = 1.0f - xi.X();
-                    float sinTheta = (sample > 0)?sqrtf(1.0f - cosTheta * cosTheta):0.0f;
-                    LEMath::FloatVector3 sampleDirectionInTangent(cosf(phi) * sinTheta, sinf(phi) * sinTheta, cosTheta);
-                    LEMath::FloatVector3 sampleDirection = sampleDirectionInTangent.X() * tangent + sampleDirectionInTangent.Y() * binormal + sampleDirectionInTangent.Z() * normal;
-                    LEMath::FloatVector2 longlat = LEMath::FloatVector2(atan2f(sampleDirection.X(), sampleDirection.Z()), acos(sampleDirection.Y()));
-                    LEMath::FloatPoint sampleUV = (longlat + LEMath::FloatVector2(0.5f * LEMath::LEMath_PI, 0.0f)) / LEMath::FloatVector2(2.0f * LEMath::LEMath_PI, LEMath::LEMath_PI);
-                    irradiance += SampleImage(sampleUV) * cosTheta;
+                    for (uint32 sample = 0; sample < numSamples; sample++) {
+                        LEMath::FloatVector2 xi = hammersley2d(sample, numSamples);
+                        float phi = xi.Y() * 2.0f * LEMath::LEMath_PI;
+                        float cosTheta = 1.0f - xi.X();
+                        float sinTheta = (sample > 0) ? sqrtf(1.0f - cosTheta * cosTheta) : 0.0f;
+                        LEMath::FloatVector3 sampleDirectionInTangent(cosf(phi) * sinTheta, sinf(phi) * sinTheta, cosTheta);
+                        LEMath::FloatVector3 sampleDirection = sampleDirectionInTangent.X() * tangent + sampleDirectionInTangent.Y() * binormal + sampleDirectionInTangent.Z() * normal;
+                        LEMath::FloatVector2 longlat = LEMath::FloatVector2(atan2f(sampleDirection.X(), sampleDirection.Z()), acos(sampleDirection.Y()));
+                        LEMath::FloatPoint sampleUV = (longlat + LEMath::FloatVector2(0.5f * LEMath::LEMath_PI, 0.0f)) / LEMath::FloatVector2(2.0f * LEMath::LEMath_PI, LEMath::LEMath_PI);
+                        irradiance += SampleImage(sampleUV) * cosTheta * sinTheta;
+                    }
+                    irradiance /= (float)numSamples;
+                    irradiance *= LEMath::LEMath_PI;
+                    irradiance.SetW(1.0f);
+                    WriteToImage(LEMath::IntVector3(x, y, 0), irradiance);
                 }
-                irradiance *= 2.0f / (float)numSamples;
-                irradiance.SetW(1.0f);
-                WriteToImage(LEMath::IntPoint(x, y), irradiance);
             }
-        }
-    });
+        });
+    } break;
+    case TextureImportFilter::Reflection: {
+        LE_TaskManager.ParallelFor(5, [SampleImage, WriteToImage, hammersley2d, imageSize, numSamples](uint32 StepBegin, uint32 StepEnd) {
+            float roughness = StepBegin * 0.25f;
+            for (uint32 y = 0; y < imageSize.Height(); y++) {
+                for (int x = 0; x < imageSize.Width(); x++) {
+                    LEMath::FloatColorRGBA radiance(0.0f, 0.0f, 0.0f, 1.0f);
+                    float centerTheta = LEMath::LEMath_PI * y / imageSize.Height();
+                    float centerPhi = LEMath::LEMath_PI * 2.0f * x / imageSize.Width();
+                    LEMath::FloatVector3 normal = LEMath::FloatVector3(-sinf(centerTheta) * cosf(centerPhi), cosf(centerTheta), sinf(centerTheta) * sinf(centerPhi));
+                    LEMath::FloatVector3 up = (y == 0 || y == imageSize.Height() - 1) ? (LEMath::FloatVector3(1.0f, 0.0f, 0.0f)) : LEMath::FloatVector3(0.0f, 1.0f, 0.0f);
+                    LEMath::FloatVector3 tangent = (up ^ normal).Normalize();
+                    LEMath::FloatVector3 binormal = (normal ^ tangent).Normalize();
+
+                    float weight = 0.0f;
+                    uint32 sampleCount = numSamples * StepBegin + 1;
+                    for (uint32 sample = 0; sample < sampleCount; sample++) {
+                        LEMath::FloatVector2 xi = hammersley2d(sample, sampleCount);
+                        
+                        float r2 = roughness * roughness;
+
+                        float phi = xi.Y() * 2.0f * LEMath::LEMath_PI;
+                        float cosTheta = sqrtf((1.0f - xi.X()) / (1.0f + (r2 * r2 - 1.0f) * xi.X()));
+                        float sinTheta = sqrtf(max(1.0e-4f, 1.0f - cosTheta * cosTheta));
+                        LEMath::FloatVector3 sampleDirectionInTangent(cosf(phi) * sinTheta, sinf(phi) * sinTheta, cosTheta);
+                        LEMath::FloatVector3 H = sampleDirectionInTangent.X() * tangent + sampleDirectionInTangent.Y() * binormal + sampleDirectionInTangent.Z() * normal;
+                        LEMath::FloatVector3 L = 2 * (normal | H) * H - normal;
+
+                        float NoL = normal | L;
+                        if (NoL > 0) {
+                            LEMath::FloatVector2 longlat = LEMath::FloatVector2(atan2f(L.X(), L.Z()), acos(L.Y()));
+                            LEMath::FloatPoint sampleUV = (longlat + LEMath::FloatVector2(0.5f * LEMath::LEMath_PI, 0.0f)) / LEMath::FloatVector2(2.0f * LEMath::LEMath_PI, LEMath::LEMath_PI);
+                            radiance += SampleImage(sampleUV) * NoL;
+                            weight += NoL;
+                        }
+                    }
+                    radiance /= weight;
+                    radiance.SetW(1.0f);
+                    WriteToImage(LEMath::IntVector3(x, y, StepBegin), radiance);
+                }
+            }
+        });
+    } break;
+    }
 
     return dynamic_cast<TextureSourceImage*>(filteredSourceImage);
 }

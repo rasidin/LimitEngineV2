@@ -275,7 +275,8 @@ namespace LimitEngine
         mRenderState->SetInvViewProjMatrix(viewProjMatrix.Inverse());
 
         mRenderState->SetTemporalContext(
-            temporalAAIndex, mTemporalAASamples, 32, 32 * mTemporalAASamples
+            //temporalAAIndex, mTemporalAASamples, 32, 32 * mTemporalAASamples
+            0, 1, 128, 128
         );
 
         mFrameCounter++;

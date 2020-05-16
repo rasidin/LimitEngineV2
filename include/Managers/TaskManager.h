@@ -124,16 +124,22 @@ public:				// Public Functions
             }
         }
 
-        uint32 step = LoopCount / (idleParallels.count() + 1);
-        uint32 currentLoopNum = 0;
-        for (uint32 Index = 0; Index < idleParallels.count(); Index++) {
+        uint32 step = max(1, LoopCount / (idleParallels.count() + 1));
+        uint32 currentLoopNum = 0u;
+        uint32 usedParallelTaskCount = 0u;
+        for (uint32 Index = 0; Index < idleParallels.count(); Index++, usedParallelTaskCount++) {
             idleParallels[Index]->AddTask(new ParallelForTask<L>(Forward<L>(Func), currentLoopNum, currentLoopNum + step - 1));
             currentLoopNum += step;
+            if (currentLoopNum >= LoopCount) {
+                usedParallelTaskCount++;
+                break;
+            }
         }
-        Func(currentLoopNum, static_cast<uint32>(LoopCount - 1));
+        if (currentLoopNum < LoopCount)
+            Func(currentLoopNum, static_cast<uint32>(LoopCount - 1));
         while (1) {
             bool bAllClear = true;
-            for (uint32 Index = 0; Index < idleParallels.count(); Index++) {
+            for (uint32 Index = 0; Index < usedParallelTaskCount; Index++) {
                 bAllClear &= idleParallels[Index]->IsIdle();
             }
             if (bAllClear) break;
