@@ -7,6 +7,25 @@
  @author minseob (leeminseob@outlook.com)
 ***********************************************************/
 
+#ifndef USE_IMPORTANCE_SAMPLING
+#define USE_IMPORTANCE_SAMPLING 0
+#endif
+#ifndef USE_ENVIRONMENT_BRDF
+#define USE_ENVIRONMENT_BRDF 1
+#endif
+
+Texture2D EnvironmentBRDFTexture;
+SamplerState EnvironmentBRDFSampler
+{
+    Filter = MIN_MAG_MIP_LINEAR;
+    AddressU = Clamp;
+    AddressV = Clamp;
+};
+float2 SampleEnvirnonmentBRDF(float r, float NoV)
+{
+	return EnvironmentBRDFTexture.Sample(EnvironmentBRDFSampler, float2(r, 1.0 - NoV)).xy;
+}
+
 float Fresnel(float f0, float d)
 {
 	if (d > 0.9999)
@@ -17,8 +36,8 @@ float Fresnel(float f0, float d)
 float3 SampleHalfDirection(float2 xi, float r, float3 normal)
 {
 	float r2 = r * r;
-	float phi = 2 * PI * xi.x;
-	float costheta = sqrt(max(1.0e-4, (1 - xi.y) / (1 + (r2 * r2 - 1) * xi.y)));
+	float phi = 2 * PI * xi.y;
+	float costheta = sqrt(max(1.0e-4, (1 - xi.x) / (1 + (r2 * r2 - 1) * xi.x)));
 	float sintheta = sqrt(max(1.0e-4, 1 - costheta * costheta));
 
 	float3 li = normalize(float3(sintheta * cos(phi), sintheta * sin(phi), costheta));
@@ -48,25 +67,36 @@ float3 Irradiance(float3 n)
 
 float3 Radiance(uint4 Context, float f0, float r, float3 N, float3 V)
 {
-	float NoV = abs(dot(N, V));
-	
-	float3 fColor = (float3)0.0;
+	float NoV = saturate(dot(N, V));
+	float3 outColor = (float3)0.0;
+#if USE_IMPORTANCE_SAMPLING	
 	for (uint i = Context.x; i < Context.w; i += Context.y)
 	{
 		float2 Xi = Hammersley(i, Context.w);
 		float3 H  = SampleHalfDirection(Xi, r, N);
-		float3 L  = normalize(-reflect(V, H));
+		float VoH = dot(V, H);
+
+		// reflect V to H
+		float3 L  = 2 * dot(V, H) * H - V;
 		
-		float NoL = abs(dot(N, L));
-		float NoH = abs(dot(N, H));
-		float VoH = abs(dot(V, H));
+		float NoL = dot(N, L);
+		if (VoH > 0 && NoL > 0) {
+			float NoH = max(1.0e-4, abs(dot(N, H)));
 		
-		float  F = max(1.0e-4, Fresnel(f0, VoH));
-		float  G = Geometry(NoH, VoH, r);
-		float3 LColor = SampleIBLReflection(L);
+			float  F = max(1.0e-4, Fresnel(f0, VoH));
+			float  G = Geometry(NoH, VoH, r);
+			float3 LColor = SampleIBLReflection(L, 0.0);
 		
-		fColor += F * G * LColor * VoH / (NoH * NoV);
+			outColor += F * G * LColor * VoH / (NoH * NoV);
+		}
 	}
-	
-	return fColor / float(Context.z);
+	outColor /= float(Context.z);
+#elif USE_ENVIRONMENT_BRDF
+	float3 L = 2 * dot(V, N) * N - V;
+	float3 ReflectionColor = SampleIBLReflection(L, r);
+	float2 EnvironmentBRDF = SampleEnvirnonmentBRDF(r, NoV);
+	outColor = ReflectionColor * (f0 * EnvironmentBRDF.x + EnvironmentBRDF.y);
+#else
+#endif
+	return outColor;
 }

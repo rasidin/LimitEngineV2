@@ -131,9 +131,9 @@ namespace LimitEngine {
             }
         }
     }
-    Model* Model::GenerateFromTextParser(TextParser *Parser)
+    Model* Model::GenerateFromTextParser(const ReferenceCountedPointer<TextParser> &Parser)
     {
-        if (!Parser) return nullptr;
+        if (!Parser.IsValid()) return nullptr;
         Model *output = new Model();
         output->Load(Parser->GetNode("DATA"));
         return output;
@@ -329,13 +329,13 @@ namespace LimitEngine {
 
         return true;
     }
-    void Model::Draw(const RenderState &rs)
+    void Model::Draw(const RenderState &rs, const LEMath::FloatMatrix4x4 &Transform)
     {
         DrawCommand::SetCulling(static_cast<uint32>(RendererFlag::Culling::ClockWise));
         DrawCommand::BeginDrawing();
         // Calculate Matrix
-        LEMath::FloatMatrix4x4 globalTransMatrix = getTransformMatrix();
-        LEMath::FloatMatrix4x4 modelWvpMat = LEMath::FloatMatrix4x4(rs.GetViewProjMatrix()) * globalTransMatrix;
+        LEMath::FloatMatrix4x4 modelTransformMatrix = Transform * getTransformMatrix();
+        LEMath::FloatMatrix4x4 modelWvpMat = modelTransformMatrix * LEMath::FloatMatrix4x4(rs.GetViewProjMatrix());
 
         for (uint32 i=0;i<mMeshes.size();i++)
         {
@@ -348,8 +348,8 @@ namespace LimitEngine {
                 {
                     // Set RenderState
                     RenderState rsCopied(rs);
-                    rsCopied.SetWorldMatrix(mesh->worldMatrix.Transpose());
-                    rsCopied.SetWorldViewProjMatrix((modelWvpMat * mMeshes[i]->worldMatrix).Transpose());
+                    rsCopied.SetWorldMatrix(mesh->worldMatrix * modelTransformMatrix);
+                    rsCopied.SetWorldViewProjMatrix(mesh->worldMatrix * modelWvpMat);
                     //LE_LightManager.ApplyLight(rsCopied, NULL);
 
                     // Bind material

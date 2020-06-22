@@ -124,6 +124,7 @@ IReferenceCountedObject* TextureFactory::Create(const ResourceSourceFactory *Sou
                 output = Texture::GenerateFromSourceImage(SourceImage);
                 delete SourceImage;
             }
+            delete parser;
         }
     }
     else {
@@ -139,7 +140,7 @@ IReferenceCountedObject* TextureFactory::Create(const ResourceSourceFactory *Sou
         }
     } 
 
-    return dynamic_cast<IReferenceCountedObject*>(output);
+    return (IReferenceCountedObject*)(output);
 }
 TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *SourceImage)
 {
@@ -323,13 +324,13 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
             }
         }
 
-        return LEMath::FloatVector2(X, Y) / numSamples;
+        return LEMath::FloatVector2(X, Y) / static_cast<float>(numSamples);
     };
 
     switch (mImportFilter) {
     case TextureImportFilter::Irradiance: {
         LE_TaskManager.ParallelFor(imageSize.Height(), [SampleImage, WriteToImage, hammersley2d, imageSize, numSamples](uint32 StepBegin, uint32 StepEnd) {
-            for (uint32 y = StepBegin; y <= StepEnd; y++) {
+            for (int y = static_cast<int>(StepBegin); y <= static_cast<int>(StepEnd); y++) {
                 for (int x = 0; x < imageSize.Width(); x++) {
                     LEMath::FloatColorRGBA irradiance(0.0f, 0.0f, 0.0f, 1.0f);
                     float centerTheta = LEMath::LEMath_PI * y / imageSize.Height();
@@ -361,8 +362,8 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
     case TextureImportFilter::Reflection: {
         LE_TaskManager.ParallelFor(5, [SampleImage, WriteToImage, hammersley2d, imageSize, numSamples](uint32 StepBegin, uint32 StepEnd) {
             float roughness = StepBegin * 0.25f;
-            for (uint32 y = 0; y < imageSize.Height(); y++) {
-                for (int x = 0; x < imageSize.Width(); x++) {
+            for (int y = 0; y < static_cast<int>(imageSize.Height()); y++) {
+                for (int x = 0; x < static_cast<int>(imageSize.Width()); x++) {
                     LEMath::FloatColorRGBA radiance(0.0f, 0.0f, 0.0f, 1.0f);
                     float centerTheta = LEMath::LEMath_PI * y / imageSize.Height();
                     float centerPhi = LEMath::LEMath_PI * 2.0f * x / imageSize.Width();
@@ -402,7 +403,7 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
     } break;
     case TextureImportFilter::EnvironmentBRDF: {
         LE_TaskManager.ParallelFor(imageSize.Height(), [WriteToImage, IntergrateBRDF, imageSize](uint32 StepBegin, uint32 StepEnd) {
-            for (uint32 y = StepBegin; y <= StepEnd; y++) {
+            for (int y = static_cast<int>(StepBegin); y <= static_cast<int>(StepEnd); y++) {
                 for (int x = 0; x < imageSize.Width(); x++) {
                     float roughness = (float)y / imageSize.Height();
                     float NoV = 1.0f - (float)x / imageSize.Width();
@@ -416,10 +417,10 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
 
     return dynamic_cast<TextureSourceImage*>(filteredSourceImage);
 }
-void TextureFactory::Release(void *data)
+void TextureFactory::Release(IReferenceCountedObject *data)
 {
     if (data == NULL)
         return;
-    delete static_cast<Texture*>(data);
+    delete dynamic_cast<Texture*>(data);
 }
 }

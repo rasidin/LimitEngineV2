@@ -51,13 +51,13 @@ namespace LimitEngine {
         // Get projection matrix of screen
         virtual LEMath::FloatMatrix4x4 GetProjectionMatrix()
         {
-            const float topDistanceInScreen = tan(mFovRadians) * mNearMeters;       // Vertical of screen
+            const float topDistanceInScreen = tanf(mFovRadians * 0.5f) * mNearMeters;       // Vertical of screen
             const float rightDistanceInScreen = topDistanceInScreen / mAspectRatio; // Horizontal of screen
 #if defined(USE_DX9) || defined(USE_DX11) // For directX
-            return LEMath::FloatMatrix4x4(mNearMeters / rightDistanceInScreen, 0.0f, 0.0f, 0.0f,
-                                          0.0f, mNearMeters / topDistanceInScreen, 0.0f, 0.0f,
-                                          0.0f, 0.0f, mFarMeters / (mFarMeters - mNearMeters), 1.0f,
-                                          0.0f, 0.0f, -mFarMeters * mNearMeters / (mFarMeters - mNearMeters), 0.0f);
+            return LEMath::FloatMatrix4x4(mNearMeters / rightDistanceInScreen, 0.0f,                              0.0f,                                                  0.0f,
+                                          0.0f,                                mNearMeters / topDistanceInScreen, 0.0f,                                                  0.0f,
+                                          0.0f,                                0.0f,                              mFarMeters               / (mFarMeters - mNearMeters), 1.0f,
+                                          0.0f,                                0.0f,                             -mFarMeters * mNearMeters / (mFarMeters - mNearMeters), 0.0f);
 #else
             return LEMath::FloatMatrix4x4(mNearMeters/ rightDistanceInScreen, 0.0f, 0.0f, 0.0f,
                               0.0f, mNearMeters/ topDistanceInScreen, 0.0f, 0.0f,
@@ -65,6 +65,20 @@ namespace LimitEngine {
                               0.0f, 0.0f, -2.0f*mFarMeters*mNearMeters /(mFarMeters - mNearMeters), 0.0f);
 #endif
         }
+
+        LEMath::FloatVector4 GetUVtoViewParameter() const
+        {
+            const float f = tanf(mFovRadians * 0.5f);
+            const float rcpFocal1 = f / mAspectRatio;
+            const float rcpFocal2 = f;
+            return LEMath::FloatVector4(2.0f * rcpFocal1, -2.0f * rcpFocal2, -rcpFocal1, rcpFocal2);
+        }
+
+        LEMath::FloatVector4 GetPerspectiveProjectionParameters() const
+        {
+            return LEMath::FloatVector4(mNearMeters, mFarMeters, mFarMeters - mNearMeters, 0.0f);
+        }
+
     protected:
         float       mFovRadians;        // Field of view (radians)
         float       mAspectRatio;       // Apect ratio of screen

@@ -32,11 +32,11 @@ class Object
 	{
 		MemoryAllocator::Free(data);
 	}
-	void* malloc(size_t size)
+	void* malloc(size_t size) const
 	{
 		return MemoryAllocator::Alloc(size, category);
 	}
-	void free(void *data)
+	void free(void *data) const
 	{
 		MemoryAllocator::Free(data);
 	}

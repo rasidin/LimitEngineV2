@@ -9,6 +9,42 @@
 
 #define PI 3.14159265359
 
+// (Mod8, Mod16, Mod32, Mod64)
+uint4 FrameIndexContext;
+
+float4x4 WorldMatrix;
+float4x4 ViewMatrix;
+float4x4 WorldViewProjMatrix;
+float4x4 ProjectionMatrix;
+float4x4 ViewProjectionMatrix;
+
+float FastSqrt(float x)
+{
+	return asfloat(0x1fbd1df5 + (asint(x) >> 1));
+}
+
+float FastAcos(float x)
+{
+	float res = -0.156583 * abs(x) + PI / 2;
+	res *= FastSqrt(1.0 - abs(x));
+	return x >= 0 ? res : PI - res;
+}
+
+float GetTangent(float3 v)
+{
+    return -v.z * rsqrt(max(1.0e-4, dot(v.xy, v.xy)));
+}
+
+float SinToCos(float t)
+{
+	return sqrt(1.0 - t * t);
+}
+
+float TanToSin(float t)
+{
+	return t * rsqrt(t*t + 1.0);
+}
+
 // Hammersley on hemisphere
 // http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
 float radicalInverse_VdC(uint bits) 
@@ -52,15 +88,70 @@ float3 YCoCgToRGB(float3 YCoCg)
 }
 
 Texture3D BlueNoiseTexture;
-SamplerState BlueNoiseSampler
-{
-	Filter = MIN_MAG_MIP_POINT;
-	AddressU = Wrap;
-	AddressV = Wrap;
-};
+SamplerState BlueNoiseSampler;
+
+// (InvWidth, InvHeight, InvDepth)
 float4 BlueNoiseContext;
 
 float GetBlueNoiseValue1(float3 pos)
 {
-	BlueNoiseTexture.Sample(BlueNoiseSampler, pos * BlueNoiseContext.x).r;
+	return BlueNoiseTexture.Sample(BlueNoiseSampler, pos * BlueNoiseContext.xyz).x;
+}
+
+float3 GetBlueNoiseValue3(float3 pos)
+{
+	return BlueNoiseTexture.Sample(BlueNoiseSampler, pos * BlueNoiseContext.xyz).xyz;
+}
+
+float4 GetBlueNoiseValue4(float3 pos)
+{
+	return BlueNoiseTexture.Sample(BlueNoiseSampler, pos * BlueNoiseContext.xyz).xyzw;
+}
+
+// (-2 / focal1, -2 / focal2, focal1, focal2 ) focal1 = Height / (F * Width), focal2 = 1 / F
+float4 UVtoViewParameter;
+
+float3 UVtoViewPosition(float2 uv, float z)
+{
+	return float3((UVtoViewParameter.xy * uv + UVtoViewParameter.zw) * z, z);
+}
+
+SamplerState SceneDepthSampler
+{
+	Filter = MIN_MAG_MIP_POINT;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+Texture2D SceneDepthTexture;
+
+// (near, far, far - near, reserved)
+float4 PerspectiveProjectionParameters;
+
+float GetViewZ(float z)
+{
+	return PerspectiveProjectionParameters.x * PerspectiveProjectionParameters.y / (PerspectiveProjectionParameters.y - PerspectiveProjectionParameters.z * z);
+}
+
+float3 GetViewPosition(float2 uv)
+{
+	float sceneDepthZ = SceneDepthTexture.Sample(SceneDepthSampler, uv).x;
+	return UVtoViewPosition(uv, GetViewZ(sceneDepthZ));
+}
+
+SamplerState SceneNormalSampler;
+Texture2D SceneNormalTexture;
+
+float3 GetWorldNormal(float2 uv)
+{
+	return SceneNormalTexture.Sample(SceneNormalSampler, uv).xyz;
+}
+
+float3 GetViewNormal(float2 uv)
+{
+	return mul(GetWorldNormal(uv), (float3x3)ViewMatrix);
+}
+
+float3 GetViewProjectionNormal(float2 uv)
+{
+	return mul(GetWorldNormal(uv), (float3x3)ViewProjectionMatrix);
 }

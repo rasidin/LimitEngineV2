@@ -39,7 +39,7 @@ public:
 		// Mark end
 		if (mCurrentIndex >= mOwnerArray->GetSize()) {
 			mOwnerArray = NULL;
-			mCurrentIndex = SIZE_MAX;
+			mCurrentIndex = 0xffffffffu;
 		}
 		return *this;
 	}
@@ -50,7 +50,7 @@ public:
 		// Mark end
 		if (mCurrentIndex >= mOwnerArray->GetSize()) {
 			mOwnerArray = NULL;
-			mCurrentIndex = SIZE_MAX;
+			mCurrentIndex = 0xffffffffu;
 		}
 		return result;
 	}
@@ -60,11 +60,11 @@ public:
 	bool operator==(const VectorArrayIterator &iterator) const { return mOwnerArray == iterator.mOwnerArray && mCurrentIndex == iterator.mCurrentIndex; }
 	bool operator!=(const VectorArrayIterator &iterator) const { return mOwnerArray != iterator.mOwnerArray || mCurrentIndex != iterator.mCurrentIndex; }
 
-	bool IsValid() const { return mCurrentIndex == SIZE_MAX || mOwnerArray == NULL || mOwnerArray->GetSize() <= mCurrentIndex; }
+	bool IsValid() const { return mCurrentIndex == 0xffffffffu || mOwnerArray == NULL || mOwnerArray->GetSize() <= mCurrentIndex; }
 private: // Non-creatable by user
 	VectorArrayIterator()
 		: mOwnerArray(NULL)
-		, mCurrentIndex(SIZE_MAX)
+		, mCurrentIndex(0xffffffffu)
 	{}
 	VectorArrayIterator(VectorArray<T> *owner, uint32 index)
 		: mOwnerArray(owner)

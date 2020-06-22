@@ -13,6 +13,8 @@ Copyright (C), LIMITGAME, 2020
 #include <LEFloatVector2.h>
 #include <LEFloatVector4.h>
 
+#include "Managers/RenderTargetPoolManager.h"
+
 namespace LimitEngine {
 
 class DrawCommand
@@ -29,7 +31,10 @@ class DrawCommand
     static void BindVertexBuffer(void *handle, void *buffer, uint32 offset, uint32 size, uint32 stride);
     static void BindIndexBuffer(void *handle);
 	static void BindTargetTexture(uint32 index, Texture *texture);
+    static void BindSampler(uint32 index, SamplerState *sampler);
     static void BindTexture(uint32 index, Texture *texture);
+    static void BindTexture(uint32 index, const PooledRenderTarget &texture);
+    static void BindTexture(uint32 index, const PooledDepthStencil &texture);
     static void BindShader(Shader *shader);
     static void BindShader(const char *name);
 	static void Dispatch(int x, int y, int z);

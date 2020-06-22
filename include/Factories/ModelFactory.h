@@ -23,7 +23,7 @@ namespace LimitEngine {
         virtual ~ModelFactory() {}
 
         IReferenceCountedObject* Create(const ResourceSourceFactory *format, const FileData &Data) override;
-        void Release(void *data) override;
+        void Release(IReferenceCountedObject *data) override;
         uint32 GetResourceTypeCode() override { return makeResourceTypeCode("LMDL"); }
     private:
         void* createFromText(const char *text);

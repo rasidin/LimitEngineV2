@@ -44,23 +44,26 @@ static const unsigned char Shader_ResolveSceneColorSRGB_PS[] = {
 static const unsigned char Shader_TemporalAA_PS[] = {
 #include "shader/DirectX11/bin/TemporalAA.ps.txt"
 };
-//static const unsigned char Shader_DrawIBL_PS[] = {
-//#include "shader/DirectX11/bin/DrawIBL.ps.txt"
-//};
-//static const unsigned char Shader_MakeIBLSpecularMipmap_PS[] = {
-//#include "shader/DirectX11/bin/MakeIBLSpecularMipmap.ps.txt"
-//};
-//static const unsigned char Shader_GenerateBakedBRDF_CS[] = {
-//#include "shader/DirectX11/bin/GenerateBakedBRDF.cs.txt"
-//};
+static const unsigned char Shader_AmbientOcclusion_PS[] = {
+#include "shader/DirectX11/bin/AmbientOcclusion.ps.txt"
+};
+static const unsigned char Shader_AmbientOcclusionBlur_PS[] = {
+#include "shader/DirectX11/bin/AmbientOcclusionBlur.ps.txt"
+};
 static const unsigned char Shader_DrawFont_PS[] = {
 #include "shader/DirectX11/bin/DrawFont.ps.txt"
 };
 static const unsigned char Shader_Standard_VS[] = {
 #include "shader/DirectX11/bin/Standard.vs.txt"
 };
-static const unsigned char Shader_Standard_PS[] = {
-#include "shader/DirectX11/bin/Standard.ps.txt"
+static const unsigned char Shader_Standard_PrePass_PS[] = {
+#include "shader/DirectX11/bin/Standard.PrePass.ps.txt"
+};
+static const unsigned char Shader_Standard_BasePass_PS[] = {
+#include "shader/DirectX11/bin/Standard.BasePass.ps.txt"
+};
+static const unsigned char Shader_Standard_TranslucencyPass_PS[] = {
+#include "shader/DirectX11/bin/Standard.TranslucencyPass.ps.txt"
 };
 #endif
 
@@ -81,13 +84,28 @@ namespace LimitEngine {
     {
         Shader *shader;
 
-        // Set Standard shader
+        // Set Standard shader (PrePass)
         {
-            shader = new Shader("Standard");
+            shader = new Shader("Standard.PrePass");
             shader->SetCompiledBinary(Shader_Standard_VS, sizeof(Shader_Standard_VS), Shader::TYPE_VERTEX);
-            shader->SetCompiledBinary(Shader_Standard_PS, sizeof(Shader_Standard_PS), Shader::TYPE_PIXEL);
+            shader->SetCompiledBinary(Shader_Standard_PrePass_PS, sizeof(Shader_Standard_PrePass_PS), Shader::TYPE_PIXEL);
             AddShader(shader);
-            //AddShader(shader);
+        }
+
+        // Set Standard shader (BasePass)
+        {
+            shader = new Shader("Standard.BasePass");
+            shader->SetCompiledBinary(Shader_Standard_VS, sizeof(Shader_Standard_VS), Shader::TYPE_VERTEX);
+            shader->SetCompiledBinary(Shader_Standard_BasePass_PS, sizeof(Shader_Standard_BasePass_PS), Shader::TYPE_PIXEL);
+            AddShader(shader);
+        }
+
+        // Set Standard shader (TranslucencyPass)
+        {
+            shader = new Shader("Standard.TranslucencyPass");
+            shader->SetCompiledBinary(Shader_Standard_VS, sizeof(Shader_Standard_VS), Shader::TYPE_VERTEX);
+            shader->SetCompiledBinary(Shader_Standard_TranslucencyPass_PS, sizeof(Shader_Standard_TranslucencyPass_PS), Shader::TYPE_PIXEL);
+            AddShader(shader);
         }
 
         // Set Sprite Shader
@@ -130,49 +148,20 @@ namespace LimitEngine {
             AddShader(shader);
         }
 
-//        // Set DrawIBL Shader
-//        {
-//            shader = new Shader("DrawIBL");
-//
-//#ifdef WINDOWS
-//            shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
-//            shader->SetCompiledBinary(Shader_DrawIBL_PS, sizeof(Shader_DrawIBL_PS), Shader::TYPE_PIXEL);
-//#else
-//            shader->Compile("<ShaderPath>Draw2D.vsh", Shader::TYPE_VERTEX);
-//            shader->Compile("<ShaderPath>DrawIBL.fsh", Shader::TYPE_PIXEL);
-//#endif
-//            shader->Link();
-//
-//            AddShader(shader);
-//        }
-//
-//        // Set DrawIBL Shader
-//        {
-//            shader = new Shader("MakeIBLSpecularMipmap");
-//
-//#ifdef WINDOWS
-//            shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
-//            shader->SetCompiledBinary(Shader_MakeIBLSpecularMipmap_PS, sizeof(Shader_MakeIBLSpecularMipmap_PS), Shader::TYPE_PIXEL);
-//#else
-//            shader->Compile("<ShaderPath>Draw2D.vsh", Shader::TYPE_VERTEX);
-//            shader->Compile("<ShaderPath>MakeIBLSpecularMipmap.fsh", Shader::TYPE_PIXEL);
-//#endif
-//            shader->Link();
-//
-//            AddShader(shader);
-//        }
-//
-//		// Set GenerateBakedBRDF Shader
-//		{
-//			shader = new Shader("GenerateBakedBRDF");
-//#ifdef WINDOWS
-//			shader->SetCompiledBinary(Shader_GenerateBakedBRDF_CS, sizeof(Shader_GenerateBakedBRDF_CS), Shader::TYPE_COMPUTE);
-//#else
-//			shader->Compile("<ShaderPath>GenerateBakedBRDF.csh", Shader::TYPE_COMPUTE);
-//#endif
-//			AddShader(shader);
-//
-//		}
+        // PostProcess AmbientOcclusion
+        {
+            shader = new Shader("AmbientOcclusion");
+            shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
+            shader->SetCompiledBinary(Shader_AmbientOcclusion_PS, sizeof(Shader_AmbientOcclusion_PS), Shader::TYPE_PIXEL);
+            AddShader(shader);
+        }
+        // PostProcess AmbientOcclusion Blur
+        {
+            shader = new Shader("AmbientOcclusionBlur");
+            shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
+            shader->SetCompiledBinary(Shader_AmbientOcclusionBlur_PS, sizeof(Shader_AmbientOcclusionBlur_PS), Shader::TYPE_PIXEL);
+            AddShader(shader);
+        }
     }
     void ShaderManager::Term()
     {

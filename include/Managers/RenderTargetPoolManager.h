@@ -16,7 +16,7 @@
 
 namespace LimitEngine {
 class RenderTargetPoolManager;
-typedef Singleton<RenderTargetPoolManager, LimitEngineMemoryCategory_Graphics> SingletonRenderTaregtPoolManager;
+typedef Singleton<RenderTargetPoolManager, LimitEngineMemoryCategory_Graphics> SingletonRenderTargetPoolManager;
 struct RenderTargetDesc
 {
     LEMath::IntSize Size;
@@ -128,7 +128,7 @@ public:
 
     friend RenderTargetPoolManager;
 };
-class RenderTargetPoolManager : public SingletonRenderTaregtPoolManager
+class RenderTargetPoolManager : public SingletonRenderTargetPoolManager
 {
 public:
     RenderTargetPoolManager();

@@ -30,7 +30,7 @@ namespace LimitEngine {
         // Set sprite frames from file
         AutoPointer<ResourceManager::RESOURCE> textResource = LE_ResourceManager.GetResourceWithoutRegister(GlyphFilePath, TextParserFactory::ID);
         if (textResource.Exists()) {
-            if (TextParser *parser = reinterpret_cast<TextParser*>(((ResourceManager::RESOURCE*)textResource)->data))
+            if (TextParser *parser = dynamic_cast<TextParser*>(((ResourceManager::RESOURCE*)textResource)->data))
             {
                 TextParser::NODE *node = NULL;
                 if ((node = parser->GetNode("FILETYPE")) && node->values[0] == "FONT")
@@ -104,6 +104,8 @@ namespace LimitEngine {
     {
         if (!mSprite.IsValid() || mGlyphs.count() == 0) return;
 
+        DrawCommand::SetDisable((uint32)RendererFlag::EnabledFlags::DEPTH_TEST);
+        DrawCommand::SetDisable((uint32)RendererFlag::EnabledFlags::DEPTH_WRITE);
         DrawCommand::SetBlendFunc(0, RendererFlag::BlendFlags::ALPHABLEND);
 
         ShaderRefPtr FontShader = LE_ShaderManager.GetShader("DrawFont");
@@ -128,5 +130,8 @@ namespace LimitEngine {
         }
 
         mSprite->EndBatchDraw(FontShader.Get());
+
+        DrawCommand::SetEnable((uint32)RendererFlag::EnabledFlags::DEPTH_TEST);
+        DrawCommand::SetEnable((uint32)RendererFlag::EnabledFlags::DEPTH_WRITE);
     }
 }

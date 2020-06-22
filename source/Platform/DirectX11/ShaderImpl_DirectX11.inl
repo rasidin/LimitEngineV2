@@ -317,7 +317,7 @@ namespace LimitEngine
         }
         void SetUniformFloat1(int loc, const float &f) override
         {
-            if (loc >= static_cast<int>(mShaderVariables.GetSize()))
+            if (loc < 0 || loc >= static_cast<int>(mShaderVariables.GetSize()))
                 return;
 
             ShaderVariable &variable = mShaderVariables[loc];
@@ -337,7 +337,7 @@ namespace LimitEngine
         }
         void SetUniformFloat2(int loc, const LEMath::FloatVector2 &v) override
         {
-            if (loc >= static_cast<int>(mShaderVariables.GetSize()))
+            if (loc < 0 || loc >= static_cast<int>(mShaderVariables.GetSize()))
                 return;
 
             ShaderVariable &variable = mShaderVariables[loc];
@@ -357,7 +357,7 @@ namespace LimitEngine
         }
         void SetUniformFloat4(int loc, const LEMath::FloatVector4 &v) override
         {
-            if (loc >= static_cast<int>(mShaderVariables.GetSize()))
+            if (loc < 0 || loc >= static_cast<int>(mShaderVariables.GetSize()))
                 return;
 
             ShaderVariable &variable = mShaderVariables[loc];
@@ -377,7 +377,7 @@ namespace LimitEngine
         }
         void SetUniformInt1(int loc, const int32 &n) override
         {
-            if (loc >= static_cast<int>(mShaderVariables.GetSize()))
+            if (loc < 0 || loc >= static_cast<int>(mShaderVariables.GetSize()))
                 return;
             ShaderVariable &variable = mShaderVariables[loc];
             switch (variable.shaderType)
@@ -396,7 +396,7 @@ namespace LimitEngine
         }
         void SetUniformInt4(int loc, const LEMath::IntVector4 &v)
         {
-            if (loc >= static_cast<int>(mShaderVariables.GetSize()))
+            if (loc < 0 || loc >= static_cast<int>(mShaderVariables.GetSize()))
                 return;
 
             ShaderVariable &variable = mShaderVariables[loc];
@@ -416,7 +416,7 @@ namespace LimitEngine
         }
         void SetUniformMatrix4(int loc, int size, float *f) override
         {
-            if (loc >= static_cast<int>(mShaderVariables.GetSize()))
+            if (loc < 0 || loc >= static_cast<int>(mShaderVariables.GetSize()))
                 return;
 
             ShaderVariable &variable = mShaderVariables[loc];

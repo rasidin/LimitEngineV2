@@ -18,6 +18,7 @@
 #include "Core/ReferenceCountedPointer.h"
 #include "Managers/TaskManager.h"
 #include "Factories/ResourceFactory.h"
+#include "Renderer/Transform.h"
 //#include "ResourceManager.h"
 //#include "GuiManager.h"
 //#include "ProfileManager.h"
@@ -42,8 +43,10 @@ public: // Public functions
     Texture* LoadTexture(const char *filepath, ResourceFactory::ID ResourceID, bool bTransient);
     Model* LoadModel(const char *filepath, ResourceFactory::ID ResourceID, bool bTransient);
 
-    void AddModel(const ModelRefPtr &InModel);
+    uint32 AddModel(const ModelRefPtr &InModel);
     void AddLight(const LightRefPtr &InLight);
+
+    void UpdateModelTransform(uint32 InstanceID, const Transform &InTransform);
 
     void Update();
 

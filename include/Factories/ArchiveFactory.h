@@ -20,7 +20,7 @@ public:
     virtual ~ArchiveFactory();
 
     IReferenceCountedObject* Create(const ResourceSourceFactory *Format, const FileData &Data) override;
-    void Release(void *Data) override {}
+    void Release(IReferenceCountedObject *Data) override;
     uint32 GetResourceTypeCode() override { return 0u; }
 
 private:

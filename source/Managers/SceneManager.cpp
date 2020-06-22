@@ -20,6 +20,7 @@
 #include "Renderer/Camera.h"
 #include "Renderer/DrawCommand.h"
 #include "Renderer/Model.h"
+#include "Renderer/ModelInstance.h"
 #include "Renderer/Light.h"
 #include "Renderer/LightIBL.h"
 #include "Renderer/Texture.h"
@@ -28,12 +29,31 @@ namespace LimitEngine {
 class SceneUpdateTask_AddModel : public SceneManager::SceneUpdateTask
 {
     ModelRefPtr mModel;
+    uint32 mModelInstanceID;
 
 public:
-    SceneUpdateTask_AddModel(Model *InModel) : mModel(InModel) {}
+    SceneUpdateTask_AddModel(Model *InModel, uint32 ID) : mModel(InModel), mModelInstanceID(ID) {}
     void Run(SceneManager *Manager) override
     {
-        Manager->AddModel_UpdateTask(mModel.Get());
+        Manager->AddModel_UpdateTask(mModel.Get(), mModelInstanceID);
+    }
+};
+
+class SceneUpdateTask_UpdateModelTransform : public SceneManager::SceneUpdateTask
+{
+    uint32 mInstanceID;
+    Transform mTransform;
+public:
+    SceneUpdateTask_UpdateModelTransform(uint32 InstanceID, const Transform &InTransform)
+        : mInstanceID(InstanceID)
+        , mTransform(InTransform)
+    {}
+    void Run(SceneManager *Manager) override
+    {
+        ModelInstRefPtr FoundModel = Manager->findModelInstance(mInstanceID);
+        if (FoundModel.IsValid()) {
+            FoundModel->SetTransform(mTransform);
+        }
     }
 };
 
@@ -67,6 +87,7 @@ SceneManager* SingletonSceneManager::mInstance = NULL;
 SceneManager::SceneManager()
     : mCamera(new Camera())
     , mEnvironmentLight(nullptr)
+    , mCurrentInstanceID(1u)
 {
 }
 
@@ -81,7 +102,9 @@ void SceneManager::Init(const InitializeOptions &InitOptions)
     mBackgroundShaders[static_cast<uint32>(BackgroundImageType::Longlat)] = LE_ShaderManager.GetShader("Draw2D");
 
     TEXTURE_COLOR_FORMAT SceneColorFormat = (InitOptions.SceneColorSpace == InitializeOptions::ColorSpace::Linear) ? TEXTURE_COLOR_FORMAT_A16B16G16R16F : TEXTURE_COLOR_FORMAT_A8R8G8B8;
+    TEXTURE_COLOR_FORMAT SceneNormalFormat = TEXTURE_COLOR_FORMAT_A16B16G16R16F;
     mSceneColor = LE_RenderTargetPoolManager.GetRenderTarget(InitOptions.Resolution, 1, SceneColorFormat);
+    mSceneNormal = LE_RenderTargetPoolManager.GetRenderTarget(InitOptions.Resolution, 1, SceneNormalFormat);
     mSceneDepth = LE_RenderTargetPoolManager.GetDepthStencil(InitOptions.Resolution, TEXTURE_DEPTH_FORMAT_D32F);
 }
 
@@ -91,113 +114,22 @@ void SceneManager::SetBackgroundImage(const TextureRefPtr &BackgroundImage, Back
     mBackgroundType = Type;
 }
 
-void SceneManager::LoadFromText(const char *text)
+void SceneManager::AddModel_UpdateTask(Model *InModel, uint32 InID)
 {
-    TextParser parser;
-    parser.Parse(text);
-    TextParser::NODE *node = NULL;
-    if ((node = parser.GetNode("FILETYPE")) && node->values[0] == "SCENE")
-    {
-        TextParser::NODE *node_data = parser.GetNode("DATA");
-        if (node_data)
-        {
-            // Models
-            TextParser::NODE *node_models = node_data->FindChild("MODELS");
-            if (node_models)
-            {
-                for(uint32 i=0;i<node_models->children.size();i++)
-                {
-                    TextParser::NODE *child = node_models->children[i];
-                    TextParser::NODE *node_filename = NULL;
-                    if ( child->name == "MODEL" && 
-                        (node_filename = child->FindChild("FILENAME")))
-                    {   // MODEL
-                        Model *model = new Model(node_filename->values[0].GetCharPtr());
-                        TextParser::NODE *node_position = child->FindChild("POSITION");
-                        if (node_position) model->SetPosition(node_position->ToFloatVector3());
-                        TextParser::NODE *node_scale = child->FindChild("SCALE");
-                        if (node_scale) model->SetScale(node_scale->ToFloatVector3());
-                        TextParser::NODE *node_rotation = child->FindChild("ROTATION");
-                        if (node_rotation) model->SetRotation(node_rotation->ToFloatVector3());
-                        mModels.push_back(model);
-                    }
-                }
-            }
-
-            // Lights
-            TextParser::NODE *node_lights = node_data->FindChild("LIGHTS");
-            if (node_lights)
-            {
-                for(uint32 i=0;i<node_lights->children.size();i++)
-                {
-                    Light *light = NULL;
-                    TextParser::NODE *child = node_lights->children[i];
-                    TextParser::NODE *node_type = child->FindChild("TYPE");
-                    if (node_type->values[0] == "Point")
-                    {
-                        light = new PointLight();
-                    }
-                    else if (node_type->values[0] == "Directional")
-                    {
-                        light = new DirectionalLight();
-                    }
-                    else if (node_type->values[0] == "Ambient")
-                    {
-                        light = new AmbientLight();
-                    }
-                    if (!light) continue;
-                    TextParser::NODE *node_color = child->FindChild("COLOR");
-                    if (node_color)
-                    {
-                        light->SetColor(node_color->ToFloatVector3());
-                    }
-                    TextParser::NODE *node_intensity = child->FindChild("INTENSITY");
-                    if (node_intensity)
-                    {
-                        light->SetIntensity(node_intensity->values[0].ToFloat());
-                    }
-                    TextParser::NODE *node_pos = child->FindChild("POSITION");
-                    if (node_pos && light->GetType() == Light::TYPE_POINT)
-                    {
-                        ((PointLight*)light)->SetPosition(node_pos->ToFloatVector3());
-                    }
-                    TextParser::NODE *node_scl = child->FindChild("SCALE");
-                    if (node_scl && light->GetType() == Light::TYPE_POINT)
-                    {
-                        ((PointLight*)light)->SetScale(node_scl->ToFloatVector3());
-                    }
-                    switch(light->GetType())
-                    {
-                    case Light::TYPE_POINT:
-                        {
-                            TextParser::NODE *node_range = child->FindChild("RANGE");
-                            if (node_range)
-                            {
-                                ((PointLight*)light)->SetRange(node_range->values[0].ToFloat());
-                            }
-                            TextParser::NODE *node_exp = child->FindChild("EXPONENT");
-                            if (node_exp)
-                            {
-                                ((PointLight*)light)->SetExponent(node_exp->values[0].ToFloat());
-                            }
-                        } break;
-                    }
-                    AddLight(light);
-                }
-            }
-        }
-    }
+    mModels.push_back(new ModelInstance(InID, InModel));
 }
 
-void SceneManager::AddModel_UpdateTask(Model *InModel)
-{
-    mModels.push_back(InModel);
-}
-
-void SceneManager::AddModel(const ModelRefPtr &model)
+uint32 SceneManager::AddModel(const ModelRefPtr &model)
 {
     Mutex::ScopedLock lock(mUpdateSceneMutex);
-    mUpdateTasks.Add(new SceneUpdateTask_AddModel(model.Get()));
+    mUpdateTasks.Add(new SceneUpdateTask_AddModel(model.Get(), mCurrentInstanceID++));
+    return mCurrentInstanceID - 1;
+}
+
+void SceneManager::UpdateModelTransform(uint32 InstanceID, const Transform &InTransform)
+{
+    Mutex::ScopedLock lock(mUpdateSceneMutex);
+    mUpdateTasks.Add(new SceneUpdateTask_UpdateModelTransform(InstanceID, InTransform));
 }
 
 void SceneManager::AddLight_UpdateTask(Light *InLight)
@@ -229,6 +161,22 @@ void SceneManager::SetCamera(const CameraRefPtr &camera)
     mUpdateTasks.Add(new SceneUpdateTask_SetCamera(camera.Get()));
 }
 
+LEMath::FloatVector4 SceneManager::GetUVtoViewParameter() const
+{
+    if (mCamera.IsValid()) {
+        return mCamera->GetUVtoViewParameter();
+    }
+    return LEMath::FloatVector4::Zero;
+}
+
+LEMath::FloatVector4 SceneManager::GetPerspectiveProjectionParameters() const
+{
+    if (mCamera.IsValid()) {
+        return mCamera->GetPerspectiveProjectionParameters();
+    }
+    return LEMath::FloatVector4::Zero;
+}
+
 void SceneManager::Update()
 {
     updateSceneTasks();
@@ -237,6 +185,7 @@ void SceneManager::Update()
     mSceneColor = LE_RenderTargetPoolManager.GetRenderTarget(mSceneColor.GetDesc());
 
     mCamera->Update();
+
     LE_DrawManager.SetViewMatrix(mCamera->GetViewMatrix());
     LE_DrawManager.SetProjectionMatrix(mCamera->GetProjectionMatrix());
     if (mEnvironmentLight.IsValid()) {
@@ -258,6 +207,10 @@ void SceneManager::updateSceneTasks()
 
 void SceneManager::drawBackground()
 {
+    DrawCommand::SetRenderTarget(0, mSceneColor.Get(), mSceneDepth.Get());
+    DrawCommand::SetEnable((uint32)RendererFlag::EnabledFlags::DEPTH_WRITE);
+    DrawCommand::SetDepthFunc(RendererFlag::TestFlags::ALWAYS);
+
     switch (mBackgroundType) {
     case BackgroundImageType::None:
         DrawCommand::ClearScreen(LEMath::FloatColorRGBA(0.0f, 0.0f, 0.0f, 1.0f));
@@ -265,27 +218,43 @@ void SceneManager::drawBackground()
     case BackgroundImageType::Fullscreen: 
     case BackgroundImageType::Longlat:
     {
+        LEMath::IntSize ScreenSize = LE_DrawManager.GetRealScreenSize();
+        LEMath::IntSize ImageSize = mBackgroundImage->GetSize();
+
+        LEMath::FloatPoint ImageUVOffset;
+        LEMath::IntSize AdjustImageSize;
+        if (ScreenSize.Height() * ImageSize.Width() / ScreenSize.Width() <= ImageSize.Height()) {
+            AdjustImageSize.SetY(ScreenSize.Height() * ImageSize.Width() / ScreenSize.Width());
+            AdjustImageSize.SetX(AdjustImageSize.Height() * ScreenSize.Width() / ScreenSize.Height());
+            ImageUVOffset = LEMath::FloatPoint(0.0f, (float)(AdjustImageSize.Y() - ScreenSize.Y()) * 0.5f / ScreenSize.Y());
+        }
+        else {
+            AdjustImageSize.SetX(ScreenSize.Width() * ImageSize.Height() / ScreenSize.Height());
+            AdjustImageSize.SetY(AdjustImageSize.Width() * ScreenSize.Height() / ScreenSize.Width());
+            ImageUVOffset = LEMath::FloatPoint((float)(ImageSize.X() - AdjustImageSize.X()) * 0.5f / ImageSize.X(), 0.0f);
+        }
+
         if (mBackgroundImage.IsValid()) DrawCommand::BindTexture(0, mBackgroundImage.Get());
         DrawCommand::SetBlendFunc(0, RendererFlag::BlendFlags::SOURCE);
         DrawCommand::SetDepthFunc(RendererFlag::TestFlags::ALWAYS);
-         
+
         Vertex2D *buffer = LE_Draw2DManager.GetVertexBuffer2D(6);
-        buffer[0].SetPosition(LEMath::FloatVector3(0.0f, 0.0f, 0.0f));
+        buffer[0].SetPosition(LEMath::FloatVector3(-ImageUVOffset.X(), -ImageUVOffset.Y(), 1.0f));
         buffer[0].SetColor(0xffffffff);
         buffer[0].SetTexcoord(LEMath::FloatVector2(0.0f, 0.0f));
-        buffer[1].SetPosition(LEMath::FloatVector3(0.0f, 1.0f, 0.0f));
+        buffer[1].SetPosition(LEMath::FloatVector3(-ImageUVOffset.X(), 1.0f + ImageUVOffset.Y(), 1.0f));
         buffer[1].SetColor(0xffffffff);
         buffer[1].SetTexcoord(LEMath::FloatVector2(0.0f, 1.0f));
-        buffer[2].SetPosition(LEMath::FloatVector3(1.0f, 0.0f, 0.0f));
+        buffer[2].SetPosition(LEMath::FloatVector3(1.0f + ImageUVOffset.X(), -ImageUVOffset.Y(), 1.0f));
         buffer[2].SetColor(0xffffffff);
         buffer[2].SetTexcoord(LEMath::FloatVector2(1.0f, 0.0f));
-        buffer[3].SetPosition(LEMath::FloatVector3(0.0f, 1.0f, 0.0f));
+        buffer[3].SetPosition(LEMath::FloatVector3(-ImageUVOffset.X(), 1.0f + ImageUVOffset.Y(), 1.0f));
         buffer[3].SetColor(0xffffffff);
         buffer[3].SetTexcoord(LEMath::FloatVector2(0.0f, 1.0f));
-        buffer[4].SetPosition(LEMath::FloatVector3(1.0f, 1.0f, 0.0f));
+        buffer[4].SetPosition(LEMath::FloatVector3(1.0f + ImageUVOffset.X(), 1.0f + ImageUVOffset.Y(), 1.0f));
         buffer[4].SetColor(0xffffffff);
         buffer[4].SetTexcoord(LEMath::FloatVector2(1.0f, 1.0f));
-        buffer[5].SetPosition(LEMath::FloatVector3(1.0f, 0.0f, 0.0f));
+        buffer[5].SetPosition(LEMath::FloatVector3(1.0f + ImageUVOffset.X(), -ImageUVOffset.Y(), 1.0f));
         buffer[5].SetColor(0xffffffff);
         buffer[5].SetTexcoord(LEMath::FloatVector2(1.0f, 0.0f));
         LE_Draw2DManager.FlushDraw2D(RendererFlag::PrimitiveTypes::TRIANGLELIST);
@@ -293,14 +262,57 @@ void SceneManager::drawBackground()
     }
 }
 
+void SceneManager::drawPrePass()
+{
+    RenderState PrePassRenderState = LE_DrawManager.GetRenderState();
+    PrePassRenderState.SetRenderPass(RenderPass::PrePass);
+    DrawCommand::SetRenderTarget(0, mSceneNormal.Get(), mSceneDepth.Get());
+    DrawCommand::SetEnable((uint32)RendererFlag::EnabledFlags::DEPTH_WRITE);
+    DrawCommand::SetDepthFunc(RendererFlag::TestFlags::LEQUAL);
+    for (uint32 mdlidx = 0; mdlidx < mModels.count(); mdlidx++) {
+        mModels[mdlidx]->Draw(PrePassRenderState);
+    }
+}
+
+void SceneManager::drawBasePass()
+{
+    RenderState BasePassRenderState = LE_DrawManager.GetRenderState();
+    BasePassRenderState.SetRenderPass(RenderPass::BasePass);
+    DrawCommand::SetRenderTarget(0, mSceneColor.Get(), mSceneDepth.Get());
+    DrawCommand::SetDisable((uint32)RendererFlag::EnabledFlags::DEPTH_WRITE);
+    DrawCommand::SetDepthFunc(RendererFlag::TestFlags::EQUAL);
+    for (uint32 mdlidx = 0; mdlidx < mModels.count(); mdlidx++) {
+        mModels[mdlidx]->Draw(BasePassRenderState);
+    }
+}
+
+void SceneManager::drawTranslucencyPass()
+{
+    RenderState TranslucencyRenderState = LE_DrawManager.GetRenderState();
+    TranslucencyRenderState.SetRenderPass(RenderPass::TranslucencyPass);
+    DrawCommand::SetRenderTarget(0, mSceneColor.Get(), mSceneDepth.Get());
+}
+
+ModelInstRefPtr SceneManager::findModelInstance(uint32 InstanceID)
+{
+    ModelInstRefPtr Output;
+    for (uint32 ModelIndex = 0; ModelIndex < mModels.count(); ModelIndex++)
+    {
+        if (mModels[ModelIndex]->GetInstanceID() == InstanceID) {
+            Output = mModels[ModelIndex];
+            break;
+        }
+    }
+    return Output;
+}
+
 void SceneManager::Draw()
 {
-    DrawCommand::SetRenderTarget(0, mSceneColor.Get(), mSceneDepth.Get());
     DrawCommand::BeginScene();
     drawBackground();
-    for(uint32 mdlidx=0;mdlidx<mModels.count();mdlidx++) {
-        mModels[mdlidx]->Draw(LE_DrawManager.GetRenderState());
-    }
+    drawPrePass();
+    drawBasePass();
+    //drawTranslucencyPass();
     DrawCommand::EndScene();
     DrawCommand::SetRenderTarget(0, nullptr, nullptr);
 }

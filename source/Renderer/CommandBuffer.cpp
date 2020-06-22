@@ -1,11 +1,30 @@
-﻿/***********************************************************
-LIMITEngine Header File
-Copyright (C), LIMITGAME, 2020
------------------------------------------------------------
+﻿/*********************************************************************
+Copyright (c) 2020 LIMITGAME
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify,
+merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+----------------------------------------------------------------------
 @file  CommandBuffer.h
 @brief CommandBuffer for rendering
 @author minseob (leeminseob@outlook.com)
-***********************************************************/
+**********************************************************************/
 #include <LEFloatMatrix4x4.h>
 
 #include "Core/Debug.h"
@@ -39,6 +58,10 @@ CommandBuffer::CommandBuffer(size_t bufferSize)
 }
 CommandBuffer::~CommandBuffer()
 {
+    if (mImpl) {
+        delete mImpl;
+        mImpl = nullptr;
+    }
     if (mCommandBuffer) {
         free(mCommandBuffer);
         mCommandBuffer = NULL;
@@ -303,13 +326,39 @@ void CommandBuffer::Flush(RenderState *rs)
 				COMMAND_BINDTARGETTEXTURE *command = reinterpret_cast<COMMAND_BINDTARGETTEXTURE*>(currentCommand);
                 mImpl->BindTargetTexture(command->index, command->texture);
 			} break;
+            case COMMAND::cBindSampler:
+            {
+                COMMAND_BINDSAMPLER *command = reinterpret_cast<COMMAND_BINDSAMPLER*>(currentCommand);
+                if (command->sampler.IsValid()) {
+                    mImpl->BindSampler(command->index, command->sampler.Get());
+                    command->sampler.Release();
+                }
+            } break;
             case COMMAND::cBindTexture:
             {
                 COMMAND_BINDTEXTURE *command = reinterpret_cast<COMMAND_BINDTEXTURE*>(currentCommand);
-                if (command->texture)
-                    mImpl->BindTexture(command->index, command->texture);
+                if (command->texture.IsValid()) {
+                    mImpl->BindTexture(command->index, command->texture.Get());
+                    command->texture.Release();
+                } 
                 else
                     mImpl->BindTexture(command->index, nullTexture);
+            } break;
+            case COMMAND::cBindPooledRenderTarget:
+            {
+                COMMAND_BINDPOOLEDRENDERTARGET *command = reinterpret_cast<COMMAND_BINDPOOLEDRENDERTARGET*>(currentCommand);
+                if (command->texture.Get()) {
+                    mImpl->BindTexture(command->index, command->texture.Get());
+                    command->texture.Release();
+                }
+            } break;
+            case COMMAND::cBindPooledDepthStencil:
+            {
+                COMMAND_BINDPOOLEDDEPTHSTENCIL *command = reinterpret_cast<COMMAND_BINDPOOLEDDEPTHSTENCIL*>(currentCommand);
+                if (command->texture.Get()) {
+                    mImpl->BindTexture(command->index, command->texture.Get());
+                    command->texture.Release();
+                }
             } break;
             default:
                 DEBUG_MESSAGE("[DrawManager] Unknown Command : %d\n", currentCommand->commandType);
@@ -466,8 +515,23 @@ void DrawCommand::BindTargetTexture(uint32 index, Texture *texture)
 	COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDTARGETTEXTURE(index, texture);
 }
 
+void DrawCommand::BindSampler(uint32 index, SamplerState *sampler)
+{
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDSAMPLER(index, sampler);
+}
+
 void DrawCommand::BindTexture(uint32 index, Texture *texture)
 {
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDTEXTURE(index, texture);
+}
+
+void DrawCommand::BindTexture(uint32 index, const PooledRenderTarget &texture)
+{
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDPOOLEDRENDERTARGET(index, texture);
+}
+
+void DrawCommand::BindTexture(uint32 index, const PooledDepthStencil &texture)
+{
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDPOOLEDDEPTHSTENCIL(index, texture);
 }
 }

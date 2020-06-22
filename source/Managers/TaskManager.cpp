@@ -225,6 +225,7 @@ void TaskManager::removeTask(TaskManager::TaskID id)
     Mutex::ScopedLock scopedLock(mMutex);
     for(uint32 taskidx=0;taskidx<mTasks.count();taskidx++) {
 		if(mTasks[taskidx]->id == id) {
+            delete mTasks[taskidx];
 			mTasks.Delete(taskidx);
 		}
 	}

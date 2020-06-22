@@ -98,7 +98,7 @@ namespace LimitEngine {
 
         AABB GetBoundingBox() { return mBoundingbox; }
 
-        void Draw(const RenderState &rs);
+        void Draw(const RenderState &rs, const LEMath::FloatMatrix4x4 &Transform);
 
         void SetName(const String &name)        { mName = name; }
         String GetName()                        { return mName; }
@@ -117,7 +117,7 @@ namespace LimitEngine {
 		fPolygon::INTERSECT_RESULT IntersectSphere(const fRay &r, float radius);
 
     public: // Generator
-        static Model* GenerateFromTextParser(TextParser *Parser);
+        static Model* GenerateFromTextParser(const ReferenceCountedPointer<TextParser> &Parser);
 
         virtual void InitResource() override;
 

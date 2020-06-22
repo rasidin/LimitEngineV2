@@ -24,6 +24,7 @@
 #include "Managers/ResourceManager.h"
 #include "Managers/RenderTargetPoolManager.h"
 #include "Renderer/Font.h"
+#include "Renderer/SamplerState.h"
 
 namespace LimitEngine {
 // =============================================================
@@ -44,20 +45,25 @@ void LimitEngine::Init(WINDOW_HANDLE handle, const InitializeOptions &Options)
     //}
     mSystemFont->InitResource();
 
-    if (TextureFactory *Factory = (TextureFactory*)ResourceManager::GetSingleton().GetFactory(TextureFactory::ID)) {
-        Factory->SetImportFilter(TextureFactory::TextureImportFilter::EnvironmentBRDF);
-        Factory->SetSizeFilteredImage(LEMath::IntVector2(128, 128));
-        Factory->SetSampleCount(256);
-    }
-    if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("textures/Alexs_Apt_2k.tga", TextureFactory::ID)) {
-        mEnvironmentBRDF = (Texture*)(LoadedResource->data);
+    //if (TextureFactory *Factory = (TextureFactory*)ResourceManager::GetSingleton().GetFactory(TextureFactory::ID)) {
+    //    Factory->SetImportFilter(TextureFactory::TextureImportFilter::EnvironmentBRDF);
+    //    Factory->SetSizeFilteredImage(LEMath::IntVector2(128, 128));
+    //    Factory->SetSampleCount(256);
+    //}
+    if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("textures/EnvironmentBRDF.texture.lea", ArchiveFactory::ID)) {
+        mEnvironmentBRDF = dynamic_cast<Texture*>(LoadedResource->data);
         mEnvironmentBRDF->InitResource();
         mDrawManager->SetEnvironmentBRDFTexture(mEnvironmentBRDF);
     }
 
     if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("textures/BlueNoise.texture.text", TextureFactory::ID)) {
-        mBlueNoiseTexture = (Texture*)(LoadedResource->data);
+        mBlueNoiseTexture = dynamic_cast<Texture*>(LoadedResource->data);
         mBlueNoiseTexture->InitResource();
+        mDrawManager->SetBlueNoiseTexture(mBlueNoiseTexture);
+        mDrawManager->SetBlueNoiseContext(LEMath::FloatVector4(
+            1.0f / mBlueNoiseTexture.Get()->GetSize().Width(),
+            1.0f / mBlueNoiseTexture.Get()->GetSize().Height(), 
+            1.0f / 8.0f, 0.0f));
     }
 
 	mTaskID_UpdateScene     = LE_TaskManager.AddTask("SceneManager::Update",    TaskPriority_Renderer_UpdateScene,      mSceneManager, &SceneManager::Update);
@@ -82,6 +88,8 @@ void LimitEngine::Term()
 
 	mTaskManager->Term();
 	mShaderManager->Term();
+
+    SamplerState::TerminateCache();
 }
 void LimitEngine::SetResourceRootPath(const char *RootPath)
 {
@@ -126,21 +134,25 @@ Model* LimitEngine::LoadModel(const char *filepath, ResourceFactory::ID ID, bool
             OutModel = (Model*)TextureResource->data;
         }
     }
-    if (OutModel) {
-        mSceneManager->AddModel(OutModel);
-    }
     return OutModel;
 }
-void LimitEngine::AddModel(const ModelRefPtr &InModel)
+uint32 LimitEngine::AddModel(const ModelRefPtr &InModel)
 {
     if (mSceneManager) {
-        mSceneManager->AddModel(InModel);
+        return mSceneManager->AddModel(InModel);
     }
+    return InstanceIDNone;
 }
 void LimitEngine::AddLight(const LightRefPtr &InLight)
 {
     if (mSceneManager) {
         mSceneManager->AddLight(InLight);
+    }
+}
+void LimitEngine::UpdateModelTransform(uint32 InstanceID, const Transform &InTransform)
+{
+    if (mSceneManager) {
+        mSceneManager->UpdateModelTransform(InstanceID, InTransform);
     }
 }
 void LimitEngine::Suspend()
@@ -193,17 +205,12 @@ LimitEngine::LimitEngine()
 
 LimitEngine::~LimitEngine()
 {
-    //mResourceManager->SaveResource("fonts/System.font.lea", mSystemFont);
-
-	//delete mResourceManager; mResourceManager = NULL;
+	delete mResourceManager; mResourceManager = NULL;
 	delete mDrawManager; mDrawManager = nullptr;
     delete mPostProcessManager; mPostProcessManager = nullptr;
 	delete mShaderManager; mShaderManager = nullptr;
     delete mSceneManager; mSceneManager = nullptr;
     delete mShaderDriverManager; mShaderDriverManager = NULL;
-	//delete mGuiManager; mGuiManager = NULL;
-	//delete mProfileManager; mProfileManager = NULL;
-	//delete mLightManager; mLightManager = NULL;
     delete mRenderTargetPoolManager; mRenderTargetPoolManager = nullptr;
 
 	delete mTaskManager; mTaskManager = nullptr;

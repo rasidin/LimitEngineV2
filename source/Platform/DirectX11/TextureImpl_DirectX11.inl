@@ -1,6 +1,25 @@
 /***********************************************************
-LIMITEngine Source File
-Copyright (C), LIMITGAME, 2020
+Copyright (c) 2020 LIMITGAME
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify,
+merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
 -----------------------------------------------------------
 @file  TextureImpl_DirectX11.inl
 @brief Texture (DirectX11)
@@ -46,9 +65,33 @@ namespace LimitEngine {
         switch (format)
         {
         case TEXTURE_DEPTH_FORMAT_D32F:
+            return DXGI_FORMAT_R32_TYPELESS;
+        case TEXTURE_DEPTH_FORMAT_D24S8:
+            return DXGI_FORMAT_R24G8_TYPELESS;
+        default:
+            return DXGI_FORMAT_UNKNOWN;
+        }
+    }
+    DXGI_FORMAT ConvertDepthStencilFormat(const TEXTURE_DEPTH_FORMAT &format)
+    {
+        switch (format)
+        {
+        case TEXTURE_DEPTH_FORMAT_D32F:
             return DXGI_FORMAT_D32_FLOAT;
         case TEXTURE_DEPTH_FORMAT_D24S8:
             return DXGI_FORMAT_D24_UNORM_S8_UINT;
+        default:
+            return DXGI_FORMAT_UNKNOWN;
+        }
+    }
+    DXGI_FORMAT ConvertDepthStencilShaderViewFormat(const TEXTURE_DEPTH_FORMAT &format)
+    {
+        switch (format)
+        {
+        case TEXTURE_DEPTH_FORMAT_D32F:
+            return DXGI_FORMAT_R32_FLOAT;
+        case TEXTURE_DEPTH_FORMAT_D24S8:
+            return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
         default:
             return DXGI_FORMAT_UNKNOWN;
         }
@@ -128,6 +171,18 @@ namespace LimitEngine {
             if (mUnorderedAccessView) {
                 mUnorderedAccessView->Release();
             }
+            if (mRenderTargetView) {
+                mRenderTargetView->Release();
+            }
+            if (mDepthStencilView) {
+                mDepthStencilView->Release();
+            }
+            if (mTexture2D) {
+                mTexture2D->Release();
+            }
+            if (mTexture3D) {
+                mTexture3D->Release();
+            }
             mShaderResourceView = nullptr;
         }
 
@@ -166,7 +221,7 @@ namespace LimitEngine {
             ::memset(&tex2DDesc, 0, sizeof(D3D11_TEXTURE2D_DESC));
             tex2DDesc.Width = size.Width();
             tex2DDesc.Height = size.Height();
-            tex2DDesc.MipLevels = mipLevels;
+            tex2DDesc.MipLevels = max(1, mipLevels);
             tex2DDesc.Format = ConvertTextureFormat(format);
             tex2DDesc.SampleDesc.Count = 1;
             tex2DDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -221,7 +276,7 @@ namespace LimitEngine {
             tex3DDesc.Width = size.Width();
             tex3DDesc.Height = size.Height();
             tex3DDesc.Depth = size.Depth();
-            tex3DDesc.MipLevels = mipLevels;
+            tex3DDesc.MipLevels = max(1, mipLevels);
             tex3DDesc.Format = ConvertTextureFormat(format);
             tex3DDesc.Usage = D3D11_USAGE_DEFAULT;
             tex3DDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
@@ -238,7 +293,6 @@ namespace LimitEngine {
             tex3DSubRes[size.Depth()].SysMemPitch = CalculatePitchSize(format, LEMath::IntVector2(size.X(), size.Y()));
             tex3DSubRes[size.Depth()].SysMemSlicePitch = CalculateSlideSize(format, LEMath::IntVector2(size.X(), size.Y()));
             if (device->CreateTexture3D(&tex3DDesc, initializeData ? (tex3DSubRes) : NULL, &mTexture3D) == S_OK) {
-                delete[] tex3DSubRes;
                 D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
                 ::memset(&srvDesc, 0, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
                 srvDesc.Format = tex3DDesc.Format;
@@ -266,7 +320,7 @@ namespace LimitEngine {
                 }
                 return true;
             }
-            delete tex3DSubRes;
+            delete[] tex3DSubRes;
             return false;
         }
         void CreateScreenColor(const LEMath::IntSize &size) override { /* unimplemented */ }
@@ -330,7 +384,7 @@ namespace LimitEngine {
             tex2DDesc.Format = ConvertTextureFormat(format);
             tex2DDesc.SampleDesc.Count = 1;
             tex2DDesc.Usage = D3D11_USAGE_DEFAULT;
-            tex2DDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+            tex2DDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
 
             if (device->CreateTexture2D(&tex2DDesc, nullptr, &mTexture2D) == S_OK) {
                 mDepthFormat = format;
@@ -339,10 +393,22 @@ namespace LimitEngine {
 
             D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
             ::memset(&depthStencilViewDesc, 0, sizeof(D3D11_DEPTH_STENCIL_VIEW_DESC));
-            depthStencilViewDesc.Format = tex2DDesc.Format;
-            depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+            depthStencilViewDesc.Format = ConvertDepthStencilFormat(format);
+            depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
             if (device->CreateDepthStencilView(mTexture2D, &depthStencilViewDesc, &mDepthStencilView) != S_OK) {
                 Debug::Error("Failed to create depthstencilview");
+                return;
+            }
+
+            D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+            ::memset(&srvDesc, 0, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
+            srvDesc.Format = ConvertDepthStencilShaderViewFormat(format);
+            srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+            srvDesc.Texture2D.MostDetailedMip = 0;
+            srvDesc.Texture2D.MipLevels = 1;
+
+            if (device->CreateShaderResourceView(mTexture2D, &srvDesc, &mShaderResourceView) != S_OK) {
+                Debug::Error("Failed to create depthstencil shader resource view");
                 return;
             }
         }

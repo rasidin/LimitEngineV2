@@ -13,14 +13,9 @@
 #include "InitializeOptions.h"
 #include "Core/Singleton.h"
 #include "Managers/RenderTargetPoolManager.h"
+#include "PostProcessors/PostProcessor.h"
 
 namespace LimitEngine {
-struct PostProcessContext
-{
-    PooledRenderTarget SceneColor;
-    PooledDepthStencil SceneDepth;
-};
-
 class PostProcessManager;
 typedef Singleton<PostProcessManager, LimitEngineMemoryCategory_Graphics> SingletonPostProcessManager;
 class PostProcessManager : public SingletonPostProcessManager
@@ -34,12 +29,14 @@ public:
     void Process();
 
 private:
-    bool ProcessTemporalAA(const PostProcessContext &Context, PooledRenderTarget &Result);
-    void ResolveFinalResult(const PostProcessContext &Context);
+    VectorArray<PostProcessor*> PostProcessors;
 
-private:
+    ShaderRefPtr mAmbientOcclusionShader;
+    ShaderRefPtr mAmbientOcclusionBlurShader;
     ShaderRefPtr mTemporalAAShader;
     ShaderRefPtr mResolveShader;
+
+    int mAmbientOcclusionParameter_SceneDepth;
 
     PooledRenderTarget mHistorySceneColor;
 };

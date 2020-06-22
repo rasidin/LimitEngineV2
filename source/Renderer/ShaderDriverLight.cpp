@@ -42,7 +42,7 @@ namespace LimitEngine {
             DrawCommand::BindTexture(mIBLIrrTex_Position, rs.GetIBLIrradianceTexture().Get());
         }
         if (IsValidShaderParameterPosition(mTemporalContext_Position)) {
-            DrawCommand::SetShaderUniformInt4(material->GetShader().Get(), mTemporalContext_Position, rs.GetTemporalContext());
+            DrawCommand::SetShaderUniformInt4(material->GetShader(rs.GetRenderPass()).Get(), mTemporalContext_Position, rs.GetTemporalContext());
         }
         if (IsValidShaderParameterPosition(mEnvBRDFTex_Position)) {
             DrawCommand::BindTexture(mEnvBRDFTex_Position, rs.GetEnvironmentBRDFTexture().Get());

@@ -132,6 +132,8 @@ namespace LimitEngine {
             mBaseRenderTargetView = InitParameter->mBaseRenderTargetView;
             mBaseDepthStencilView = InitParameter->mBaseDepthStencilView;
 
+            delete InitParameter;
+
             // Set BlendState
             for (uint32 bfidx = 0; bfidx < RenderTargetMaxCount; bfidx++)
                 SetBlendFunc(bfidx, RendererFlag::BlendFlags::SOURCE);
@@ -183,7 +185,8 @@ namespace LimitEngine {
             }
             mBlendStates.Clear();
             for (uint32 depthIndex = 0; depthIndex < mDepthStencilStates.GetSize(); depthIndex++) {
-                mDepthStencilStates.GetAt(depthIndex).value->Release();
+                if (mDepthStencilStates.GetAt(depthIndex).value)
+                    mDepthStencilStates.GetAt(depthIndex).value->Release();
             }
             mDepthStencilStates.Clear();
             if (mDefaultSampler) {
@@ -238,12 +241,12 @@ namespace LimitEngine {
         bool PrepareForDrawingModel() override { return true; }
         void ClearScreen(const LEMath::FloatColorRGBA &color) override
         {
-            if (mBaseRenderTargetView) {
+            if (mCurrentRenderTargetView) {
                 FLOAT color4[4] = { color.Red(), color.Green(), color.Blue(), color.Alpha() };
-                mD3DDeviceContext->ClearRenderTargetView(mBaseRenderTargetView, color4);
+                mD3DDeviceContext->ClearRenderTargetView(mCurrentRenderTargetView, color4);
             }
-            if (mBaseDepthStencilView) {
-                mD3DDeviceContext->ClearDepthStencilView(mBaseDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+            if (mCurrentDepthStencilView) {
+                mD3DDeviceContext->ClearDepthStencilView(mCurrentDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
             }
         }
         void BindVertexBuffer(void *handle, void *buffer, uint32 offset, uint32 size, uint32 stride) override
@@ -282,6 +285,8 @@ namespace LimitEngine {
         }
         void BindTargetTexture(uint32 index, Texture *texture) override
         {
+            if (index == 0xffffffff)
+                return;
             if (cache.CurrentShader) {
                 if (cache.CurrentShader->HasShader(Shader::TYPE_COMPUTE)) {
                     if (texture == NULL) {
@@ -295,19 +300,34 @@ namespace LimitEngine {
                 }
             }
         }
+        void BindSampler(uint32 Index, SamplerState *Sampler) override
+        {
+            LEASSERT(mD3DDeviceContext);
+            if (Index == 0xffffffff)
+                return;
+
+            if (cache.CurrentShader) {
+                ID3D11SamplerState *samplers[] = { (ID3D11SamplerState*)Sampler->GetHandle() };
+                if (cache.CurrentShader->HasShader(Shader::TYPE_PIXEL)) {
+                    mD3DDeviceContext->PSSetSamplers(Index, 1, samplers);
+                }
+                else if (cache.CurrentShader->HasShader(Shader::TYPE_COMPUTE)) {
+                    mD3DDeviceContext->CSSetSamplers(Index, 1, samplers);
+                }
+            }
+        }
         void BindTexture(uint32 Index, Texture *Texture) override
         {
             LEASSERT(mD3DDeviceContext);
+            if (Index == 0xffffffff)
+                return;
+
             if (cache.CurrentShader) {
                 if (cache.CurrentShader->HasShader(Shader::TYPE_PIXEL)) {
-                    ID3D11SamplerState* sss[] = { mDefaultSampler };
-                    mD3DDeviceContext->PSSetSamplers(Index, 1, sss);
                     ID3D11ShaderResourceView* srvs[] = { (ID3D11ShaderResourceView*)Texture->GetShaderResourceView() };
                     mD3DDeviceContext->PSSetShaderResources(Index, 1, srvs);
                 }
                 else if (cache.CurrentShader->HasShader(Shader::TYPE_COMPUTE)) {
-                    ID3D11SamplerState* sss[] = { mDefaultSampler };
-                    mD3DDeviceContext->CSSetSamplers(Index, 1, sss);
                     ID3D11ShaderResourceView* srvs[] = { (ID3D11ShaderResourceView*)Texture->GetShaderResourceView() };
                     mD3DDeviceContext->CSSetShaderResources(Index, 1, srvs);
                 }
@@ -427,6 +447,9 @@ namespace LimitEngine {
                 ID3D11DepthStencilView *depthStencilView = depth ? ((ID3D11DepthStencilView*)depth->GetDepthStencilView()) : nullptr;
 
                 mD3DDeviceContext->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
+
+                mCurrentRenderTargetView = renderTargetView;
+                mCurrentDepthStencilView = depthStencilView;
             }
         }
     private:
@@ -504,6 +527,8 @@ namespace LimitEngine {
         ID3D11Device            *mD3DDevice;
         ID3D11DeviceContext		*mD3DDeviceContext;
         ID3D11SamplerState      *mDefaultSampler;
+        ID3D11RenderTargetView  *mCurrentRenderTargetView;
+        ID3D11DepthStencilView  *mCurrentDepthStencilView;
         ID3D11RenderTargetView	*mBaseRenderTargetView;                         // View for rendertarget
         ID3D11DepthStencilView	*mBaseDepthStencilView;                         // View for depthstencil
         ID3D11RasterizerState   *mRasterizerStates[static_cast<uint32>(RendererFlag::Culling::Max)];

@@ -39,6 +39,9 @@ add_library(LimitEngine
 	source/Managers/ResourceManager.cpp
 	source/Managers/RenderTargetPoolManager.cpp
 	source/Managers/TaskManager.cpp
+	source/PostProcessors/PostProcessAmbientOcclusion.cpp
+	source/PostProcessors/PostProcessTemporalAA.cpp
+	source/PostProcessors/PostProcessResolveFinalColor.cpp
 	source/Renderer/AABB.cpp
 	source/Renderer/CommandBuffer.cpp
 	source/Renderer/Camera.cpp
@@ -50,7 +53,9 @@ add_library(LimitEngine
 	source/Renderer/LightIBL.cpp
 	source/Renderer/Material.cpp
 	source/Renderer/Model.cpp
+	source/Renderer/ModelInstance.cpp
 	source/Renderer/RenderContext.cpp
+	source/Renderer/SamplerState.cpp
 	source/Renderer/Shader.cpp
 	source/Renderer/ShaderDriver.cpp
 	source/Renderer/ShaderDriverBakedBRDF.cpp

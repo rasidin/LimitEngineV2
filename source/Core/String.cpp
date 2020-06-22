@@ -110,4 +110,18 @@ namespace LimitEngine {
 		}
 		return output;
 	}
+    void String::Split(const String &SplitWord, String &A, String &B) const
+    {
+        int32 splitWordPosition = FindWord(SplitWord);
+        if (splitWordPosition >= 0) {
+            char *TempBuffer = GetCopiedCharPtr();
+            TempBuffer[splitWordPosition] = 0;
+            A = TempBuffer;
+            B =&TempBuffer[splitWordPosition + 1];
+        }
+        else {
+            A = *this;
+            B = "";
+        }
+    }
 }

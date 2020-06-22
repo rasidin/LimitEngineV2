@@ -165,7 +165,7 @@ public:
     size_t        GetLength() const                    { if (mBuffer) return strlen(mBuffer); else return 0; }
     char*        GetCharPtr()                        { return mBuffer; }
     const char*    GetCharPtr() const                    { return mBuffer; }
-    char*       GetCopiedCharPtr()
+    char*       GetCopiedCharPtr() const
     {
         if (!GetLength()) return NULL;
         char *output = (char *)malloc(GetLength() + 1);
@@ -184,8 +184,9 @@ public:
     // ============================================
     void    Release();
     bool    IsContain(const String &str) const;
-    uint32    FindWord(const String &str) const;
-    String    Replace(const String &str, const String &tar);
+    uint32  FindWord(const String &str) const;
+    String  Replace(const String &str, const String &tar);
+    void    Split(const String &SplitWord, String &A, String &B) const;
 
 private:
     char        *mBuffer;

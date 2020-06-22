@@ -29,7 +29,7 @@ public:
     virtual ~TextureFactory() {}
 
     IReferenceCountedObject* Create(const ResourceSourceFactory *SourceFactory, const ResourceFactory::FileData &size) override;
-    void Release(void *data) override;
+    void Release(IReferenceCountedObject *data) override;
     uint32 GetResourceTypeCode() override { return makeResourceTypeCode("LMDL"); }
 
     class TextureSourceImage* FilterSourceImage(class TextureSourceImage *SourceImage);

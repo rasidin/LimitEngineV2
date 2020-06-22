@@ -35,7 +35,7 @@ namespace LimitEngine {
         if (ImageFilePath) {
             AutoPointer<ResourceManager::RESOURCE> TextureResource = LE_ResourceManager.GetResourceWithoutRegister(ImageFilePath, TextureFactory::ID);
             if (TextureResource.Exists()) {
-                Texture *texture = static_cast<Texture*>(TextureResource->PopData());
+                Texture *texture = dynamic_cast<Texture*>(TextureResource->data);
                 texture->CreateUsingSourceData();
                 Output->SetTexture(texture);
             }

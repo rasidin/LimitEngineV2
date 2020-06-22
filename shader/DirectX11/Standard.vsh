@@ -7,6 +7,8 @@
  @author minseob (leeminseob@outlook.com)
  ***********************************************************/
 
+#include "CommonDefinitions.shh"
+
 struct VS_INPUT
 {
     float4 Position     : POSITION0;
@@ -27,8 +29,6 @@ struct VS_OUTPUT
     float4 WorldNormal   : POSITION2;
 };
 
-float4x4 WorldViewProjMatrix;
-
 VS_OUTPUT vs_main(VS_INPUT In)
 {
     VS_OUTPUT Out;
@@ -36,7 +36,7 @@ VS_OUTPUT vs_main(VS_INPUT In)
     Out.Normal = In.Normal;
     Out.Color = In.Color;
     Out.Texcoord0 = In.Texcoord0;
-    Out.WorldPosition = In.Position;
+    Out.WorldPosition = mul(WorldMatrix, In.Position);
     Out.WorldNormal = In.Normal;
     return Out;
 }

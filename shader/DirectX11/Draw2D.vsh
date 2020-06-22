@@ -25,7 +25,7 @@ VS_OUTPUT vs_main(VS_INPUT In)
 	VS_OUTPUT output = (VS_OUTPUT)0;
 	output.pos.x = In.pos.x * 2 - 1;
 	output.pos.y = 1 - In.pos.y * 2;
-    output.pos.z = 0;
+    output.pos.z = In.pos.z;
 	output.pos.w = 1;
 	output.color = In.color;
     output.uv = In.uv;

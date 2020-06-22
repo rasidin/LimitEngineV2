@@ -56,9 +56,13 @@ public:
 
         void* PopData() { void *output = data; data = nullptr; return output; }
         void Release();
+        void ReleaseResource();
     private:
-        virtual ~_RESOURCE() {}
-        void ForceRelease();
+        virtual ~_RESOURCE()
+        {
+            ReleaseResource();
+        }
+        void ForceReleaseResource();
     } RESOURCE;
     
 public:

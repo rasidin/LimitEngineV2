@@ -32,6 +32,9 @@ namespace LimitEngine {
         bool IsSceneBegan() const { return mSceneBegan; }
         bool IsModelDrawingBegan() const { return mModelDrawingBegan; }
 
+        void SetRenderPass(const RenderPass &InRenderPass) { mRenderPass = InRenderPass; }
+        RenderPass GetRenderPass() const { return mRenderPass; }
+
         void SetTemporalContext(int FrameIndex, int NumTemporalFrames, int SamplesInFrame, int AllSamplesNum)
         {
             mTemporalContext.SetX(FrameIndex);
@@ -39,11 +42,19 @@ namespace LimitEngine {
             mTemporalContext.SetZ(SamplesInFrame);
             mTemporalContext.SetW(AllSamplesNum);
         }
+        void SetFrameIndexContext(int FrameIndexMod8, int FrameIndexMod16, int FrameIndexMod32, int FrameIndexMod64)
+        {
+            mFrameIndexContext.SetX(FrameIndexMod8);
+            mFrameIndexContext.SetY(FrameIndexMod16);
+            mFrameIndexContext.SetZ(FrameIndexMod32);
+            mFrameIndexContext.SetW(FrameIndexMod64);
+        }
+        const LEMath::IntVector4& GetFrameIndexContext() const { return mFrameIndexContext; }
         const LEMath::IntVector4& GetTemporalContext() const { return mTemporalContext; }
 
-        void SetBlueNoiseContext(float PerTextureSize)
+        void SetBlueNoiseContext(const LEMath::FloatVector4 &Context)
         {
-            mBlueNoiseContext.SetX(PerTextureSize);
+            mBlueNoiseContext = Context;
         }
         const LEMath::FloatVector4& GetBlueNoiseContext() const { return mBlueNoiseContext; }
 
@@ -77,13 +88,19 @@ namespace LimitEngine {
         TextureRefPtr GetIBLIrradianceTexture() const                           { return mEnvironmentTextures.iblIrradianceTexture; }
         void SetEnvironmentBRDFTexture(const TextureRefPtr &envBRDFtex)         { mEnvironmentTextures.environmentBRDFTexture = envBRDFtex; }
         TextureRefPtr GetEnvironmentBRDFTexture() const                         { return mEnvironmentTextures.environmentBRDFTexture; }
+        void SetBlueNoiseTexture(const TextureRefPtr &blueNoiseTex)             { mBlueNoiseTexture = blueNoiseTex; }
+        TextureRefPtr GetBlueNoiseTexture() const                               { return mBlueNoiseTexture; }
 
     private:
         bool mSceneBegan;
         bool mModelDrawingBegan;
 
+        RenderPass mRenderPass;
+
         LEMath::IntVector4 mTemporalContext; // x = FrameIndex, y = NumTemporalFrames, z = Samples in one frame, w = All Samples
+        LEMath::IntVector4 mFrameIndexContext; // (mod8, mod16, mod32, mod64)
         LEMath::FloatVector4 mBlueNoiseContext;
+        TextureRefPtr mBlueNoiseTexture;
 
         struct GeneralMatrices {
             LEMath::FloatMatrix4x4  viewMatrix;

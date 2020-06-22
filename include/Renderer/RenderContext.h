@@ -16,6 +16,7 @@
 #include <LERenderer>
 
 #include "Core/Singleton.h"
+#include "Core/ReferenceCountedPointer.h"
 #include "Containers/MapArray.h"
 
 namespace LimitEngine {
@@ -32,9 +33,9 @@ namespace LimitEngine {
 		RenderContext();
 		virtual ~RenderContext();
 
-		Texture* GetDefaultTexture(DefaultTextureType type) const { return mDefaultTextures[(int)type]; }
+		Texture* GetDefaultTexture(DefaultTextureType type) const { return mDefaultTextures[(int)type].Get(); }
 	private:
-		VectorArray<Texture*> mDefaultTextures;
+		VectorArray<TextureRefPtr> mDefaultTextures;
 	};
 } // LimitEngine
 

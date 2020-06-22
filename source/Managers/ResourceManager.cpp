@@ -38,15 +38,22 @@ namespace LimitEngine {
 	ResourceManager* SingletonResourceManager::mInstance = NULL;
 #endif
 	MapArray<String, String> ResourceManager::mPathTable;
-    
-    void ResourceManager::_RESOURCE::ForceRelease()
-    {
-        Release();
-    }
+
     void ResourceManager::_RESOURCE::Release()
     {
+        ReleaseResource();
+        delete this;
+    }
+    void ResourceManager::_RESOURCE::ForceReleaseResource()
+    {
+        ReleaseResource();
+    }
+    void ResourceManager::_RESOURCE::ReleaseResource()
+    {
         if (data) {
-            data->SubReferenceCounter();
+            if (data->SubReferenceCounter() == 0) {
+                factory->Release(data);
+            }
             data = nullptr;
         }
     }
@@ -74,6 +81,9 @@ namespace LimitEngine {
 		mResources.Clear();
         if (mLoader) delete mLoader;
         unregisterFactories();
+
+        mPathTable.Clear();
+        mRootPath = nullptr;
     }
     void ResourceManager::registerFactories()
     {
@@ -100,6 +110,12 @@ namespace LimitEngine {
             delete factory;
         }
         mFactories.Clear();
+
+        for (uint32 srcFacIdx = 0; srcFacIdx < mSourceFactories.size(); srcFacIdx++) {
+            ResourceSourceFactory *sourceFactory = mSourceFactories.GetAt(srcFacIdx).value;
+            delete sourceFactory;
+        }
+        mSourceFactories.Clear();
     }
     void ResourceManager::SetPathTag(const char *key, const char *value)
     {
@@ -180,9 +196,13 @@ namespace LimitEngine {
                 RESOURCE *newRes = new RESOURCE(Filename, Factory, size, createdData);
                 if (NeedRegister)
                     mResources.Add(newRes);
+
+                free(filenameonly);
                 free(convertedPath);
+                free(data);
                 return newRes;
             }
+            free(data);
         }
         free(filenameonly);
 		free(convertedPath);

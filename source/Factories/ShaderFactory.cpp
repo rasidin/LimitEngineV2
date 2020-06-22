@@ -33,10 +33,10 @@ void* ShaderFactory::CreateFromShaderText(const char *shaderName, const char *vs
 	delete output;
 	return NULL;
 }
-void ShaderFactory::Release(void *data)
+void ShaderFactory::Release(IReferenceCountedObject *data)
 {
 	if (data == NULL)
 		return;
-	delete static_cast<Shader*>(data);
+	delete dynamic_cast<Shader*>(data);
 }
 }

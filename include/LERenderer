@@ -21,24 +21,31 @@ class LightIBL;
 class LightManager;
 class Material;
 class Model;
+class ModelInstance;
 class Mesh;
 class PointLight;
 class PostProcessManager;
+class PostProcessor;
 class Shader;
 class ShaderDriver;
 class SpotLight;
 class Sprite;
+class SamplerState;
 class Texture;
 class RenderState;
 class RenderContext;
 class RenderTargetPoolManager;
 
-#define CameraRefPtr  ReferenceCountedPointer<Camera> 
-#define FontRefPtr    ReferenceCountedPointer<Font>   
-#define LightRefPtr   ReferenceCountedPointer<Light>  
-#define ModelRefPtr   ReferenceCountedPointer<Model>  
-#define TextureRefPtr ReferenceCountedPointer<Texture>
-#define ShaderRefPtr  ReferenceCountedPointer<Shader> 
+#define CameraRefPtr		ReferenceCountedPointer<Camera> 
+#define FontRefPtr			ReferenceCountedPointer<Font>   
+#define LightRefPtr			ReferenceCountedPointer<Light>  
+#define ModelRefPtr			ReferenceCountedPointer<Model>  
+#define ModelInstRefPtr		ReferenceCountedPointer<ModelInstance>
+#define SamplerStateRefPtr	ReferenceCountedPointer<SamplerState>
+#define TextureRefPtr		ReferenceCountedPointer<Texture>
+#define ShaderRefPtr		ReferenceCountedPointer<Shader> 
+
+#define InstanceIDNone 0xffffffff
 }
 
 #include "Renderer/Definitions.h"

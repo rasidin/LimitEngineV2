@@ -24,6 +24,7 @@ public:
     virtual float GetFovRadians() const override;
     virtual float GetExposure() const override;
 
+    void SetFocalLength(float InFocalLength) { mFocalLength = InFocalLength; }
     void SetShutterSpeed(float InShutterSpeed) { mShutterSpeed = InShutterSpeed; }
     void SetFStop(float InFStop) { mFStop = InFStop; }
     void SetISO(float InISO) { mISO = InISO; }

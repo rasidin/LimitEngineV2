@@ -17,6 +17,10 @@ Copyright (C), LIMITGAME, 2020
 
 #include "Core/Singleton.h"
 #include "Core/Mutex.h"
+#include "Core/ReferenceCountedPointer.h"
+
+#include "Managers/RenderTargetPoolManager.h"
+#include "Renderer/SamplerState.h"
 
 namespace LimitEngine {
 class CommandImpl : public Object<LimitEngineMemoryCategory_Graphics>
@@ -37,6 +41,7 @@ public:
     virtual void BindIndexBuffer(void *Handle) = 0;
     virtual void BindShader(Shader *Shd) = 0;
     virtual void BindTargetTexture(uint32 Index, Texture *Tex) = 0;
+    virtual void BindSampler(uint32 Index, SamplerState *Sampler) = 0;
     virtual void BindTexture(uint32 Index, Texture *Tex) = 0;
     virtual void Dispatch(int X, int Y, int Z) = 0;
     virtual void DrawPrimitive(uint32 Primitive, uint32 Offset, uint32 Count) = 0;
@@ -74,8 +79,11 @@ private:            // Private Structure
             cEndDrawing,
             cClearScreen,
             cBindShader,
+            cBindSampler,
             cBindTexture,
 			cBindTargetTexture,
+            cBindPooledRenderTarget,
+            cBindPooledDepthStencil,
             cBindVertexBuffer,
             cBindIndexBuffer,
             cDispatch,
@@ -186,6 +194,17 @@ private:            // Private Structure
 		uint32          index;
 		Texture        *texture;
 	} COMMAND_BINDTARGETTEXTURE;
+    // Bind texture sampler
+    typedef struct _COMMAND_BINDSAMPLER : public _COMMAND_COMMON
+    {
+        _COMMAND_BINDSAMPLER(uint32 n, SamplerState *s)
+            : _COMMAND_COMMON(cBindSampler)
+            , index(n)
+            , sampler(s)
+        {}
+        uint32              index;
+        SamplerStateRefPtr  sampler;
+    } COMMAND_BINDSAMPLER;
     // Bind texture before drawing model
     typedef struct _COMMAND_BINDTEXTURE : public _COMMAND_COMMON
     {
@@ -196,8 +215,28 @@ private:            // Private Structure
         {
         }
         uint32           index;
-        Texture         *texture;
+        TextureRefPtr    texture;
     } COMMAND_BINDTEXTURE;
+    typedef struct _COMMAND_BINDPOOLEDRENDERTARGET : public _COMMAND_COMMON
+    {
+        _COMMAND_BINDPOOLEDRENDERTARGET(uint32 i, const PooledRenderTarget &t)
+            : _COMMAND_COMMON(cBindPooledRenderTarget)
+            , index(i)
+            , texture(t)
+        {}
+        uint32             index;
+        PooledRenderTarget texture;
+    } COMMAND_BINDPOOLEDRENDERTARGET;
+    typedef struct _COMMAND_BINDPOOLEDDEPTHSTENCIL : public _COMMAND_COMMON
+    {
+        _COMMAND_BINDPOOLEDDEPTHSTENCIL(uint32 i, const PooledDepthStencil &t)
+            : _COMMAND_COMMON(cBindPooledDepthStencil)
+            , index(i)
+            , texture(t)
+        {}
+        uint32             index;
+        PooledDepthStencil texture;
+    } COMMAND_BINDPOOLEDDEPTHSTENCIL;
     // Set float value to shader
     typedef struct _COMMAND_SETSHADERUNIFORMFLOAT1 : public _COMMAND_COMMON
     {

@@ -26,6 +26,7 @@ namespace LimitEngine {
         static constexpr uint32 Vertex2DReserved = 3 * 200;
     public:
         Draw2DManager();
+        virtual ~Draw2DManager();
 
         void Init();
         void Term();

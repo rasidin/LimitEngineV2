@@ -39,10 +39,19 @@ void PooledDepthStencil::Release()
     mTexture = nullptr;
 }
 RenderTargetPoolManager::RenderTargetPoolManager()
-    : SingletonRenderTaregtPoolManager()
+    : SingletonRenderTargetPoolManager()
 {}
 RenderTargetPoolManager::~RenderTargetPoolManager()
-{}
+{
+    for (auto RTBucket : mRTBuckets) {
+        delete RTBucket.value;
+    }
+    mRTBuckets.Clear();
+    for (auto DSBucket : mDSBuckets) {
+        delete DSBucket.value;
+    }
+    mDSBuckets.Clear();
+}
 PooledRenderTarget RenderTargetPoolManager::GetRenderTarget(const RenderTargetDesc &InDesc)
 {
     return GetRenderTarget(InDesc.Size, InDesc.Depth, InDesc.Format);

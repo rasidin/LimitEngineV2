@@ -20,10 +20,10 @@ namespace LimitEngine {
     IReferenceCountedObject* TextParserFactory::Create(const ResourceSourceFactory *Format, const FileData &Data)
     {
         if (!Data.IsValid()) return nullptr;
-        return dynamic_cast<ReferenceCountedObject<>*>((TextParser*)Format->ConvertRawData(Data.Data, Data.Size));
+        return dynamic_cast<IReferenceCountedObject*>((TextParser*)Format->ConvertRawData(Data.Data, Data.Size));
     }
-    void TextParserFactory::Release(void *Data)
+    void TextParserFactory::Release(IReferenceCountedObject *Data)
     {
-        delete static_cast<TextParser*>(Data);
+        delete dynamic_cast<TextParser*>(Data);
     }
 }

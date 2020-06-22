@@ -18,12 +18,12 @@ IReferenceCountedObject* ModelFactory::Create(const ResourceSourceFactory *Sourc
 
     if (SourceFactory->GetID() == TextParserID) {
         if (TextParser *Parser = (TextParser*)SourceFactory->ConvertRawData(Data.Data, Data.Size)) {
-            return dynamic_cast<IReferenceCountedObject*>(Model::GenerateFromTextParser(Parser));
+            return dynamic_cast<IReferenceCountedObject*>(Model::GenerateFromTextParser(ReferenceCountedPointer<TextParser>(Parser)));
         }
     }
     return NULL;
 }
-void ModelFactory::Release(void *data)
+void ModelFactory::Release(IReferenceCountedObject *data)
 {
     if (data) {
         delete static_cast<Model*>(data);

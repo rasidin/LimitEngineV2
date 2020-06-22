@@ -9,6 +9,19 @@ Copyright (C), LIMITGAME, 2020
 #pragma once
 
 namespace LimitEngine {
+enum class RenderPass : char {
+    PrePass = 0,
+    BasePass,
+    TranslucencyPass,
+    NumOfRenderPass
+};
+
+static constexpr char* RenderPassNames[] = {
+    "PrePass",
+    "BasePass",
+    "TranslucencyPass"
+};
+
 enum class BackgroundImageType : char {
     None = 0,
     Fullscreen,

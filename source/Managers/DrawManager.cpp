@@ -21,29 +21,12 @@
 #error No implementation DrawManagerImpl
 #endif
 
-//#include "LE_Camera.h"
-//
 #include "Core/Debug.h"
 #include "Core/Timer.h"
 #include "Managers/Draw2DManager.h"
 #include "Renderer/CommandBuffer.h"
 #include "Renderer/VertexBuffer.h"
 #include "Renderer/RenderContext.h"
-//
-//#include "LE_ShaderManager.h"
-//#include "LE_LightManager.h"
-//#include "LE_LightIBL.h"
-//#include "LE_Texture.h"
-//#include "LE_TaskManager.h"
-//#include "LE_TaskPriority.h"
-//#include "LE_Timer.h"
-//#include "LE_FrameBuffer.h"
-//
-//#include "LE_PostFilter_Filmic.h"
-//#include "LE_PostFilter_DOF.h"
-//
-//#include "LE_MemoryAllocator.h"
-//#include "LE_RenderContext.h"
 
 namespace LimitEngine
 {
@@ -204,8 +187,10 @@ namespace LimitEngine
     void DrawManager::runRendererTasks()
     {
         for (uint32 rtidx = 0; rtidx < mRendererTasks.size(); rtidx++) {
-            mRendererTasks[rtidx]->Run();
-            delete mRendererTasks[rtidx];
+            if (mRendererTasks[rtidx]) {
+                mRendererTasks[rtidx]->Run();
+                delete mRendererTasks[rtidx];
+            }
         }
         mRendererTasks.Clear();
     }
@@ -269,7 +254,7 @@ namespace LimitEngine
         }
         LEMath::FloatMatrix4x4 viewProjMatrix = viewMatrix * projMatrixWithJitter;
 
-        mRenderState->SetViewProjMatrix(viewProjMatrix.Transpose());
+        mRenderState->SetViewProjMatrix(viewProjMatrix);
         mRenderState->SetInvViewMatrix(viewMatrix.Inverse());
         mRenderState->SetInvProjMatrix(projMatrixWithJitter.Inverse());
         mRenderState->SetInvViewProjMatrix(viewProjMatrix.Inverse());
@@ -278,6 +263,12 @@ namespace LimitEngine
             //temporalAAIndex, mTemporalAASamples, 32, 32 * mTemporalAASamples
             0, 1, 128, 128
         );
+        mRenderState->SetFrameIndexContext(
+            mFrameCounter % 8,
+            mFrameCounter % 16,
+            mFrameCounter % 32,
+            mFrameCounter % 64
+            );
 
         mFrameCounter++;
     }

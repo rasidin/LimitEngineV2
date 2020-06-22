@@ -37,12 +37,17 @@ namespace LimitEngine {
         *this << InMaterial.mId;
         *this << InMaterial.mName;
         String shaderName;
-        if (InMaterial.mShader.IsValid()) {
-            shaderName = InMaterial.mShader->GetName();
+        if (InMaterial.mShader[0].IsValid()) {
+            String ShaderPrefix;
+            String RenderPass;
+            InMaterial.mShader[0]->GetName().Split(".", ShaderPrefix, RenderPass);
+            shaderName = ShaderPrefix;
         }
         *this << shaderName;
         if (IsLoading()) {
-            InMaterial.mShader = LE_ShaderManager.GetShader(shaderName);
+            for (uint32 RenderPassIndex = 0; RenderPassIndex < (uint32)RenderPass::NumOfRenderPass; RenderPassIndex++) {
+                InMaterial.mShader[RenderPassIndex] = LE_ShaderManager.GetShader(shaderName + "." + RenderPassNames[RenderPassIndex]);
+            }
         }
         return *this;
     }
@@ -50,7 +55,6 @@ namespace LimitEngine {
     Material::Material()
         : mId()
         , mName()
-        , mShader(NULL)
         , mShaderDriverParameter(NULL)
     {
     }
@@ -64,9 +68,10 @@ namespace LimitEngine {
     void Material::Load(TextParser::NODE *root)
     {
         // TODO : Share shader between materials...
-        mShader = nullptr;
+        for (uint32 Index = 0; Index < (uint32)RenderPass::NumOfRenderPass; Index++)
+            mShader[Index] = nullptr;
 
-        bool CompiledShaders = false;
+        //bool CompiledShaders = false;
 		bool SucceedCompilingVS = false;
 		bool SucceedCompilingPS = false;
 		for (uint32 chidx = 0; chidx < root->children.size(); chidx++) {
@@ -78,18 +83,21 @@ namespace LimitEngine {
                 mName = node->values[0];
             }
             else if (node->name == "SHADER") {
-                mShader = LE_ShaderManager.GetShader(node->values[0]);
+                String shaderName = node->values[0];
+                for (uint32 Index = 0; Index < (uint32)RenderPass::NumOfRenderPass; Index++) {
+                    mShader[Index] = LE_ShaderManager.GetShader(shaderName + "." + RenderPassNames[Index]);
+                }
             }
-            else if (node->name == "VERTEXSHADER") {
-                if (!mShader.IsValid()) mShader = new Shader();
-                CompiledShaders = true;
-				SucceedCompilingVS = mShader->Compile(node->values[0], Shader::TYPE_VERTEX);
-            }
-            else if (node->name == "PIXELSHADER") {
-                if (!mShader.IsValid()) mShader = new Shader();
-                CompiledShaders = true;
-                SucceedCompilingPS = mShader->Compile(node->values[0], Shader::TYPE_PIXEL);
-            }
+    //        else if (node->name == "VERTEXSHADER") {
+    //            if (!mShader.IsValid()) mShader = new Shader();
+    //            CompiledShaders = true;
+				//SucceedCompilingVS = mShader->Compile(node->values[0], Shader::TYPE_VERTEX);
+    //        }
+    //        else if (node->name == "PIXELSHADER") {
+    //            if (!mShader.IsValid()) mShader = new Shader();
+    //            CompiledShaders = true;
+    //            SucceedCompilingPS = mShader->Compile(node->values[0], Shader::TYPE_PIXEL);
+    //        }
             else { // Texture or Parameter
                 if (node->values.count() == 1) {
                     if (node->IsValueNumber(0)) { // float
@@ -115,26 +123,26 @@ namespace LimitEngine {
                 }
             }
         }
-		if (CompiledShaders && SucceedCompilingVS && SucceedCompilingPS) {
-			LE_ShaderManager.AddShader(mShader.Get());
-		}
-		else if (CompiledShaders) {
-			mShader = nullptr;
-		}
+		//if (CompiledShaders && SucceedCompilingVS && SucceedCompilingPS) {
+		//	LE_ShaderManager.AddShader(mShader.Get());
+		//}
+		//else if (CompiledShaders) {
+		//	mShader = nullptr;
+		//}
     }
     void Material::setupShaderParameters()
     {
-        if (!mShader.IsValid())
-            return;
-        if (mShaderDriverParameter = dynamic_cast<ShaderDriverParameter*>(mShader->GetDriver("ShaderDriverParameter"))) {
-            for (uint32 prmidx = 0; prmidx < mShaderDriverParameter->GetParameterCount(); prmidx++) {
-                ShaderDriverParameter::ShaderParameter &param = mShaderDriverParameter->GetParameter(prmidx);
-                int indexOfMaterialParameters = mParameters.FindIndex(param.name);
-                if (indexOfMaterialParameters >= 0) {
-                    mParameters.GetAt(indexOfMaterialParameters).value.SetIndexOfShaderParameter(prmidx);
-                }
-            }
-        }
+        //if (!mShader.IsValid())
+        //    return;
+        //if (mShaderDriverParameter = dynamic_cast<ShaderDriverParameter*>(mShader->GetDriver("ShaderDriverParameter"))) {
+        //    for (uint32 prmidx = 0; prmidx < mShaderDriverParameter->GetParameterCount(); prmidx++) {
+        //        ShaderDriverParameter::ShaderParameter &param = mShaderDriverParameter->GetParameter(prmidx);
+        //        int indexOfMaterialParameters = mParameters.FindIndex(param.name);
+        //        if (indexOfMaterialParameters >= 0) {
+        //            mParameters.GetAt(indexOfMaterialParameters).value.SetIndexOfShaderParameter(prmidx);
+        //        }
+        //    }
+        //}
     }
     void Material::SetupShaderParameters()
     {
@@ -143,8 +151,9 @@ namespace LimitEngine {
     }
     void Material::Bind(const RenderState &rs)
     {
-        if (mShader.IsValid()) {
-            DrawCommand::BindShader(mShader.Get());
+        uint32 renderPass = (uint32)rs.GetRenderPass();
+        if (mShader[renderPass].IsValid()) {
+            DrawCommand::BindShader(mShader[renderPass].Get());
 
             for (uint32 prmidx = 0; prmidx < mParameters.size(); prmidx++) {
                 if (mParameters.GetAt(prmidx).value.IndexOfShaderParameter() >= 0) {
@@ -159,7 +168,7 @@ namespace LimitEngine {
                 }
             }
 
-            mShader->ApplyDrivers(rs, this);
+            mShader[renderPass]->ApplyDrivers(rs, this);
         }
     }
 }

@@ -26,6 +26,10 @@ namespace LimitEngine {
     {
     }
 
+    Draw2DManager::~Draw2DManager()
+    {
+    }
+
     void Draw2DManager::Init()
     {
         mShader_draw2d = ShaderManager::GetSingleton().GetShader("Draw2D");
@@ -33,13 +37,13 @@ namespace LimitEngine {
         mVertexbuffer_draw2d.InitResource();
 
         // Create vertex buffer for drawing full screen (For postfilter, background...)
-        Vertex<VERTEXTYPE(PCT)> scrVertex[6];
+        Vertex2D scrVertex[6];
         scrVertex[0].SetPosition(LEMath::FloatVector3(0.0f, 0.0f, 0.0f));
-        scrVertex[1].SetPosition(LEMath::FloatVector3(1.0f, 0.0f, 0.0f));
-        scrVertex[2].SetPosition(LEMath::FloatVector3(0.0f, 1.0f, 0.0f));
+        scrVertex[1].SetPosition(LEMath::FloatVector3(0.0f, 1.0f, 0.0f));
+        scrVertex[2].SetPosition(LEMath::FloatVector3(1.0f, 0.0f, 0.0f));
         scrVertex[3].SetPosition(LEMath::FloatVector3(0.0f, 1.0f, 0.0f));
-        scrVertex[4].SetPosition(LEMath::FloatVector3(1.0f, 0.0f, 0.0f));
-        scrVertex[5].SetPosition(LEMath::FloatVector3(1.0f, 1.0f, 0.0f));
+        scrVertex[4].SetPosition(LEMath::FloatVector3(1.0f, 1.0f, 0.0f));
+        scrVertex[5].SetPosition(LEMath::FloatVector3(1.0f, 0.0f, 0.0f));
         scrVertex[0].SetColor(ByteColorRGBA(0xffffffff));
         scrVertex[1].SetColor(ByteColorRGBA(0xffffffff));
         scrVertex[2].SetColor(ByteColorRGBA(0xffffffff));
@@ -47,12 +51,13 @@ namespace LimitEngine {
         scrVertex[4].SetColor(ByteColorRGBA(0xffffffff));
         scrVertex[5].SetColor(ByteColorRGBA(0xffffffff));
         scrVertex[0].SetTexcoord(LEMath::FloatVector2(0.0f, 0.0f));
-        scrVertex[1].SetTexcoord(LEMath::FloatVector2(1.0f, 0.0f));
-        scrVertex[2].SetTexcoord(LEMath::FloatVector2(0.0f, 1.0f));
+        scrVertex[1].SetTexcoord(LEMath::FloatVector2(0.0f, 1.0f));
+        scrVertex[2].SetTexcoord(LEMath::FloatVector2(1.0f, 0.0f));
         scrVertex[3].SetTexcoord(LEMath::FloatVector2(0.0f, 1.0f));
-        scrVertex[4].SetTexcoord(LEMath::FloatVector2(1.0f, 0.0f));
-        scrVertex[5].SetTexcoord(LEMath::FloatVector2(1.0f, 1.0f));
+        scrVertex[4].SetTexcoord(LEMath::FloatVector2(1.0f, 1.0f));
+        scrVertex[5].SetTexcoord(LEMath::FloatVector2(1.0f, 0.0f));
         mVertexbuffer_drawscr.Create(6, &scrVertex[0], 0);
+        mVertexbuffer_drawscr.InitResource();
         mNullTexture = RenderContext::GetSingleton().GetDefaultTexture(RenderContext::DefaultTextureTypeWhite);
     }
     void Draw2DManager::Term()
@@ -64,7 +69,7 @@ namespace LimitEngine {
     }
     void Draw2DManager::DrawScreen(Shader *Shader /*= nullptr*/)
     {
-        DrawCommand::SetCulling(static_cast<uint32>(RendererFlag::Culling::ClockWise));
+        DrawCommand::SetCulling(static_cast<uint32>(RendererFlag::Culling::CounterClockWise));
         if (Shader == nullptr) {
             if (!mShader_draw2d.IsValid())
                 mShader_draw2d = ShaderManager::GetSingleton().GetShader("Draw2D");
@@ -73,7 +78,7 @@ namespace LimitEngine {
         else
             DrawCommand::BindShader(Shader);
         mVertexbuffer_drawscr.BindToDrawManager();
-        DrawCommand::DrawPrimitive(RendererFlag::PrimitiveTypes::TRIANGLELIST, mVertex_draw2d_start, 6);
+        DrawCommand::DrawPrimitive(RendererFlag::PrimitiveTypes::TRIANGLELIST, 0, 6);
     }
     void Draw2DManager::FlushDraw2D(const RendererFlag::PrimitiveTypes &PrimitiveType, Shader *Shader /*= nullptr*/)
     {

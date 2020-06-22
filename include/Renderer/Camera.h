@@ -43,21 +43,24 @@ namespace LimitEngine {
         void SetAim(const LEMath::FloatVector3 &t);
 
         // Set screen size for screen frustum
-		virtual void SetScreenSize(int width, int height)   { mScreenSize = LEMath::IntSize(width, height); if (mFrustum) mFrustum->SetAspectRatio(float(height) / width); }
-		virtual LEMath::IntSize GetScreenSize() const					{ return mScreenSize; }
+		virtual void SetScreenSize(int width, int height)               { mScreenSize = LEMath::IntSize(width, height); if (mFrustum) mFrustum->SetAspectRatio(float(height) / width); }
+		virtual LEMath::IntSize GetScreenSize() const                   { return mScreenSize; }
         // Get aspect ratio of frustum
-        float GetAspectRatio()                              { if(mFrustum) return mFrustum->GetAspectRatio(); return 1.0f; }
+        float GetAspectRatio()                                          { if(mFrustum) return mFrustum->GetAspectRatio(); return 1.0f; }
         // Set field of view (radians)
-        virtual void SetFovRadians(float fov)               { if(mFrustum) mFrustum->SetFOVRadians(fov); }
+        virtual void SetFovRadians(float fov)                           { if(mFrustum) mFrustum->SetFOVRadians(fov); }
         // Get field of view (radians)
-        virtual float GetFovRadians() const                         { if(mFrustum) return mFrustum->GetFOVRadians(); return DefaultFOVRadians; }
+        virtual float GetFovRadians() const                             { if(mFrustum) return mFrustum->GetFOVRadians(); return DefaultFOVRadians; }
         // Get view matrix
         const LEMath::FloatMatrix4x4& GetViewMatrix() const             { return mViewMatrix; }
         // Get projection matrix
         LEMath::FloatMatrix4x4  GetProjectionMatrix()                   { if(mFrustum) return mFrustum->GetProjectionMatrix(); return LEMath::FloatMatrix4x4::Identity; }
 
+        LEMath::FloatVector4 GetUVtoViewParameter() const               { if (mFrustum) return mFrustum->GetUVtoViewParameter(); return LEMath::FloatVector4::Zero; }
+        LEMath::FloatVector4 GetPerspectiveProjectionParameters() const { if (mFrustum) return mFrustum->GetPerspectiveProjectionParameters(); return LEMath::FloatVector4::Zero; }
+
         // Get exposure (EV)
-        virtual float GetExposure() const { return 1.0f; }
+        virtual float GetExposure() const                               { return 1.0f; }
 	private:
 		// Setup metadata for editor
 		void setupMetaData();

@@ -26,9 +26,6 @@ namespace LimitEngine {
 	}
 	RenderContext::~RenderContext()
 	{
-		for(uint32 dtidx=0;dtidx<mDefaultTextures.size();dtidx++) {
-			delete mDefaultTextures[dtidx];
-		}
 		mDefaultTextures.Clear();
 	}
 } // LimitEngine

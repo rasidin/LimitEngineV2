@@ -36,7 +36,7 @@ public:
     typedef uint32 ID;
 
     virtual IReferenceCountedObject* Create(const class ResourceSourceFactory *SourceFactory, const FileData &Data) = 0;
-    virtual void Release(void *data) = 0;
+    virtual void Release(IReferenceCountedObject *data) = 0;
     virtual uint32 GetResourceTypeCode() = 0;
 protected:
     uint32 makeResourceTypeCode(const char *typeCode) { return typeCode[0] | (typeCode[1] << 8) | (typeCode[2] << 16) | (typeCode[3] << 24); }

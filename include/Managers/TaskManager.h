@@ -116,7 +116,7 @@ public:				// Public Functions
 	void Term();
 
     template<typename L>
-    void ParallelFor(int LoopCount, L &&Func) {
+    void ParallelFor(uint32 LoopCount, L &&Func) {
         VectorArray<ParallelTask*> idleParallels;
         for (uint32 Index = 0; Index < ParallelTaskCount; Index++) {
             if (mParallelThreads[Index]->IsIdle()) {

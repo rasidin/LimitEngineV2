@@ -40,8 +40,8 @@ namespace LimitEngine {
         void SetName(const String &name) { mName = name; }
         const String& GetName() const { return mName; }
         
-		void SetShader(Shader *shader) { mShader = shader; setupShaderParameters(); }
-        ShaderRefPtr GetShader() const { return mShader; }
+		void SetShader(const RenderPass &InRenderPass, Shader *shader) { mShader[(uint32)InRenderPass] = shader; setupShaderParameters(); }
+        ShaderRefPtr GetShader(const RenderPass &InRenderPass) const { return mShader[(uint32)InRenderPass]; }
 
 		void SetParameter(const String &name, const ShaderParameter &param) { mParameters.Add(name, param); }
 		ShaderParameter GetParameter(const String &name) const { return mParameters[name]; }
@@ -55,7 +55,7 @@ namespace LimitEngine {
         MapArray<String, ShaderParameter>   mParameters;
         ShaderDriverParameter              *mShaderDriverParameter;
 
-        ShaderRefPtr                        mShader;
+        ShaderRefPtr                        mShader[(uint32)RenderPass::NumOfRenderPass];
 
         friend Archive;
     };

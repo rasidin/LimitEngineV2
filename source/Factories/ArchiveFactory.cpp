@@ -56,4 +56,19 @@ IReferenceCountedObject* ArchiveFactory::Create(const ResourceSourceFactory*, co
 
     return dynamic_cast<IReferenceCountedObject*>(newObject);
 }
+void ArchiveFactory::Release(IReferenceCountedObject *data)
+{
+    if (data) {
+        if (Font *fontData = dynamic_cast<Font*>(data)) {
+            delete fontData;
+        }
+        else if (Texture *textureData = dynamic_cast<Texture*>(data)) {
+            delete textureData;
+        }
+        else if (Model *modelData = dynamic_cast<Model*>(data)) {
+            delete modelData;
+        }
+        data = nullptr;
+    }
+}
 }

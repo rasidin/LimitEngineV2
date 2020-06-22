@@ -7,19 +7,19 @@
  @author minseob (leeminseob@outlook.com)
 ***********************************************************/
 
-Texture2D IBLReflectionTexture;
+Texture3D IBLReflectionTexture;
 SamplerState IBLReflectionSampler
 {
     Filter = MIN_MAG_MIP_LINEAR;
     AddressU = Wrap;
-    AddressV = Wrap;
+    AddressV = Clamp;
 };
 Texture2D IBLIrradianceTexture;
 SamplerState IBLIrradianceSampler
 {
     Filter = MIN_MAG_MIP_LINEAR;
     AddressU = Wrap;
-    AddressV = Wrap;
+    AddressV = Clamp;
 };
 
 float2 CalcLongLatUV(float3 Direction)
@@ -28,15 +28,15 @@ float2 CalcLongLatUV(float3 Direction)
     return longlat / float2(2.0 * PI, PI);
 }
 
-float3 SampleIBLReflection(float2 uv)
+float3 SampleIBLReflection(float2 uv, float roughness)
 {
-	return IBLReflectionTexture.Sample(IBLReflectionSampler, uv).rgb;
+	return IBLReflectionTexture.Sample(IBLReflectionSampler, float3(uv, roughness)).rgb;
 }
 
-float3 SampleIBLReflection(float3 dir)
+float3 SampleIBLReflection(float3 dir, float roughness)
 {
 	float2 uv = CalcLongLatUV(dir);
-	return SampleIBLReflection(uv);
+	return SampleIBLReflection(uv, roughness);
 }
 
 float3 SampleIBLIrradiance(float2 uv)
