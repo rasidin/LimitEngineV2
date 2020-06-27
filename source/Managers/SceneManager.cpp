@@ -13,6 +13,7 @@
 #include "Core/Debug.h"
 #include "Core/TaskPriority.h"
 #include "Core/TextParser.h"
+#include "PostProcessors/PostProcessAmbientOcclusion.h"
 #include "Managers/DrawManager.h"
 #include "Managers/Draw2DManager.h"
 #include "Managers/ResourceManager.h"
@@ -88,11 +89,18 @@ SceneManager::SceneManager()
     : mCamera(new Camera())
     , mEnvironmentLight(nullptr)
     , mCurrentInstanceID(1u)
+    , mAmbientOcclusion(nullptr)
 {
+    mAmbientOcclusion = new PostProcessAmbientOcclusion();
 }
 
 SceneManager::~SceneManager()
 {
+    for (uint32 RTIndex = 0; RTIndex < PendingDeleteRenderTargetCount; RTIndex++) {
+        if (mPendingReleaseRenderTargets[RTIndex].Get())
+            mPendingReleaseRenderTargets[RTIndex].Release();
+    }
+    delete mAmbientOcclusion;
 }
 
 void SceneManager::Init(const InitializeOptions &InitOptions)
@@ -106,6 +114,14 @@ void SceneManager::Init(const InitializeOptions &InitOptions)
     mSceneColor = LE_RenderTargetPoolManager.GetRenderTarget(InitOptions.Resolution, 1, SceneColorFormat);
     mSceneNormal = LE_RenderTargetPoolManager.GetRenderTarget(InitOptions.Resolution, 1, SceneNormalFormat);
     mSceneDepth = LE_RenderTargetPoolManager.GetDepthStencil(InitOptions.Resolution, TEXTURE_DEPTH_FORMAT_D32F);
+}
+
+void SceneManager::PostInit(const InitializeOptions &InitOptions)
+{
+    PostProcessAmbientOcclusion *CapturedAmbientOcclusion = mAmbientOcclusion;
+    LE_DrawManager.AddRendererTaskLambda([CapturedAmbientOcclusion, InitOptions]() {
+        CapturedAmbientOcclusion->Init(InitOptions);
+    });
 }
 
 void SceneManager::SetBackgroundImage(const TextureRefPtr &BackgroundImage, BackgroundImageType Type)
@@ -274,6 +290,22 @@ void SceneManager::drawPrePass()
     }
 }
 
+PooledRenderTarget SceneManager::drawAmbientOcclusion()
+{
+    PostProcessContext Context;
+    Context.RenderStateContext = LE_DrawManager.GetRenderStatePtr();
+    Context.SceneColor = LE_SceneManager.GetSceneColor();
+    Context.SceneDepth = mSceneDepth;
+    Context.SceneNormal = mSceneNormal;
+    Context.BlueNoiseTexture = LE_DrawManager.GetBlueNoiseTexture();
+    Context.BlueNoiseContext = LE_DrawManager.GetBlueNoiseContext();
+    Context.FrameIndexContext = LE_DrawManager.GetFrameIndexContext();
+    VectorArray<PooledRenderTarget> AORenderTargets;
+    AORenderTargets.Add();
+    mAmbientOcclusion->Process(Context, AORenderTargets);
+    return AORenderTargets[0];
+}
+
 void SceneManager::drawBasePass()
 {
     RenderState BasePassRenderState = LE_DrawManager.GetRenderState();
@@ -308,9 +340,24 @@ ModelInstRefPtr SceneManager::findModelInstance(uint32 InstanceID)
 
 void SceneManager::Draw()
 {
+    // Release pending render targets
+    uint32 PendingDeleteRenderTargetSlot = 0xffff;
+    for (uint32 RTIndex = 0; RTIndex < PendingDeleteRenderTargetCount; RTIndex++) {
+        if (mPendingReleaseRenderTargets[RTIndex].Get() && mPendingReleaseRenderTargets[RTIndex].Get()->GetReferenceCounter() <= 1) {
+            mPendingReleaseRenderTargets[RTIndex].Release();
+        }
+        else if (mPendingReleaseRenderTargets[RTIndex].Get() == nullptr && PendingDeleteRenderTargetSlot == 0xffff) {
+            PendingDeleteRenderTargetSlot = RTIndex;
+        }
+    }
+    LEASSERT(PendingDeleteRenderTargetSlot != 0xffff);
+
     DrawCommand::BeginScene();
     drawBackground();
     drawPrePass();
+    PooledRenderTarget AORenderTarget = drawAmbientOcclusion();
+    mPendingReleaseRenderTargets[PendingDeleteRenderTargetSlot] = AORenderTarget;
+    LE_DrawManager.SetAmbientOcclusionTexture(AORenderTarget);
     drawBasePass();
     //drawTranslucencyPass();
     DrawCommand::EndScene();

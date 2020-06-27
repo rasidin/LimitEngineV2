@@ -147,22 +147,23 @@ public:                    // Interfaces
     LEMath::IntSize GetRealScreenSize() { if (mImpl) return mImpl->GetScreenSize(); return LEMath::IntSize(0, 0); }
 
     // Set/Get matrices
-    void                          SetViewMatrix(const LEMath::FloatMatrix4x4 &view)                  { mRenderState->SetViewMatrix(view); }
-    const LEMath::FloatMatrix4x4& GetViewMatrix()                                                    { return mRenderState->GetViewMatrix(); }
-    void                          SetProjectionMatrix(const LEMath::FloatMatrix4x4 &proj)            { mRenderState->SetProjMatrix(proj); }
-    const LEMath::FloatMatrix4x4& GetProjectionMatrix()                                              { return mRenderState->GetProjMatrix(); }
-    void                          SetViewProjMatrix(const LEMath::FloatMatrix4x4 &viewProj)          { mRenderState->SetViewProjMatrix(viewProj); }
-    void                          SetInvViewProjMatrix(const LEMath::FloatMatrix4x4 &invViewProj)    { mRenderState->SetInvViewProjMatrix(invViewProj); }
-    void                          SetEnvironmentReflectionMap(const TextureRefPtr &InTexture)        { mRenderState->SetIBLReflectionTexture(InTexture); }
-    void                          SetEnvironmentIrradianceMap(const TextureRefPtr &InTexture)        { mRenderState->SetIBLIrradianceTexture(InTexture); }
-    void                          UpdateMatrices();                                                  
+    void                          SetViewMatrix(const LEMath::FloatMatrix4x4 &view)                     { mRenderState->SetViewMatrix(view); }
+    const LEMath::FloatMatrix4x4& GetViewMatrix()                                                       { return mRenderState->GetViewMatrix(); }
+    void                          SetProjectionMatrix(const LEMath::FloatMatrix4x4 &proj)               { mRenderState->SetProjMatrix(proj); }
+    const LEMath::FloatMatrix4x4& GetProjectionMatrix()                                                 { return mRenderState->GetProjMatrix(); }
+    void                          SetViewProjMatrix(const LEMath::FloatMatrix4x4 &viewProj)             { mRenderState->SetViewProjMatrix(viewProj); }
+    void                          SetInvViewProjMatrix(const LEMath::FloatMatrix4x4 &invViewProj)       { mRenderState->SetInvViewProjMatrix(invViewProj); }
+    void                          SetEnvironmentReflectionMap(const TextureRefPtr &InTexture)           { mRenderState->SetIBLReflectionTexture(InTexture); }
+    void                          SetEnvironmentIrradianceMap(const TextureRefPtr &InTexture)           { mRenderState->SetIBLIrradianceTexture(InTexture); }
+    void                          UpdateMatrices();                                                     
     
-    const LEMath::IntVector4&     GetFrameIndexContext() const                                       { return mRenderState->GetFrameIndexContext(); }
-    void                          SetEnvironmentBRDFTexture(const TextureRefPtr &InTexture)          { mRenderState->SetEnvironmentBRDFTexture(InTexture); }
-    void                          SetBlueNoiseTexture(const TextureRefPtr &InTexture)                { mRenderState->SetBlueNoiseTexture(InTexture); }
-    Texture*                      GetBlueNoiseTexture() const                                        { return mRenderState->GetBlueNoiseTexture().Get(); }
-    void                          SetBlueNoiseContext(const LEMath::FloatVector4 &Context)           { mRenderState->SetBlueNoiseContext(Context); }
-    const LEMath::FloatVector4    GetBlueNoiseContext() const                                        { return mRenderState->GetBlueNoiseContext(); }
+    const LEMath::IntVector4&     GetFrameIndexContext() const                                          { return mRenderState->GetFrameIndexContext(); }
+    void                          SetEnvironmentBRDFTexture(const TextureRefPtr &InTexture)             { mRenderState->SetEnvironmentBRDFTexture(InTexture); }
+    void                          SetAmbientOcclusionTexture(const PooledRenderTarget &InRenderTarget)  { mRenderState->SetAmbientOcclusionTexture(InRenderTarget.Get()); }
+    void                          SetBlueNoiseTexture(const TextureRefPtr &InTexture)                   { mRenderState->SetBlueNoiseTexture(InTexture); }
+    Texture*                      GetBlueNoiseTexture() const                                           { return mRenderState->GetBlueNoiseTexture().Get(); }
+    void                          SetBlueNoiseContext(const LEMath::FloatVector4 &Context)              { mRenderState->SetBlueNoiseContext(Context); }
+    const LEMath::FloatVector4    GetBlueNoiseContext() const                                           { return mRenderState->GetBlueNoiseContext(); }
 
     // RenderState
     const RenderState& GetRenderState() const { return *mRenderState; }
@@ -194,32 +195,32 @@ private:            // Private members
     LEMath::FloatPoint getJitterPosition(uint32 Index, uint32 NumOfSamples);
 
 private:            // Private Properties
-    uint32                       mFrameCounter;                     //!< FrameCounter
-                                                                    
-    CommandBuffer               *mCommandBuffer;                    //!< Command buffer for rendering order
-    RenderContext               *mRenderContext;                    //!< Render context data
-    RenderState                 *mRenderState;                      //!< Statement for rendering
-                                                                    
-    DrawManagerImpl             *mImpl;                             //!< Implement of drawmanager
-    Draw2DManager               *mDraw2DManager;                    //!< Draw2D Manager
-                                                                    
-    Thread                      *mDrawThread;                       //!< Thread for drawing. (Run commandbuffer)
-    bool                         mDrawThreadExitCode;               //!< Exit flag for drawing thread
-    Event                        mDrawEvent;                        //!< Event for flushing command buffer
-    Event                        mReadyCommandBufferEvent;          //!< Event about ready commandbuffer
-                                                                    
-    Mutex                        mCommandFlushMutex;                //!< Mutex for flushing commands
-    VectorArray<RendererTask*>   mRendererTasks;                    //!< Task before flushing commands
-                                                                    
-    bool                         mInitialized;                      //!< Is drawmanager initialized?
-    bool                         mSceneBegan;                       //!< Is scene began?
-    bool                         mModelDrawingBegan;                //!< Is drawing model began?
-    bool                         mReadyToRender;                    //!< Is it ready to render?
-                                                                    
-    LEMath::IntSize              mScreenSize;                       //!< Current screen size
-    LEMath::IntSize              mRealScreenSize;                   //!< Current real screen size
-                                                                    
-    uint32                       mTemporalAASamples;                //!< Number of samples for TemporalAA
+    uint32                               mFrameCounter;                     //!< FrameCounter
+
+    CommandBuffer                       *mCommandBuffer;                    //!< Command buffer for rendering order
+    RenderContext                       *mRenderContext;                    //!< Render context data
+    RenderState                         *mRenderState;                      //!< Statement for rendering
+
+    DrawManagerImpl                     *mImpl;                             //!< Implement of drawmanager
+    Draw2DManager                       *mDraw2DManager;                    //!< Draw2D Manager
+
+    Thread                              *mDrawThread;                       //!< Thread for drawing. (Run commandbuffer)
+    bool                                 mDrawThreadExitCode;               //!< Exit flag for drawing thread
+    Event                                mDrawEvent;                        //!< Event for flushing command buffer
+    Event                                mReadyCommandBufferEvent;          //!< Event about ready commandbuffer
+
+    Mutex                                mCommandFlushMutex;                //!< Mutex for flushing commands
+    VectorArray<RendererTask*>           mRendererTasks;                    //!< Task before flushing commands
+                                                                            
+    bool                                 mInitialized;                      //!< Is drawmanager initialized?
+    bool                                 mSceneBegan;                       //!< Is scene began?
+    bool                                 mModelDrawingBegan;                //!< Is drawing model began?
+    bool                                 mReadyToRender;                    //!< Is it ready to render?
+                                                                            
+    LEMath::IntSize                      mScreenSize;                       //!< Current screen size
+    LEMath::IntSize                      mRealScreenSize;                   //!< Current real screen size
+                                         
+    uint32                               mTemporalAASamples;                //!< Number of samples for TemporalAA
 };    // DrawManager
 #define sDrawManager LimitEngine::DrawManager::GetSingletonPtr()
 #define LE_DrawManager LimitEngine::DrawManager::GetSingleton()

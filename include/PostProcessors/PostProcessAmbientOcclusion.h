@@ -24,7 +24,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 @file  PostProcessorAmbientOcclusion.h
 @brief PostProcessor AmbientOcclusion Class
 @author minseob (leeminseob@outlook.com)
-***********************************************************/
+**********************************************************************/
 #pragma once
 
 #include <LeRenderer>

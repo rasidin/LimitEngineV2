@@ -24,8 +24,13 @@ namespace LimitEngine {
         void setup(const Shader *InShader) override;
     private:
         int32 mIBLRefTex_Position;
+        int32 mIBLRefSam_Position;
         int32 mIBLIrrTex_Position;
+        int32 mIBLIrrSam_Position;
         int32 mEnvBRDFTex_Position;
+        int32 mEnvBRDFSam_Position;
+        int32 mAOTex_Position;
+        int32 mAOSam_Position;
         int32 mTemporalContext_Position;
     };
 } // LimitEngine

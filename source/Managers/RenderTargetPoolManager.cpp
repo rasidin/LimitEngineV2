@@ -15,7 +15,8 @@ RenderTargetPoolManager* RenderTargetPoolManager::mInstance = nullptr;
 PooledRenderTarget::PooledRenderTarget(const PooledRenderTarget &RenderTarget)
 : mTexture(RenderTarget.mTexture), mDesc(RenderTarget.mDesc)
 {
-    mTexture->AddReferenceCounter();
+    if (mTexture)
+        mTexture->AddReferenceCounter();
 }
 void PooledRenderTarget::Release()
 {

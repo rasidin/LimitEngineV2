@@ -89,6 +89,8 @@ namespace LimitEngine {
         void SetEnvironmentBRDFTexture(const TextureRefPtr &envBRDFtex)         { mEnvironmentTextures.environmentBRDFTexture = envBRDFtex; }
         TextureRefPtr GetEnvironmentBRDFTexture() const                         { return mEnvironmentTextures.environmentBRDFTexture; }
         void SetBlueNoiseTexture(const TextureRefPtr &blueNoiseTex)             { mBlueNoiseTexture = blueNoiseTex; }
+        TextureRefPtr GetAmbientOcclusionTexture() const                        { return mEnvironmentTextures.ambientOcclusionTexture; }
+        void SetAmbientOcclusionTexture(const TextureRefPtr &aoTexture)         { mEnvironmentTextures.ambientOcclusionTexture = aoTexture; }
         TextureRefPtr GetBlueNoiseTexture() const                               { return mBlueNoiseTexture; }
 
     private:
@@ -127,6 +129,7 @@ namespace LimitEngine {
             TextureRefPtr    iblReflectionTexture;
             TextureRefPtr    iblIrradianceTexture;
             TextureRefPtr    environmentBRDFTexture;
+            TextureRefPtr    ambientOcclusionTexture;
         } mEnvironmentTextures;
     };
 }

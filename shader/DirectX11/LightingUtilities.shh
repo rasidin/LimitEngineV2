@@ -8,19 +8,9 @@
 ***********************************************************/
 
 Texture3D IBLReflectionTexture;
-SamplerState IBLReflectionSampler
-{
-    Filter = MIN_MAG_MIP_LINEAR;
-    AddressU = Wrap;
-    AddressV = Clamp;
-};
+SamplerState IBLReflectionSampler;
 Texture2D IBLIrradianceTexture;
-SamplerState IBLIrradianceSampler
-{
-    Filter = MIN_MAG_MIP_LINEAR;
-    AddressU = Wrap;
-    AddressV = Clamp;
-};
+SamplerState IBLIrradianceSampler;
 
 float2 CalcLongLatUV(float3 Direction)
 {
@@ -48,4 +38,11 @@ float3 SampleIBLIrradiance(float3 dir)
 {
 	float2 uv = CalcLongLatUV(dir);
 	return SampleIBLIrradiance(uv);
+}
+
+Texture2D AmbientOcclusionTexture;
+SamplerState AmbientOcclusionSampler;
+float GetAmbientOcclusionValue(float2 uv)
+{
+	return AmbientOcclusionTexture.Sample(AmbientOcclusionSampler, uv).x;
 }

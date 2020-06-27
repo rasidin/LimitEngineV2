@@ -89,19 +89,6 @@ bool TextParser::Parse(const char *text)
                     }
                     parentNode = currentNode;
                     currentNode = NULL;
-                    //String NewNodeName;
-                    //if (word_length) {
-                    //    buf[word_length] = 0;
-                    //    NewNodeName = buf;
-                    //    word_length = 0;
-                    //}
-                    //else {
-                    //    if (parentNode->values.count()) {
-                    //        NewNodeName = parentNode->values[parentNode->values.count() - 1];
-                    //        parentNode->values.erase(parentNode->values.count() - 1);
-                    //    }
-                    //}
-                    //addNewNode(parentNode, NewNodeName.GetCharPtr(), &currentNode);
                 }
                 else if (currentWord == '}') {
                     parentNode = parentNode->parent;

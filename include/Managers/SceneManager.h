@@ -36,6 +36,7 @@ typedef Singleton<SceneManager, LimitEngineMemoryCategory_Graphics> SingletonSce
 class SceneManager : public SingletonSceneManager
 {
     friend SceneFactory;
+    static constexpr uint32 PendingDeleteRenderTargetCount = 0xfu;
 
 public:
     struct SceneUpdateTask : public Object<LimitEngineMemoryCategory_Graphics>
@@ -70,6 +71,7 @@ public:
     LEMath::FloatVector4 GetPerspectiveProjectionParameters() const;
 
     void Init(const InitializeOptions &InitOptions);
+    void PostInit(const InitializeOptions &InitOptions);
     void Update();
     void Draw();
 
@@ -81,33 +83,38 @@ private:
     void updateSceneTasks();
     void drawBackground();
     void drawPrePass();
+    PooledRenderTarget drawAmbientOcclusion();
     void drawBasePass();
     void drawTranslucencyPass();
 
     ModelInstRefPtr findModelInstance(uint32 InstanceID);
 
 private:
-    Mutex                            mUpdateSceneMutex;
+    Mutex                               mUpdateSceneMutex;
 
-    CameraRefPtr                     mCamera;
-    VectorArray<ModelInstRefPtr>     mModels;
-    VectorArray<LightRefPtr>         mLights;
-    LightRefPtr                      mEnvironmentLight;
+    CameraRefPtr                        mCamera;
+    VectorArray<ModelInstRefPtr>        mModels;
+    VectorArray<LightRefPtr>            mLights;
+    LightRefPtr                         mEnvironmentLight;
 
-    uint32                           mCurrentInstanceID;
+    uint32                              mCurrentInstanceID;
 
-    ReferenceCountedPointer<Texture> mBackgroundImage;
-    BackgroundImageType              mBackgroundType;
-    VectorArray<ShaderRefPtr>        mBackgroundShaders;
+    ReferenceCountedPointer<Texture>    mBackgroundImage;
+    BackgroundImageType                 mBackgroundType;
+    VectorArray<ShaderRefPtr>           mBackgroundShaders;
 
-    PooledRenderTarget               mSceneNormal;
-    PooledRenderTarget               mSceneColor;
-    PooledDepthStencil               mSceneDepth;
+    PooledRenderTarget                  mPendingReleaseRenderTargets[PendingDeleteRenderTargetCount];      //!< Pending release for draw thread
 
-    VectorArray<SceneUpdateTask*>    mUpdateTasks;
+    PooledRenderTarget                  mSceneNormal;
+    PooledRenderTarget                  mSceneColor;
+    PooledDepthStencil                  mSceneDepth;
+
+    class PostProcessAmbientOcclusion  *mAmbientOcclusion;
+
+    VectorArray<SceneUpdateTask*>       mUpdateTasks;
 
 private:
-	EventListener				     mOnChangeEvent;
+	EventListener				        mOnChangeEvent;
 
     friend struct SceneUpdateTask;
     friend class SceneUpdateTask_UpdateModelTransform;

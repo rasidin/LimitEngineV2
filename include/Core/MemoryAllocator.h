@@ -21,6 +21,11 @@
 namespace LimitEngine {
     class MemoryAllocator : public Memory
     {
+        static struct STATS
+        {
+            size_t AllocatedMemory = 0u;
+        } mStats;
+
     public:
         struct MEMBLOCKHEADER
         {
@@ -63,6 +68,8 @@ namespace LimitEngine {
         
         static void* Alloc(size_t size, uint32 category = 0);
         static void Free(void* ptr);
+
+        static size_t GetStatAllocatedMemory() { return mStats.AllocatedMemory; }
 
     private:
         static MEMBLOCKHEADER* findUnusedMemoryArea( uint32 requiredMemBlocks , bool useCash = false);

@@ -13,6 +13,8 @@
 namespace LimitEngine {
     static Mutex gMutexForMemoryAllocator;
 
+    MemoryAllocator::STATS MemoryAllocator::mStats;
+
     void* MemoryAllocator::mPool = NULL;
     size_t MemoryAllocator::mPoolSize = 0;
     
@@ -127,6 +129,9 @@ namespace LimitEngine {
                     mCachedUnusedArea = ( ! nextArea->allocated ) ? nextArea : NULL;
                 }
             }
+
+            mStats.AllocatedMemory += newMemBlocks * MEMORY_BLOCK_SIZE;
+
             void* retAddr = memAreaUnused + 1;
 			return retAddr;
         }
@@ -145,7 +150,9 @@ namespace LimitEngine {
             LEASSERT( (0 == (size_t)ptr % MEMORY_BLOCK_ALIGN_BYTES) );
             
             MEMBLOCKHEADER* memArea = reinterpret_cast< MEMBLOCKHEADER* >( ptr ) - 1;
-            
+
+            mStats.AllocatedMemory -= memArea->memBlocks * MEMORY_BLOCK_SIZE;
+
             LEASSERT( memArea->allocated && "[MemoryAllocator][Free]double free??");
             
             memArea->allocated = false;

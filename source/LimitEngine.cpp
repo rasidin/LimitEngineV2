@@ -66,6 +66,8 @@ void LimitEngine::Init(WINDOW_HANDLE handle, const InitializeOptions &Options)
             1.0f / 8.0f, 0.0f));
     }
 
+    mSceneManager->PostInit(Options);
+
 	mTaskID_UpdateScene     = LE_TaskManager.AddTask("SceneManager::Update",    TaskPriority_Renderer_UpdateScene,      mSceneManager, &SceneManager::Update);
 	mTaskID_DrawScene       = LE_TaskManager.AddTask("SceneManager::Draw",      TaskPriority_Renderer_DrawScene,        mSceneManager, &SceneManager::Draw);
     mTaskID_PostProcess     = LE_TaskManager.AddTask("PostProcess::Process",    TaskPriority_Renderer_PostProcess,      mPostProcessManager, &PostProcessManager::Process);

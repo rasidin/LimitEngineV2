@@ -116,12 +116,7 @@ float3 UVtoViewPosition(float2 uv, float z)
 	return float3((UVtoViewParameter.xy * uv + UVtoViewParameter.zw) * z, z);
 }
 
-SamplerState SceneDepthSampler
-{
-	Filter = MIN_MAG_MIP_POINT;
-	AddressU = Clamp;
-	AddressV = Clamp;
-};
+SamplerState SceneDepthSampler;
 Texture2D SceneDepthTexture;
 
 // (near, far, far - near, reserved)

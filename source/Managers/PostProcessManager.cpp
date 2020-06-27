@@ -24,7 +24,7 @@ PostProcessManager* PostProcessManager::mInstance = nullptr;
 PostProcessManager::PostProcessManager()
     : SingletonPostProcessManager()
 {
-    PostProcessors.Add(new PostProcessAmbientOcclusion());
+    //PostProcessors.Add(new PostProcessAmbientOcclusion());
     PostProcessors.Add(new PostProcessTemporalAA());
     PostProcessors.Add(new PostProcessResolveFinalColor());
 }
