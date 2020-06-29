@@ -85,7 +85,8 @@ namespace LimitEngine {
             else if (node->name == "SHADER") {
                 String shaderName = node->values[0];
                 for (uint32 Index = 0; Index < (uint32)RenderPass::NumOfRenderPass; Index++) {
-                    mShader[Index] = LE_ShaderManager.GetShader(shaderName + "." + RenderPassNames[Index]);
+                    if (ShaderManager::GetSingletonPtr())
+                        mShader[Index] = LE_ShaderManager.GetShader(shaderName + "." + RenderPassNames[Index]);
                 }
             }
     //        else if (node->name == "VERTEXSHADER") {
