@@ -27,7 +27,7 @@ namespace LimitEngine
         // Static Functions
         // ==================================
         static T&    GetSingleton()           { LEASSERT(mInstance); return *mInstance; }
-        static T*    GetSingletonPtr()        { LEASSERT(mInstance); return mInstance; }
+        static T*    GetSingletonPtr()        {                      return  mInstance; }
 
         // ==================================
         // CTor & DTor
