@@ -28,6 +28,7 @@ namespace LimitEngine
         // ==================================
         static T&    GetSingleton()           { LEASSERT(mInstance); return *mInstance; }
         static T*    GetSingletonPtr()        {                      return  mInstance; }
+        static bool  IsUsable()               { return mInstance != nullptr; }
 
         // ==================================
         // CTor & DTor

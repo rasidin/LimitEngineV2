@@ -85,7 +85,7 @@ namespace LimitEngine {
             else if (node->name == "SHADER") {
                 String shaderName = node->values[0];
                 for (uint32 Index = 0; Index < (uint32)RenderPass::NumOfRenderPass; Index++) {
-                    if (ShaderManager::GetSingletonPtr())
+                    if (ShaderManager::IsUsable())
                         mShader[Index] = LE_ShaderManager.GetShader(shaderName + "." + RenderPassNames[Index]);
                 }
             }
@@ -147,8 +147,10 @@ namespace LimitEngine {
     }
     void Material::SetupShaderParameters()
     {
-        AutoPointer<RendererTask> rt_MaterialSetupShaderParameter = new RendererTask_MaterialSetupShaderParameters(this);
-        LE_DrawManager.AddRendererTask(rt_MaterialSetupShaderParameter);
+        if (DrawManager::IsUsable()) {
+            AutoPointer<RendererTask> rt_MaterialSetupShaderParameter = new RendererTask_MaterialSetupShaderParameters(this);
+            LE_DrawManager.AddRendererTask(rt_MaterialSetupShaderParameter);
+        }
     }
     void Material::Bind(const RenderState &rs)
     {
