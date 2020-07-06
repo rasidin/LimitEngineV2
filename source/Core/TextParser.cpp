@@ -10,6 +10,8 @@
 #include <string.h>
 #include "Core/TextParser.h"
 
+#include "rapidxml/rapidxml.hpp"
+
 namespace LimitEngine {
 TextParser::TextParser()
 {
@@ -40,13 +42,10 @@ bool TextParser::Parse(const char *text)
     NODE *currentNode = NULL;
     NODE *parentNode = NULL;
     bool sequenceIn = false;
-    bool escapeIn = false;
-    bool stringIn = false;
     bool comment = false;
     while (currentWord) {
-        if (!stringIn && currentWord < 0x21) {
-            if (!comment)
-            {
+        if (currentWord < 0x21) {
+            if (!comment) {
                 if (word_length) {
                     buf[word_length] = 0;
                     inputData(parentNode, &currentNode, buf, word_length, sequenceIn);
@@ -70,64 +69,48 @@ bool TextParser::Parse(const char *text)
             word_length = 0;
         }
         else if(!comment) {
-            if (stringIn) {
-                if (currentWord == '\\' && !escapeIn) {
-                    escapeIn = true;
+            switch (currentWord) {
+            case '{': { // Node array begin
+                if (currentNode == nullptr) {
+                    addNewNode(parentNode, nullptr, &currentNode);
                 }
-                else if (currentWord == '\"' && !escapeIn) {
-                    stringIn = false;
-                }
-                else {
-                    buf[word_length++] = currentWord;
-                    escapeIn = false;
-                }
-            }
-            else {
-                if (currentWord == '{') {
-                    if (currentNode == nullptr) {
-                        addNewNode(parentNode, nullptr, &currentNode);
-                    }
-                    parentNode = currentNode;
-                    currentNode = NULL;
-                }
-                else if (currentWord == '}') {
-                    parentNode = parentNode->parent;
+                parentNode = currentNode;
+                currentNode = NULL;
+            } break;
+            case '}': { // Node array end
+                parentNode = parentNode->parent;
+                buf[word_length] = 0;
+                inputData(parentNode, &currentNode, buf, word_length, sequenceIn);
+                word_length = 0;
+            } break;
+            case '[': { // Value array begin
+                sequenceIn = true;
+                buf[word_length] = 0;
+                inputData(parentNode, &currentNode, buf, word_length, sequenceIn);
+                word_length = 0;
+            } break;
+            case ']': { // Value array end
+                if (word_length) {
                     buf[word_length] = 0;
                     inputData(parentNode, &currentNode, buf, word_length, sequenceIn);
                     word_length = 0;
                 }
-                else if (currentWord == '[') {
-                    sequenceIn = true;
-                    buf[word_length] = 0;
-                    inputData(parentNode, &currentNode, buf, word_length, sequenceIn);
-                    word_length = 0;
+                sequenceIn = false;
+                currentNode = NULL;
+            } break;
+            case '#': { // Comment
+                if (word_length) {
                 }
-                else if (currentWord == ']') {
-                    if (word_length) {
-                        buf[word_length] = 0;
-                        inputData(parentNode, &currentNode, buf, word_length, sequenceIn);
-                        word_length = 0;
-                    }
-                    sequenceIn = false;
-                    currentNode = NULL;
-                }
-                else if (currentWord == '\"') {
-                    stringIn = true;
-                }
-                else if (currentWord == '/') {
-                    if (word_length && buf[word_length-1] == '/') 
-                    {
-                        comment = true;   
-                    }
-                    else buf[word_length++] = currentWord;
-                }
-                else {
-                    buf[word_length++] = currentWord;
-                }
+                comment = true;
+            } break;
+            default:
+                buf[word_length++] = currentWord;
+                break;
             }
         }
         currentWord = *(ptr++);
     }
+
     return true;
 }
 

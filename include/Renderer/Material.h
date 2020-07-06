@@ -21,6 +21,8 @@
 #include "Renderer/ShaderDriverParameter.h"
 #include "Renderer/ShaderParameter.h"
 
+#include "rapidxml/rapidxml.hpp"
+
 namespace LimitEngine {
     class Shader;
     class RendererTask_MaterialSetupShaderParameters;
@@ -31,7 +33,8 @@ namespace LimitEngine {
         Material();
         virtual ~Material();
         
-        void Load(TextParser::NODE *root);
+        Material* Load(TextParser::NODE *root);
+        Material* Load(rapidxml::xml_node<const char> *XMLNode);
         void SetupShaderParameters();
         void Bind(const RenderState &rs);
 

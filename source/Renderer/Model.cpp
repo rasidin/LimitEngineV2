@@ -150,9 +150,9 @@ namespace LimitEngine {
             Load(parser.GetNode("DATA"));
         }
     }
-    void Model::Load(TextParser::NODE *root)
+    Model* Model::Load(TextParser::NODE *root)
     {
-        if (!root) return;
+        if (!root) return nullptr;
         TextParser::NODE *node = NULL;
         if ((node = root->FindChild("MATERIALS")))
         {
@@ -289,6 +289,168 @@ namespace LimitEngine {
         // Postprocess
         calcTangentBinormal();
         setupMaterialShaderParameters();
+
+        return this;
+    }
+    Model* Model::GenerateFromXML(const rapidxml::xml_document<const char> *XMLDoc)
+    {
+        return (new Model())->Load(XMLDoc->first_node("model"));
+    }
+    Model* Model::Load(const rapidxml::xml_node<const char> *XMLNode)
+    {
+        static constexpr uint32 MaterialReserveUnit = 0xff;
+        static constexpr uint32 MeshReserveUnit = 0xf;
+        static constexpr uint32 MeshVerticesUnit = 0xffff;
+        static constexpr uint32 MeshIndicesUnit = 0xffff;
+
+        if (!XMLNode) return nullptr;
+
+        mMaterials.Clear();
+        mMaterials.Reserve(MaterialReserveUnit);
+        mMeshes.Clear();
+        mMeshes.Reserve(MeshReserveUnit);
+        if (rapidxml::xml_node<const char> *materialsNode = XMLNode->first_node("materials")) {
+            for (rapidxml::xml_node<const char> *materialNode = materialsNode->first_node(); materialNode; materialNode = materialNode->next_sibling()) {
+                Material *material = new Material();
+                material->Load(materialNode);
+                mMaterials.Add(material);
+            }
+        }
+        if (rapidxml::xml_node<const char> *elementsNode = XMLNode->first_node("elements")) {
+            for (rapidxml::xml_node<const char> *meshNode = elementsNode->first_node(); meshNode; meshNode = meshNode->next_sibling()) {
+                MESH *mesh = new MESH();
+                mMeshes.push_back(mesh);
+                if (rapidxml::xml_node<const char> *verticesNode = meshNode->first_node("vertices")) {
+                    mesh->vertexbuffer = new RigidVertexBuffer();
+                    RigidVertexBuffer *vtxbuf = (VertexBuffer<FVF_PNCTTB, SIZE_PNCTTB>*)mesh->vertexbuffer;
+                    VectorArray<RigidVertex> RigidVertices;
+                    RigidVertices.Reserve(MeshVerticesUnit);
+                    for (rapidxml::xml_node<const char> *vertexNode = verticesNode->first_node(); vertexNode; vertexNode = vertexNode->next_sibling()) {
+                        RigidVertex &newVertex = RigidVertices.Add();
+                        if (rapidxml::xml_node<const char> *positionNode = vertexNode->first_node("position")) {
+                            LEMath::FloatVector3 position;
+                            if (rapidxml::xml_node<const char> *nodeX = positionNode->first_node("x")) {
+                                position.SetX((float)atof(nodeX->value()));
+                            }
+                            if (rapidxml::xml_node<const char> *nodeY = positionNode->first_node("y")) {
+                                position.SetY((float)atof(nodeY->value()));
+                            }
+                            if (rapidxml::xml_node<const char> *nodeZ = positionNode->first_node("z")) {
+                                position.SetZ((float)atof(nodeZ->value()));
+                            }
+                            newVertex.SetPosition(position);
+                        }
+                        if (rapidxml::xml_node<const char> *normalNode = vertexNode->first_node("normal")) {
+                            LEMath::FloatVector3 normal;
+                            if (rapidxml::xml_node<const char> *nodeX = normalNode->first_node("x")) {
+                                normal.SetX((float)atof(nodeX->value()));
+                            }
+                            if (rapidxml::xml_node<const char> *nodeY = normalNode->first_node("y")) {
+                                normal.SetY((float)atof(nodeY->value()));
+                            }
+                            if (rapidxml::xml_node<const char> *nodeZ = normalNode->first_node("z")) {
+                                normal.SetZ((float)atof(nodeZ->value()));
+                            }
+                            newVertex.SetNormal(normal);
+                        }
+                        if (rapidxml::xml_node<const char> *binormalNode = vertexNode->first_node("binormal")) {
+                            LEMath::FloatVector3 binormal;
+                            if (rapidxml::xml_node<const char> *nodeX = binormalNode->first_node("x")) {
+                                binormal.SetX((float)atof(nodeX->value()));
+                            }
+                            if (rapidxml::xml_node<const char> *nodeY = binormalNode->first_node("y")) {
+                                binormal.SetY((float)atof(nodeY->value()));
+                            }
+                            if (rapidxml::xml_node<const char> *nodeZ = binormalNode->first_node("z")) {
+                                binormal.SetZ((float)atof(nodeZ->value()));
+                            }
+                            newVertex.SetBinormal(binormal);
+                        }
+                        if (rapidxml::xml_node<const char> *tangentNode = vertexNode->first_node("tangent")) {
+                            LEMath::FloatVector3 tangent;
+                            if (rapidxml::xml_node<const char> *nodeX = tangentNode->first_node("x")) {
+                                tangent.SetX((float)atof(nodeX->value()));
+                            }
+                            if (rapidxml::xml_node<const char> *nodeY = tangentNode->first_node("y")) {
+                                tangent.SetY((float)atof(nodeY->value()));
+                            }
+                            if (rapidxml::xml_node<const char> *nodeZ = tangentNode->first_node("z")) {
+                                tangent.SetZ((float)atof(nodeZ->value()));
+                            }
+                            newVertex.SetTangent(tangent);
+                        }
+                        if (rapidxml::xml_node<const char> *texcoordNode = vertexNode->first_node("texcoord")) {
+                            LEMath::FloatVector2 texcoord;
+                            if (rapidxml::xml_node<const char> *nodeX = texcoordNode->first_node("x")) {
+                                texcoord.SetX((float)atof(nodeX->value()));
+                            }
+                            if (rapidxml::xml_node<const char> *nodeY = texcoordNode->first_node("y")) {
+                                texcoord.SetY((float)atof(nodeY->value()));
+                            }
+                            newVertex.SetTexcoord(texcoord);
+                        }
+                        if (RigidVertices.size() % MeshVerticesUnit == 0) {
+                            RigidVertices.Reserve(RigidVertices.size() + MeshVerticesUnit);
+                        }
+                    }
+                    vtxbuf->Create(RigidVertices.count(), RigidVertices.GetData(), 0);
+                }
+                if (rapidxml::xml_node<const char> *indicesNode = meshNode->first_node("indices")) {
+                    DRAWGROUP *drawgroup = NULL;
+                    for (rapidxml::xml_node<const char> *indexNode = indicesNode->first_node(); indexNode; indexNode = indexNode->next_sibling()) {
+                        if (rapidxml::xml_node<const char>* materialNode = indexNode->first_node("material")) {
+                            const char *materialName = materialNode->value();
+                            if (!drawgroup || !drawgroup->material || drawgroup->material->GetID() != materialName) {
+                                // Find drawgroup
+                                drawgroup = nullptr;
+                                for (uint32 l = 0; l < mesh->drawgroups.count(); l++) {
+                                    if (mesh->drawgroups[l]->material->GetID() == materialName) {
+                                        drawgroup = mesh->drawgroups[l];
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!drawgroup) {
+                                Material *material = NULL;
+                                for (uint32 l = 0; l < mMaterials.count(); l++)
+                                {
+                                    if (mMaterials[l]->GetID() == materialName)
+                                    {
+                                        material = mMaterials[l];
+                                        break;
+                                    }
+                                }
+                                if (material)
+                                {
+                                    drawgroup = mesh->AddDrawGroup();
+                                    drawgroup->material = material;
+                                }
+                            }
+                        }
+                        if (drawgroup)
+                        if (rapidxml::xml_node<const char>* polygonNode = indexNode->first_node("polygon")) {
+                            LEMath::IntVector3 polygonIndex;
+                            if (rapidxml::xml_node<const char>* node0 = polygonNode->first_node("i0")) {
+                                polygonIndex.SetX(atoi(node0->value()));
+                            }
+                            if (rapidxml::xml_node<const char>* node1 = polygonNode->first_node("i1")) {
+                                polygonIndex.SetY(atoi(node1->value()));
+                            }
+                            if (rapidxml::xml_node<const char>* node2 = polygonNode->first_node("i2")) {
+                                polygonIndex.SetZ(atoi(node2->value()));
+                            }
+                            drawgroup->indices.push_back(polygonIndex);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Postprocess
+        calcTangentBinormal();
+        setupMaterialShaderParameters();
+
+        return this;
     }
     bool Model::Serialize(Archive &Ar)
     {

@@ -110,6 +110,26 @@ public:
         }
         return false;
     }
+    inline       bool   operator != (const String &str)
+    {
+        if (str.IsEmpty()) return !IsEmpty();
+        else return (::strcmp(mBuffer, str.mBuffer) == 0);
+    }
+    inline       bool   operator != (const String &str) const
+    {
+        if (str.IsEmpty()) return !IsEmpty();
+        else return !(::strcmp(mBuffer, str.mBuffer) == 0);
+    }
+    inline       bool   operator != (const char *str)
+    {
+        if (!strlen(str)) return !IsEmpty();
+        else return !(::strcmp(mBuffer, str) == 0);
+    }
+    inline       bool   operator != (const char *str) const
+    {
+        if (!strlen(str)) return !IsEmpty();
+        else return !(::strcmp(mBuffer, str) == 0);
+    }
     inline         char    operator [] (int n)
     { 
         if (mBuffer) return mBuffer[n]; 

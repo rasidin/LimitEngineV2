@@ -23,6 +23,7 @@
 
 #include "../Factories/SourceFactories/TGASourceFactory.inl"
 #include "../Factories/SourceFactories/TextParserSourceFactory.inl"
+#include "../Factories/SourceFactories/XMLSourceFactory.inl"
 
 #ifdef IOS
 #include "IOS/LE_ResourceLoader_IOS.h"
@@ -95,6 +96,7 @@ namespace LimitEngine {
 
         mSourceFactories.Add("tga",  new TGASourceFactory());
         mSourceFactories.Add("text", new TextParserSourceFactory());
+        mSourceFactories.Add("xml",  new XMLSourceFactory());
     }
     void ResourceManager::unregisterFactories()
     {

@@ -65,7 +65,7 @@ namespace LimitEngine {
         }
         mParameters.Clear();
     }
-    void Material::Load(TextParser::NODE *root)
+    Material* Material::Load(TextParser::NODE *root)
     {
         // TODO : Share shader between materials...
         for (uint32 Index = 0; Index < (uint32)RenderPass::NumOfRenderPass; Index++)
@@ -130,6 +130,26 @@ namespace LimitEngine {
 		//else if (CompiledShaders) {
 		//	mShader = nullptr;
 		//}
+
+        return this;
+    }
+    Material* Material::Load(rapidxml::xml_node<const char> *XMLNode)
+    {
+        for (uint32 Index = 0; Index < (uint32)RenderPass::NumOfRenderPass; Index++)
+            mShader[Index] = nullptr;
+
+        if (rapidxml::xml_node<const char> *IDNode = XMLNode->first_node("ID")) {
+            mId = IDNode->value();
+        }
+        if (rapidxml::xml_node<const char> *ShaderNode = XMLNode->first_node("SHADER")) {
+            String shaderName(ShaderNode->value());
+            for (uint32 Index = 0; Index < (uint32)RenderPass::NumOfRenderPass; Index++) {
+                if (ShaderManager::IsUsable())
+                    mShader[Index] = LE_ShaderManager.GetShader(shaderName + "." + RenderPassNames[Index]);
+            }
+        }
+
+        return this;
     }
     void Material::setupShaderParameters()
     {

@@ -11,14 +11,24 @@ Copyright (C), LIMITGAME, 2020
 #include "Renderer/Model.h"
 #include "Core/TextParser.h"
 
+#include "rapidxml/rapidxml.hpp"
+
 namespace LimitEngine {
 IReferenceCountedObject* ModelFactory::Create(const ResourceSourceFactory *SourceFactory, const FileData &Data)
 {
-    static ResourceSourceFactory::ID TextParserID = GENERATE_RESOURCEFACTORY_ID("TEPA");
+    static constexpr ResourceSourceFactory::ID TextParserID = GENERATE_RESOURCEFACTORY_ID("TEPA");
+    static constexpr ResourceSourceFactory::ID XMLParserID = GENERATE_RESOURCEFACTORY_ID("XMLR");
 
     if (SourceFactory->GetID() == TextParserID) {
         if (TextParser *Parser = (TextParser*)SourceFactory->ConvertRawData(Data.Data, Data.Size)) {
             return dynamic_cast<IReferenceCountedObject*>(Model::GenerateFromTextParser(ReferenceCountedPointer<TextParser>(Parser)));
+        }
+    }
+    else if (SourceFactory->GetID() == XMLParserID) {
+        if (rapidxml::xml_document<const char> *XMLDoc = (rapidxml::xml_document<const char>*)SourceFactory->ConvertRawData(Data.Data, Data.Size)) {
+            IReferenceCountedObject *Output = dynamic_cast<IReferenceCountedObject*>(Model::GenerateFromXML(XMLDoc));
+            delete XMLDoc;
+            return Output;
         }
     }
     return NULL;

@@ -26,6 +26,8 @@
 #include "Core/String.h"
 #include "Core/MetaData.h"
 
+#include "rapidxml/rapidxml.hpp"
+
 namespace LimitEngine {
     typedef Vertex<FVF_PNCTTB, SIZE_PNCTTB> RigidVertex;
     typedef VertexBuffer<FVF_PNCTTB, SIZE_PNCTTB> RigidVertexBuffer;
@@ -118,6 +120,7 @@ namespace LimitEngine {
 
     public: // Generator
         static Model* GenerateFromTextParser(const ReferenceCountedPointer<TextParser> &Parser);
+        static Model* GenerateFromXML(const rapidxml::xml_document<const char> *XMLDoc);
 
         virtual void InitResource() override;
 
@@ -132,7 +135,8 @@ namespace LimitEngine {
 		void setupMetaData();
 
         void Load(const char *text);
-        void Load(TextParser::NODE *node);
+        Model* Load(TextParser::NODE *node);
+        Model* Load(const rapidxml::xml_node<const char> *XMLNode);
 
         void calcTangentBinormal();
         void setupMaterialShaderParameters();

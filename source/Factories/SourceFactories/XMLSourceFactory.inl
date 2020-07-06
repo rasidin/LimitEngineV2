@@ -21,33 +21,31 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
-@file  TextParserSourceFactory.inl
-@brief Resource Source Factory for TextParser
+@file  XMLSourceFactory.inl
+@brief XML resource source factory
 @author minseob (leeminseob@outlook.com)
 **********************************************************************/
 #pragma once
-
-#include "Core/TextParser.h"
 #include "Factories/ResourceSourceFactory.h"
 
+#include "rapidxml/rapidxml.hpp"
+
 namespace LimitEngine {
-class TextParserSourceFactory : public ResourceSourceFactory
+class XMLSourceFactory : public ResourceSourceFactory
 {
 public:
-    static constexpr ResourceSourceFactory::ID FactoryID = GENERATE_RESOURCEFACTORY_ID("TEPA");
+    static constexpr ResourceSourceFactory::ID FactoryID = GENERATE_RESOURCEFACTORY_ID("XMLR");
 
-    TextParserSourceFactory() {}
-    virtual ~TextParserSourceFactory() {}
+    XMLSourceFactory() {}
+    virtual ~XMLSourceFactory() {}
 
     virtual ID GetID() const override { return FactoryID; }
 
-    virtual void* ConvertRawData(const void *Data, size_t Size) const {
-        TextParser *Output = new TextParser();
-        if (Output->Parse((const char*)Data)) {
-            return (void*)(Output);
-        }
-        delete Output;
-        return nullptr;
+    virtual void* ConvertRawData(const void *Data, size_t Size) const
+    {
+        rapidxml::xml_document<char> *Output = new rapidxml::xml_document<char>();
+        Output->parse<0>((char*)Data);
+        return (void*)Output;
     }
 };
 }
