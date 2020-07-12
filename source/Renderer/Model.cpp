@@ -42,9 +42,12 @@ namespace LimitEngine {
         uint32 NumDrawGroups = InMesh.drawgroups.count();
         *this << NumDrawGroups;
         if (IsLoading()) {
-            Model::DRAWGROUP *newDrawGroup = new Model::DRAWGROUP();
-            *this << *newDrawGroup;
-            InMesh.drawgroups.Add(newDrawGroup);
+            InMesh.drawgroups.Reserve(NumDrawGroups);
+            for (uint32 Index = 0; Index < NumDrawGroups; Index++) {
+                Model::DRAWGROUP *newDrawGroup = new Model::DRAWGROUP();
+                *this << *newDrawGroup;
+                InMesh.drawgroups.Add(newDrawGroup);
+            }
         }
         else {
             for (uint32 Index = 0; Index < NumDrawGroups; Index++) {
@@ -478,10 +481,13 @@ namespace LimitEngine {
         uint32 NumMeshes = mMeshes.count();
         Ar << NumMeshes;
         if (Ar.IsLoading()) {
-            MESH *newMesh = new MESH();
-            newMesh->vertexbuffer = new RigidVertexBuffer();
-            Ar << *newMesh;
-            mMeshes.Add(newMesh);
+            mMeshes.Reserve(NumMeshes);
+            for (uint32 Index = 0; Index < NumMeshes; Index++) {
+                MESH *newMesh = new MESH();
+                newMesh->vertexbuffer = new RigidVertexBuffer();
+                Ar << *newMesh;
+                mMeshes.Add(newMesh);
+            }
         }
         else {
             for (uint32 Index = 0; Index < NumMeshes; Index++) {
@@ -524,6 +530,7 @@ namespace LimitEngine {
                 DrawCommand::DrawIndexedPrimitive( RendererFlag::PrimitiveTypes::TRIANGLELIST,
                                                    static_cast<uint32>(((RigidVertexBuffer *)mesh->vertexbuffer)->GetSize()), 
                                                    static_cast<uint32>(drawGroup->indexBuffer->GetSize()));
+                if (j > 100) break;
             }
         }
         DrawCommand::EndDrawing();
@@ -588,7 +595,16 @@ namespace LimitEngine {
                     int idx1 = mMeshes[i]->drawgroups[l]->indices[m].X();
                     int idx2 = mMeshes[i]->drawgroups[l]->indices[m].Y();
                     int idx3 = mMeshes[i]->drawgroups[l]->indices[m].Z();
-                    LEMath::FloatVector3 p1 = vtxptr[idx1].GetPosition();
+                    LEMath::FloatVector3 n1 = vtxptr[idx1].GetNormal();
+                    LEMath::FloatVector3 n2 = vtxptr[idx2].GetNormal();
+                    LEMath::FloatVector3 n3 = vtxptr[idx3].GetNormal();
+                    vtxptr[idx1].SetTangent(LEMath::FloatVector3(1.0f, 0.0f, 0.0f));
+                    vtxptr[idx2].SetTangent(LEMath::FloatVector3(1.0f, 0.0f, 0.0f));
+                    vtxptr[idx3].SetTangent(LEMath::FloatVector3(1.0f, 0.0f, 0.0f));
+                    vtxptr[idx1].SetBinormal(LEMath::FloatVector3(0.0f, 0.0f, 1.0f));
+                    vtxptr[idx2].SetBinormal(LEMath::FloatVector3(0.0f, 0.0f, 1.0f));
+                    vtxptr[idx3].SetBinormal(LEMath::FloatVector3(0.0f, 0.0f, 1.0f));
+/*                    LEMath::FloatVector3 p1 = vtxptr[idx1].GetPosition();
                     LEMath::FloatVector3 p2 = vtxptr[idx2].GetPosition();
                     LEMath::FloatVector3 p3 = vtxptr[idx3].GetPosition();
                     LEMath::FloatVector2 t1 = vtxptr[idx1].GetTexcoord();
@@ -598,9 +614,6 @@ namespace LimitEngine {
                     LEMath::FloatVector3 p31 = p3 - p1;
                     LEMath::FloatVector2 t21 = t2 - t1;
                     LEMath::FloatVector2 t31 = t3 - t1;
-                    LEMath::FloatVector3 n1 = vtxptr[idx1].GetNormal();
-                    LEMath::FloatVector3 n2 = vtxptr[idx2].GetNormal();
-                    LEMath::FloatVector3 n3 = vtxptr[idx3].GetNormal();
                     
                     LEMath::FloatVector3 tangent =  (p21 * t31.Y() - p31 * t21.Y()).Normalize();
                     LEMath::FloatVector3 binormal = (p31 * t21.X() - p21 * t31.X()).Normalize();
@@ -621,6 +634,7 @@ namespace LimitEngine {
                     vtxptr[idx1].SetNormal(normal);
                     vtxptr[idx2].SetNormal(normal);
                     vtxptr[idx3].SetNormal(normal);
+*/
                 }
             }
         }

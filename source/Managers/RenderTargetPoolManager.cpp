@@ -53,11 +53,11 @@ RenderTargetPoolManager::~RenderTargetPoolManager()
     }
     mDSBuckets.Clear();
 }
-PooledRenderTarget RenderTargetPoolManager::GetRenderTarget(const RenderTargetDesc &InDesc)
+PooledRenderTarget RenderTargetPoolManager::GetRenderTarget(const RenderTargetDesc &InDesc, const char *InDebugName/* = nullptr*/)
 {
     return GetRenderTarget(InDesc.Size, InDesc.Depth, InDesc.Format);
 }
-PooledRenderTarget RenderTargetPoolManager::GetRenderTarget(const LEMath::IntSize Size, uint32 Depth, TEXTURE_COLOR_FORMAT Format)
+PooledRenderTarget RenderTargetPoolManager::GetRenderTarget(const LEMath::IntSize Size, uint32 Depth, TEXTURE_COLOR_FORMAT Format, const char *InDebugName/* = nullptr*/)
 {
     RenderTargetDesc Desc(Size, Depth, Format);
     Texture *FoundRenderTarget = nullptr;
@@ -70,10 +70,14 @@ PooledRenderTarget RenderTargetPoolManager::GetRenderTarget(const LEMath::IntSiz
     }
     if (FoundRenderTarget) {
         mRTBuckets.erase(rtbidx);
+        if (InDebugName)
+            FoundRenderTarget->SetDebugName(InDebugName);
         return PooledRenderTarget(FoundRenderTarget, Desc);
     } else {
         Texture *newRenderTarget = new Texture();
         newRenderTarget->CreateRenderTarget(Size, Format);
+        if (InDebugName)
+            newRenderTarget->SetDebugName(InDebugName);
         return PooledRenderTarget(newRenderTarget, Desc);
     }
     return PooledRenderTarget(nullptr, Desc);
@@ -83,7 +87,7 @@ void RenderTargetPoolManager::ReleaseRenderTarget(PooledRenderTarget &RenderTarg
     if (RenderTarget.mTexture)
         mRTBuckets.Add(RTBucketType(RenderTarget.mDesc, RenderTarget.mTexture));
 }
-PooledDepthStencil RenderTargetPoolManager::GetDepthStencil(const LEMath::IntSize Size, TEXTURE_DEPTH_FORMAT Format)
+PooledDepthStencil RenderTargetPoolManager::GetDepthStencil(const LEMath::IntSize Size, TEXTURE_DEPTH_FORMAT Format, const char *InDebugName/* = nullptr*/)
 {
     DepthStencilDesc Desc(Size, Format);
     Texture *FoundDepthStencil = nullptr;
@@ -94,11 +98,15 @@ PooledDepthStencil RenderTargetPoolManager::GetDepthStencil(const LEMath::IntSiz
         }
     }
     if (FoundDepthStencil) {
+        if (InDebugName)
+            FoundDepthStencil->SetDebugName(InDebugName);
         return PooledDepthStencil(FoundDepthStencil, Desc);
     }
     else {
         Texture *newDepthStencil = new Texture();
         newDepthStencil->CreateDepthStencil(Size, Format);
+        if (InDebugName)
+            newDepthStencil->SetDebugName(InDebugName);
         return PooledDepthStencil(newDepthStencil, Desc);
     }
 }

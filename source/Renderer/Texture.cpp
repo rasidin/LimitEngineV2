@@ -423,4 +423,10 @@ bool Texture::Serialize(Archive &OutArchive)
     OutArchive << *mSource;
     return false;
 }
+void Texture::SetDebugName(const char *InDebugName)
+{
+    uint32 CopyLength = min(DebugNameLength - 1, strlen(InDebugName) + 1);
+    ::memcpy(mDebugName, InDebugName, CopyLength);
+    mDebugName[CopyLength - 1] = 0;
+}
 }

@@ -154,11 +154,11 @@ public:
     RenderTargetPoolManager();
     virtual ~RenderTargetPoolManager();
 
-    PooledRenderTarget GetRenderTarget(const RenderTargetDesc &InDesc);
-    PooledRenderTarget GetRenderTarget(const LEMath::IntSize Size, uint32 Depth, TEXTURE_COLOR_FORMAT Format);
+    PooledRenderTarget GetRenderTarget(const RenderTargetDesc &InDesc, const char *InDebugName = nullptr);
+    PooledRenderTarget GetRenderTarget(const LEMath::IntSize Size, uint32 Depth, TEXTURE_COLOR_FORMAT Format, const char *InDebugName = nullptr);
     void ReleaseRenderTarget(PooledRenderTarget &RenderTarget);
 
-    PooledDepthStencil GetDepthStencil(const LEMath::IntSize Size, TEXTURE_DEPTH_FORMAT Format);
+    PooledDepthStencil GetDepthStencil(const LEMath::IntSize Size, TEXTURE_DEPTH_FORMAT Format, const char *InDebugName = nullptr);
     void ReleaseDepthStencil(PooledDepthStencil &DepthStencil);
 
 private:

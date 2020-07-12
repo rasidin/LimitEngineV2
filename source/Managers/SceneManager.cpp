@@ -303,6 +303,9 @@ PooledRenderTarget SceneManager::drawAmbientOcclusion()
     VectorArray<PooledRenderTarget> AORenderTargets;
     AORenderTargets.Add();
     mAmbientOcclusion->Process(Context, AORenderTargets);
+    if (AORenderTargets[0].Get()) {
+        AORenderTargets[0].Get()->SetDebugName("AORenderTarget");
+    }
     return AORenderTargets[0];
 }
 
@@ -344,6 +347,7 @@ void SceneManager::Draw()
     uint32 PendingDeleteRenderTargetSlot = 0xffff;
     for (uint32 RTIndex = 0; RTIndex < PendingDeleteRenderTargetCount; RTIndex++) {
         if (mPendingReleaseRenderTargets[RTIndex].Get() && mPendingReleaseRenderTargets[RTIndex].Get()->GetReferenceCounter() <= 1) {
+            LEASSERT(mPendingReleaseRenderTargets[RTIndex].Get()->GetReferenceCounter() == 1);
             mPendingReleaseRenderTargets[RTIndex].Release();
         }
         else if (mPendingReleaseRenderTargets[RTIndex].Get() == nullptr && PendingDeleteRenderTargetSlot == 0xffff) {
@@ -356,7 +360,8 @@ void SceneManager::Draw()
     drawBackground();
     drawPrePass();
     PooledRenderTarget AORenderTarget = drawAmbientOcclusion();
-    mPendingReleaseRenderTargets[PendingDeleteRenderTargetSlot] = AORenderTarget;
+    if (AORenderTarget.Get())
+        mPendingReleaseRenderTargets[PendingDeleteRenderTargetSlot] = AORenderTarget;
     LE_DrawManager.SetAmbientOcclusionTexture(AORenderTarget);
     drawBasePass();
     //drawTranslucencyPass();

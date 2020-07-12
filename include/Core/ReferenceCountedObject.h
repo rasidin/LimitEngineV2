@@ -9,6 +9,7 @@
 #pragma once
 
 #include "Object.h"
+#include "Mutex.h"
 
 namespace LimitEngine {
     class IReferenceCountedObject
@@ -25,12 +26,13 @@ namespace LimitEngine {
     public:
         uint32 GetReferenceCounter() const override { return mReferenceCounter; }
 
-        uint32 AddReferenceCounter() override { return ++mReferenceCounter; }
-        uint32 SubReferenceCounter() override { LEASSERT(mReferenceCounter > 0); return --mReferenceCounter; }
+        uint32 AddReferenceCounter() override { Mutex::ScopedLock scopedLock(mMutex); return ++mReferenceCounter; }
+        uint32 SubReferenceCounter() override { Mutex::ScopedLock scopedLock(mMutex); LEASSERT(mReferenceCounter > 0); return --mReferenceCounter; }
     protected:
-        ReferenceCountedObject() : mReferenceCounter(0u) {}
+        ReferenceCountedObject() : mReferenceCounter(0u), mMutex() {}
         virtual ~ReferenceCountedObject() {}
     private:
+        Mutex mMutex;
         uint32 mReferenceCounter;
     };
 }

@@ -164,6 +164,8 @@ class Texture : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics
         CurrentVersion = FirstVersion
     };
 
+    static constexpr uint32 DebugNameLength = 0x40;
+
 public:
     Texture();
     virtual ~Texture();
@@ -203,6 +205,8 @@ public:
 
     virtual bool Serialize(Archive &OutArchive) override;
 
+    void SetDebugName(const char *InDebugName);
+
 public: // Generators
     static Texture* GenerateFromSourceImage(const TextureSourceImage *SourceImage);
 
@@ -219,6 +223,8 @@ private:
     TEXTURE_COLOR_FORMAT        mFormat;
 
     SerializedTextureSource    *mSource;
+
+    char                        mDebugName[DebugNameLength];
 
     friend class TextureFactory;
 };
