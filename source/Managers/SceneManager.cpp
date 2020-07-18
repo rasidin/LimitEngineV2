@@ -223,6 +223,7 @@ void SceneManager::updateSceneTasks()
 
 void SceneManager::drawBackground()
 {
+    DrawCommand::BeginEvent("DrawBackground");
     DrawCommand::SetRenderTarget(0, mSceneColor.Get(), mSceneDepth.Get());
     DrawCommand::SetEnable((uint32)RendererFlag::EnabledFlags::DEPTH_WRITE);
     DrawCommand::SetDepthFunc(RendererFlag::TestFlags::ALWAYS);
@@ -276,10 +277,12 @@ void SceneManager::drawBackground()
         LE_Draw2DManager.FlushDraw2D(RendererFlag::PrimitiveTypes::TRIANGLELIST);
     }   break;
     }
+    DrawCommand::EndEvent();
 }
 
 void SceneManager::drawPrePass()
 {
+    DrawCommand::BeginEvent("Prepass");
     RenderState PrePassRenderState = LE_DrawManager.GetRenderState();
     PrePassRenderState.SetRenderPass(RenderPass::PrePass);
     DrawCommand::SetRenderTarget(0, mSceneNormal.Get(), mSceneDepth.Get());
@@ -288,10 +291,12 @@ void SceneManager::drawPrePass()
     for (uint32 mdlidx = 0; mdlidx < mModels.count(); mdlidx++) {
         mModels[mdlidx]->Draw(PrePassRenderState);
     }
+    DrawCommand::EndEvent();
 }
 
 PooledRenderTarget SceneManager::drawAmbientOcclusion()
 {
+    DrawCommand::BeginEvent("AmbientOcclusion");
     PostProcessContext Context;
     Context.RenderStateContext = LE_DrawManager.GetRenderStatePtr();
     Context.SceneColor = LE_SceneManager.GetSceneColor();
@@ -306,11 +311,13 @@ PooledRenderTarget SceneManager::drawAmbientOcclusion()
     if (AORenderTargets[0].Get()) {
         AORenderTargets[0].Get()->SetDebugName("AORenderTarget");
     }
+    DrawCommand::EndEvent();
     return AORenderTargets[0];
 }
 
 void SceneManager::drawBasePass()
 {
+    DrawCommand::BeginEvent("Basepass");
     RenderState BasePassRenderState = LE_DrawManager.GetRenderState();
     BasePassRenderState.SetRenderPass(RenderPass::BasePass);
     DrawCommand::SetRenderTarget(0, mSceneColor.Get(), mSceneDepth.Get());
@@ -319,13 +326,16 @@ void SceneManager::drawBasePass()
     for (uint32 mdlidx = 0; mdlidx < mModels.count(); mdlidx++) {
         mModels[mdlidx]->Draw(BasePassRenderState);
     }
+    DrawCommand::EndEvent();
 }
 
 void SceneManager::drawTranslucencyPass()
 {
+    DrawCommand::BeginEvent("Translucency");
     RenderState TranslucencyRenderState = LE_DrawManager.GetRenderState();
     TranslucencyRenderState.SetRenderPass(RenderPass::TranslucencyPass);
     DrawCommand::SetRenderTarget(0, mSceneColor.Get(), mSceneDepth.Get());
+    DrawCommand::EndEvent();
 }
 
 ModelInstRefPtr SceneManager::findModelInstance(uint32 InstanceID)
@@ -356,6 +366,7 @@ void SceneManager::Draw()
     }
     LEASSERT(PendingDeleteRenderTargetSlot != 0xffff);
 
+    DrawCommand::BeginEvent("Scene");
     DrawCommand::BeginScene();
     drawBackground();
     drawPrePass();
@@ -367,5 +378,6 @@ void SceneManager::Draw()
     //drawTranslucencyPass();
     DrawCommand::EndScene();
     DrawCommand::SetRenderTarget(0, nullptr, nullptr);
+    DrawCommand::EndEvent();
 }
 }

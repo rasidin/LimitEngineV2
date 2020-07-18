@@ -81,6 +81,7 @@ CommandBuffer::COMMAND* CommandBuffer::popPushCommandBuffer()
 CommandBuffer::COMMAND* CommandBuffer::nextPushCommandBuffer(int count)
 {
     Mutex::ScopedLock scopedLock(mMutex);
+    void *LastPushCommand = mPushCommandBufferPointer;
     mPushCommandBufferPointer = (COMMAND*)mPushCommandBufferPointer + count;
     if (((intptr_t)mPushCommandBufferPointer) - ((intptr_t)mCommandBuffer) >= CommandReservedMemorySize) {
         intptr_t overMemoryOffset = GetSizeAlign((intptr_t)mPushCommandBufferPointer - ((intptr_t)mCommandBuffer + CommandReservedMemorySize), sizeof(COMMAND));
@@ -92,13 +93,12 @@ CommandBuffer::COMMAND* CommandBuffer::nextPushCommandBuffer(int count)
 CommandBuffer::COMMAND* CommandBuffer::nextPullCommandBuffer()
 {
     COMMAND *currentCommand = (COMMAND*)mPullCommandBufferPointer;
-    intptr_t leftCountCB = ((intptr_t)mCommandBuffer + CommandReservedMemorySize - (intptr_t)currentCommand) / sizeof(COMMAND);
-    if (currentCommand->nextOffset >= leftCountCB) {
-        mPullCommandBufferPointer = (COMMAND*)mCommandBuffer + currentCommand->nextOffset - leftCountCB;
+    COMMAND *nextCommand = currentCommand + currentCommand->nextOffset;
+    if ((uintptr_t)mCommandBuffer + CommandReservedMemorySize <= (uintptr_t)nextCommand) {
+        intptr_t leftCountCB = ((intptr_t)mCommandBuffer + CommandReservedMemorySize - (intptr_t)currentCommand) / sizeof(COMMAND);
+        nextCommand = (COMMAND*)mCommandBuffer + currentCommand->nextOffset - leftCountCB;
     }
-    else {
-        mPullCommandBufferPointer = (COMMAND*)mPullCommandBufferPointer + currentCommand->nextOffset;
-    }
+    mPullCommandBufferPointer = nextCommand;
     return (COMMAND*)mPullCommandBufferPointer;
 }
 
@@ -141,6 +141,14 @@ float* CommandBuffer::copyMatrixToBuffer(float *ptr)
     return output;
 }
 
+char* CommandBuffer::duplicateString(const char *src)
+{
+    size_t srclength = strlen(src) + 1;
+    char *output = static_cast<char*>(allocateFromCommandBuffer(srclength));
+    ::memcpy(output, src, srclength);
+    return output;
+}
+
 uint32 CommandBuffer::CalculateCommandOffset(COMMAND *cmd)
 {
     if ((intptr_t)mPushCommandBufferPointer < (intptr_t)cmd) { // Back to origin
@@ -160,14 +168,17 @@ void CommandBuffer::Flush(RenderState *rs)
     void  *flushCommandBufferPointer = mPushCommandBufferPointer;
     mMutex.Unlock();
 
+    uint32 cmdCount = 0u;
 	void *bindedVertexBufferHandle = NULL;
 	void *bindedIndexBufferHandle = NULL;
 	Texture *nullTexture = RenderContext::GetSingleton().GetDefaultTexture(RenderContext::DefaultTextureTypeWhite);
-    //LE_Debug::Print("Run command : %x to %x (%d)\n", (uintptr_t)mPullCommandBufferPointer, (uintptr_t)flushCommandBufferPointer, ((intptr_t)flushCommandBufferPointer - (intptr_t)mPullCommandBufferPointer) / sizeof(COMMAND));
+    //gDebug.Print(">> Run command : %x to %x (%d)\n", (uintptr_t)mPullCommandBufferPointer, (uintptr_t)flushCommandBufferPointer, ((intptr_t)flushCommandBufferPointer - (intptr_t)mPullCommandBufferPointer) / sizeof(COMMAND));
     while (flushCommandBufferPointer != mPullCommandBufferPointer)
     {
         COMMAND *currentCommand = static_cast<COMMAND*>(mPullCommandBufferPointer);
         nextPullCommandBuffer();
+
+        //gDebug.Print("Command[%03d] : %d\n", cmdCount++, currentCommand->commandType);
 
         switch (currentCommand->commandType)
         {
@@ -232,7 +243,7 @@ void CommandBuffer::Flush(RenderState *rs)
             } break;
             case COMMAND::cDrawIndexedPrimitive:
             {
-				COMMAND_DRAWINDEXEDPRIMITIVE *command = reinterpret_cast<COMMAND_DRAWINDEXEDPRIMITIVE*>(currentCommand);
+                COMMAND_DRAWINDEXEDPRIMITIVE *command = reinterpret_cast<COMMAND_DRAWINDEXEDPRIMITIVE*>(currentCommand);
 				if (bindedVertexBufferHandle == NULL || bindedIndexBufferHandle == NULL)
 					break;
 				if (mImpl->PrepareForDrawing())
@@ -360,6 +371,24 @@ void CommandBuffer::Flush(RenderState *rs)
                     command->texture.Release();
                 }
             } break;
+            case COMMAND::cSetMarker:
+            {
+                COMMAND_SETMARKER *command = reinterpret_cast<COMMAND_SETMARKER*>(currentCommand);
+                if (command->MarkerName) {
+                    mImpl->SetMarker(command->MarkerName);
+                }
+            } break;
+            case COMMAND::cBeginEvent:
+            {
+                COMMAND_BEGINEVENT *command = reinterpret_cast<COMMAND_BEGINEVENT*>(currentCommand);
+                if (command->EventName) {
+                    mImpl->BeginEvent(command->EventName);
+                }
+            } break;
+            case COMMAND::cEndEvent:
+            {
+                mImpl->EndEvent();
+            } break;
             default:
                 DEBUG_MESSAGE("[DrawManager] Unknown Command : %d\n", currentCommand->commandType);
                 break;
@@ -384,11 +413,6 @@ void DrawCommand::BeginScene()
 void DrawCommand::EndScene()
 {
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_ENDSCENE();
-}
-
-void DrawCommand::Present()
-{
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_PRESENT();
 }
 
 void DrawCommand::BeginDrawing()
@@ -533,5 +557,22 @@ void DrawCommand::BindTexture(uint32 index, const PooledRenderTarget &texture)
 void DrawCommand::BindTexture(uint32 index, const PooledDepthStencil &texture)
 {
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDPOOLEDDEPTHSTENCIL(index, texture);
+}
+
+void DrawCommand::SetMarker(const char *InMarkerName)
+{
+    CommandBuffer::COMMAND_SETMARKER *currentCommand = COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETMARKER(LE_DrawManager.getCommandBuffer()->duplicateString(InMarkerName));
+    currentCommand->nextOffset = LE_DrawManager.getCommandBuffer()->CalculateCommandOffset((CommandBuffer::COMMAND*)currentCommand);
+}
+
+void DrawCommand::BeginEvent(const char *InEventName)
+{
+    CommandBuffer::COMMAND_BEGINEVENT *currentCommand = COMMANDBUFFER_NEW CommandBuffer::COMMAND_BEGINEVENT(LE_DrawManager.getCommandBuffer()->duplicateString(InEventName));
+    currentCommand->nextOffset = LE_DrawManager.getCommandBuffer()->CalculateCommandOffset((CommandBuffer::COMMAND*)currentCommand);
+}
+
+void DrawCommand::EndEvent()
+{
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_ENDEVENT();
 }
 }

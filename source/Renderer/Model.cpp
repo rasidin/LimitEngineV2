@@ -516,8 +516,8 @@ namespace LimitEngine {
                 {
                     // Set RenderState
                     RenderState rsCopied(rs);
-                    rsCopied.SetWorldMatrix(mesh->worldMatrix * modelTransformMatrix);
-                    rsCopied.SetWorldViewProjMatrix(mesh->worldMatrix * modelWvpMat);
+                    rsCopied.SetWorldMatrix(/*mesh->worldMatrix * */modelTransformMatrix);
+                    rsCopied.SetWorldViewProjMatrix(/*mesh->worldMatrix * */modelWvpMat);
                     //LE_LightManager.ApplyLight(rsCopied, NULL);
 
                     // Bind material
@@ -530,7 +530,6 @@ namespace LimitEngine {
                 DrawCommand::DrawIndexedPrimitive( RendererFlag::PrimitiveTypes::TRIANGLELIST,
                                                    static_cast<uint32>(((RigidVertexBuffer *)mesh->vertexbuffer)->GetSize()), 
                                                    static_cast<uint32>(drawGroup->indexBuffer->GetSize()));
-                if (j > 100) break;
             }
         }
         DrawCommand::EndDrawing();

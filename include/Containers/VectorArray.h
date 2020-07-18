@@ -230,15 +230,19 @@ public:
     inline uint32 size() const              { return _size; }
     inline void erase(uint32 n)             { Delete(n); }
     
-    void Clear()
+    void Clear(bool FreeReservedData = true)
     {
-        if (_data) 
+        if (_data)
         {
             for(uint32 i=0;i<_size;i++) _data[i].T::~T();
             memset(_data, 0, sizeof(T) * _reserved);
-        }    
+        }
         _size = 0;
-        _reserved = 0;
+        if (FreeReservedData) {
+            free(_data);
+            _data = nullptr;
+            _reserved = 0;
+        }
     }
 
     T& operator [] (uint32 n)                { LEASSERT(n < _size); return *(_data + n); }

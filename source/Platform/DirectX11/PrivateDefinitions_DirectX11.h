@@ -8,15 +8,17 @@ Copyright(C), LIMITGAME, 2020
 ***********************************************************/
 #pragma once
 #include <d3d11.h>
+#include <d3d11_1.h>
 
 #include "Core/Object.h"
 
 namespace LimitEngine {
 struct CommandInit_Parameter : public Object<LimitEngineMemoryCategory_Graphics>
 {
-    ID3D11Device			*mD3DDevice = nullptr;
-    ID3D11DeviceContext		*mD3DDeviceContext = nullptr;
-    ID3D11RenderTargetView	*mBaseRenderTargetView = nullptr;
-    ID3D11DepthStencilView	*mBaseDepthStencilView = nullptr;
+    ID3D11Device			    *mD3DDevice             = nullptr;
+    ID3D11DeviceContext		    *mD3DDeviceContext      = nullptr;
+    ID3DUserDefinedAnnotation   *mD3DPerf               = nullptr;
+    ID3D11RenderTargetView	    *mBaseRenderTargetView  = nullptr;
+    ID3D11DepthStencilView	    *mBaseDepthStencilView  = nullptr;
 };
 }

@@ -8,6 +8,7 @@ Copyright (C), LIMITGAME, 2020
 ***********************************************************/
 #ifdef USE_DX11
 #include <d3d11.h>
+#include <d3d11_1.h>
 
 #include <LERenderer>
 
@@ -57,6 +58,7 @@ namespace LimitEngine {
 
             Output->mD3DDevice = mD3DDevice;
             Output->mD3DDeviceContext = mD3DDeviceContext;
+            Output->mD3DPerf = mD3DPerf;
             Output->mBaseRenderTargetView = mBaseRenderTargetView;
 
             return dynamic_cast<void*>(Output);
@@ -93,6 +95,10 @@ namespace LimitEngine {
                 Debug::Error("Failed to create device");
                 return;
             }
+            if (FAILED(mD3DDeviceContext->QueryInterface(__uuidof(mD3DPerf), reinterpret_cast<void**>(&mD3DPerf)))) {
+                Debug::Error("Failed to interface for perf");
+                return;
+            }
             // Get Backbuffer
             if (FAILED(mDXGISwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&mBaseRenderTarget))) {
                 Debug::Error("Failed to get backbuffer");
@@ -115,7 +121,7 @@ namespace LimitEngine {
             mD3DDeviceContext->RSSetViewports(1, &viewPort);
         }
         void ResizeScreen(const LEMath::IntSize &size) override {}
-        void Present(Texture *texture) override
+        void Present() override
         {
             if (mDXGISwapChain) {
                 HRESULT presentResult = mDXGISwapChain->Present(0, 0);
@@ -153,16 +159,17 @@ namespace LimitEngine {
         void* GetDeviceContext() const override { return mD3DDeviceContext; }
 
     private:
-        ID3D11Device			*mD3DDevice;
-        ID3D11DeviceContext		*mD3DDeviceContext;
-        IDXGIDevice1			*mDXGIDevice;
-        IDXGIAdapter			*mDXGIAdapter;
-        IDXGIFactory			*mDXGIFactory;
-        IDXGISwapChain			*mDXGISwapChain;
+        ID3D11Device			    *mD3DDevice;
+        ID3D11DeviceContext		    *mD3DDeviceContext;
+        IDXGIDevice1			    *mDXGIDevice;
+        IDXGIAdapter			    *mDXGIAdapter;
+        IDXGIFactory			    *mDXGIFactory;
+        IDXGISwapChain			    *mDXGISwapChain;
+        ID3DUserDefinedAnnotation   *mD3DPerf;
 
-        ID3D11Texture2D			*mBaseRenderTarget;                             // Texture for rendertarget
-        ID3D11Texture2D         *mBaseDepthStencilTexture;                      // Texture for depthstencil
-        ID3D11RenderTargetView	*mBaseRenderTargetView;                         // View for rendertarget
+        ID3D11Texture2D			    *mBaseRenderTarget;                             // Texture for rendertarget
+        ID3D11Texture2D             *mBaseDepthStencilTexture;                      // Texture for depthstencil
+        ID3D11RenderTargetView	    *mBaseRenderTargetView;                         // View for rendertarget
     };
 }
 

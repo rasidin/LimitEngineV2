@@ -30,6 +30,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include <LEIntVector2.h>
 
 #include "Core/Singleton.h"
+#include "Core/Mutex.h"
 #include "Containers/MapArray.h"
 #include "Renderer/Texture.h"
 
@@ -162,6 +163,8 @@ public:
     void ReleaseDepthStencil(PooledDepthStencil &DepthStencil);
 
 private:
+    Mutex mBucketMutex;
+
     typedef Pair<RenderTargetDesc, Texture*> RTBucketType;
     VectorArray<RTBucketType> mRTBuckets;
     typedef Pair<DepthStencilDesc, Texture*> DSBucketType;

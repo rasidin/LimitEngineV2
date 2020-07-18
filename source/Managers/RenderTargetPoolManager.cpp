@@ -59,6 +59,8 @@ PooledRenderTarget RenderTargetPoolManager::GetRenderTarget(const RenderTargetDe
 }
 PooledRenderTarget RenderTargetPoolManager::GetRenderTarget(const LEMath::IntSize Size, uint32 Depth, TEXTURE_COLOR_FORMAT Format, const char *InDebugName/* = nullptr*/)
 {
+    Mutex::ScopedLock lock(mBucketMutex);
+
     RenderTargetDesc Desc(Size, Depth, Format);
     Texture *FoundRenderTarget = nullptr;
     uint32 rtbidx = 0u;
@@ -84,6 +86,7 @@ PooledRenderTarget RenderTargetPoolManager::GetRenderTarget(const LEMath::IntSiz
 }
 void RenderTargetPoolManager::ReleaseRenderTarget(PooledRenderTarget &RenderTarget)
 {
+    Mutex::ScopedLock lock(mBucketMutex);
     if (RenderTarget.mTexture)
         mRTBuckets.Add(RTBucketType(RenderTarget.mDesc, RenderTarget.mTexture));
 }

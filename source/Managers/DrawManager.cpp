@@ -154,7 +154,7 @@ namespace LimitEngine
         WaitForFlushing();
 
         // Present screen
-        mImpl->Present(NULL);
+        mImpl->Present();
 
         runRendererTasks();
         // Run drawing commands
@@ -205,6 +205,7 @@ namespace LimitEngine
     }
     void DrawManager::runRendererTasks()
     {
+        Mutex::ScopedLock lock(mRendererTaskMutex);
         for (uint32 rtidx = 0; rtidx < mRendererTasks.size(); rtidx++) {
             if (mRendererTasks[rtidx]) {
                 mRendererTasks[rtidx]->Run();

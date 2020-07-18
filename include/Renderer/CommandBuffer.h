@@ -54,6 +54,9 @@ public:
     virtual void SetEnabled(uint32 Flag) = 0;
     virtual void SetDisable(uint32 Flag) = 0;
     virtual void SetRenderTarget(uint32 Index, Texture *Color, Texture *Depth, uint32 SurfaceIndex) = 0;
+    virtual void SetMarker(const char *InMarkerName) = 0;
+    virtual void BeginEvent(const char *InEventName) = 0;
+    virtual void EndEvent() = 0;
     //virtual void SetUniformFloat1(int Location, float Value) = 0;
     //virtual void SetUniformFloat2(int Location, const LEMath::FloatVector2 &Value) = 0;
     //virtual void SetUniformFloat4(int Location, const LEMath::FloatVector4 &Value) = 0;
@@ -103,6 +106,9 @@ private:            // Private Structure
             cSetDepthFunc,
             cSetBlendFunc,
             cSetRenderTarget,
+            cSetMarker,
+            cBeginEvent,
+            cEndEvent,
             CommandNum,
         };
         uint16       commandType;               //!<Type of command                  [ 2 ]
@@ -130,11 +136,6 @@ private:            // Private Structure
     {
         _COMMAND_ENDSCENE() : _COMMAND_COMMON(cEndScene) {}
     } COMMAND_ENDSCENE;
-    // Present screen   
-    typedef struct _COMMAND_PRESENT : public _COMMAND_COMMON
-    {
-        _COMMAND_PRESENT() : _COMMAND_COMMON(cPresent) {}
-    } COMMAND_PRESENT;
     // Begin drawing
     typedef struct _COMMAND_BEGINDRAWING : public _COMMAND_COMMON
     {
@@ -466,6 +467,28 @@ private:            // Private Structure
         Texture             *color;
         Texture             *depthstencil;
     } COMMAND_SETRENDERTARGET;
+    typedef struct _COMMAND_SETMARKER : public _COMMAND_COMMON
+    {
+        _COMMAND_SETMARKER(char *InMarkerName)
+            : _COMMAND_COMMON(cSetMarker)
+            , MarkerName(InMarkerName)
+        {}
+        char                *MarkerName;
+    } COMMAND_SETMARKER;
+    typedef struct _COMMAND_BEGINEVENT : public _COMMAND_COMMON
+    {
+        _COMMAND_BEGINEVENT(char *InEventName)
+            : _COMMAND_COMMON(cBeginEvent)
+            , EventName(InEventName)
+        {}
+        char               *EventName;
+    } COMMAND_BEGINEVENT;
+    typedef struct _COMMAND_ENDEVENT : public _COMMAND_COMMON
+    {
+        _COMMAND_ENDEVENT()
+            : _COMMAND_COMMON(cEndEvent)
+        {}
+    } COMMAND_ENDEVENT;
 public:
     // Ctor & Dtor
     CommandBuffer(size_t bufferSize = CommandReservedMemorySize);
@@ -484,6 +507,7 @@ public:
 private:
     void* allocateFromCommandBuffer(size_t size);
     float* copyMatrixToBuffer(float *ptr);
+    char* duplicateString(const char *src);
 
     COMMAND* popPushCommandBuffer();
     COMMAND* nextPushCommandBuffer(int count = 1);

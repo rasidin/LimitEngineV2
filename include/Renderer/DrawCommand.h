@@ -25,7 +25,6 @@ class DrawCommand
     static void ClearScreen(const LEMath::FloatColorRGBA &color);
     static void BeginScene();
     static void EndScene();
-    static void Present();
     static void BeginDrawing();
     static void EndDrawing();
     static void BindVertexBuffer(void *handle, void *buffer, uint32 offset, uint32 size, uint32 stride);
@@ -54,5 +53,8 @@ class DrawCommand
     static void SetDisable(uint32 f);
     static void SetBlendFunc(uint32 rt, RendererFlag::BlendFlags func);
     static void SetDepthFunc(RendererFlag::TestFlags f);
+    static void SetMarker(const char *InMarkerName);
+    static void BeginEvent(const char *InEventName);
+    static void EndEvent();
 }; // DrawCommand
 }

@@ -116,6 +116,7 @@ namespace LimitEngine {
             , cache() 
             , mD3DDevice(nullptr)
             , mD3DDeviceContext(nullptr)
+            , mD3DPerf(nullptr)
             , mDefaultSampler(nullptr)
             , mBaseRenderTargetView(nullptr)
             , mBaseDepthStencilView(nullptr)
@@ -129,6 +130,7 @@ namespace LimitEngine {
             CommandInit_Parameter *InitParameter = (CommandInit_Parameter*)Parameter;
             mD3DDevice = InitParameter->mD3DDevice;
             mD3DDeviceContext = InitParameter->mD3DDeviceContext;
+            mD3DPerf = InitParameter->mD3DPerf;
             mBaseRenderTargetView = InitParameter->mBaseRenderTargetView;
             mBaseDepthStencilView = InitParameter->mBaseDepthStencilView;
 
@@ -344,7 +346,6 @@ namespace LimitEngine {
             if (mD3DDeviceContext) {
                 mD3DDeviceContext->IASetPrimitiveTopology(ConvertPrimitiveType(type));
                 mD3DDeviceContext->Draw(count, offset);
-                mD3DDeviceContext->Flush();
             }
         }
         void DrawPrimitiveUp(uint32 type, uint32 count, void *data, uint32 stride) override
@@ -358,7 +359,6 @@ namespace LimitEngine {
             if (mD3DDeviceContext) {
                 mD3DDeviceContext->IASetPrimitiveTopology(ConvertPrimitiveType(type));
                 mD3DDeviceContext->DrawIndexed(count, 0, 0);
-                mD3DDeviceContext->Flush();
             }
         }
         void SetFVF(uint32 fvf) override { cache.CurrentFVF = fvf; }
@@ -523,14 +523,39 @@ namespace LimitEngine {
             }
             return foundState;
         }
+        void SetMarker(const char *InMarkerName)
+        {
+            if (mD3DPerf) {
+                wchar_t wText[0xff];
+                size_t convertedSize;
+                mbstowcs_s(&convertedSize, wText, InMarkerName, min(strlen(InMarkerName) + 1, 0xff));
+                mD3DPerf->SetMarker(wText);
+            }
+        }
+        void BeginEvent(const char *InEventName)
+        {
+            if (mD3DPerf) {
+                wchar_t wText[0xff];
+                size_t convertedSize;
+                mbstowcs_s(&convertedSize, wText, InEventName, min(strlen(InEventName) + 1, 0xff));
+                mD3DPerf->BeginEvent(wText);
+            }
+        }
+        void EndEvent()
+        {
+            if (mD3DPerf) {
+                mD3DPerf->EndEvent();
+            }
+        }
     private:
-        ID3D11Device            *mD3DDevice;
-        ID3D11DeviceContext		*mD3DDeviceContext;
-        ID3D11SamplerState      *mDefaultSampler;
-        ID3D11RenderTargetView  *mCurrentRenderTargetView;
-        ID3D11DepthStencilView  *mCurrentDepthStencilView;
-        ID3D11RenderTargetView	*mBaseRenderTargetView;                         // View for rendertarget
-        ID3D11DepthStencilView	*mBaseDepthStencilView;                         // View for depthstencil
-        ID3D11RasterizerState   *mRasterizerStates[static_cast<uint32>(RendererFlag::Culling::Max)];
+        ID3D11Device                *mD3DDevice;
+        ID3D11DeviceContext		    *mD3DDeviceContext;
+        ID3DUserDefinedAnnotation   *mD3DPerf;
+        ID3D11SamplerState          *mDefaultSampler;
+        ID3D11RenderTargetView      *mCurrentRenderTargetView;
+        ID3D11DepthStencilView      *mCurrentDepthStencilView;
+        ID3D11RenderTargetView	    *mBaseRenderTargetView;                         // View for rendertarget
+        ID3D11DepthStencilView	    *mBaseDepthStencilView;                         // View for depthstencil
+        ID3D11RasterizerState       *mRasterizerStates[static_cast<uint32>(RendererFlag::Culling::Max)];
     };
 }

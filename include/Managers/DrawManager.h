@@ -52,7 +52,7 @@ public:
     
     virtual void Init(WINDOW_HANDLE handle, const InitializeOptions &Options) = 0;
     virtual void ResizeScreen(const LEMath::IntSize &size) = 0;
-    virtual void Present(Texture *texture) = 0;
+    virtual void Present() = 0;
     virtual void Term() = 0;
     
     virtual void* GetDeviceHandle() const = 0;
@@ -123,10 +123,10 @@ public:                    // Interfaces
     bool IsReadyToRender() { return mReadyToRender; }
 
     // Add renderer task (auto release)
-    void AddRendererTask(AutoPointer<RendererTask> &task) { if (RendererTask *TaskPtr = task.Pop()) mRendererTasks.Add(TaskPtr); }
+    void AddRendererTask(AutoPointer<RendererTask> &task) { Mutex::ScopedLock lock(mRendererTaskMutex); if (RendererTask *TaskPtr = task.Pop()) mRendererTasks.Add(TaskPtr); }
 
     template<typename L>
-    void AddRendererTaskLambda(L &&Lambda) { mRendererTasks.Add(new RendererTaskLambda<L>(Forward<L>(Lambda))); }
+    void AddRendererTaskLambda(L &&Lambda) { Mutex::ScopedLock lock(mRendererTaskMutex); mRendererTasks.Add(new RendererTaskLambda<L>(Forward<L>(Lambda))); }
 
     // Prepare for drawing scene
     void PrepareForDrawingScene();
@@ -209,6 +209,7 @@ private:            // Private Properties
     Event                                mDrawEvent;                        //!< Event for flushing command buffer
     Event                                mReadyCommandBufferEvent;          //!< Event about ready commandbuffer
 
+    Mutex                                mRendererTaskMutex;                //!< Mutex for running renderer tasks
     Mutex                                mCommandFlushMutex;                //!< Mutex for flushing commands
     VectorArray<RendererTask*>           mRendererTasks;                    //!< Task before flushing commands
                                                                             
