@@ -67,7 +67,7 @@ namespace LimitEngine {
     {
         mVertex_draw2d_start = mVertex_draw2d_used = 0u;
     }
-    void Draw2DManager::DrawScreen(Shader *Shader /*= nullptr*/)
+    void Draw2DManager::DrawScreen(Shader *Shader /*= nullptr*/, ConstantBuffer *buffer /*= nullptr*/)
     {
         DrawCommand::SetCulling(static_cast<uint32>(RendererFlag::Culling::CounterClockWise));
         if (Shader == nullptr) {
@@ -77,10 +77,11 @@ namespace LimitEngine {
         }
         else
             DrawCommand::BindShader(Shader);
+        DrawCommand::BindConstantBuffer(buffer);
         mVertexbuffer_drawscr.BindToDrawManager();
         DrawCommand::DrawPrimitive(RendererFlag::PrimitiveTypes::TRIANGLELIST, 0, 6);
     }
-    void Draw2DManager::FlushDraw2D(const RendererFlag::PrimitiveTypes &PrimitiveType, Shader *Shader /*= nullptr*/)
+    void Draw2DManager::FlushDraw2D(const RendererFlag::PrimitiveTypes &PrimitiveType, Shader *Shader /*= nullptr*/, ConstantBuffer *Buffer /*= nullptr*/)
     {
         DrawCommand::SetCulling(static_cast<uint32>(RendererFlag::Culling::CounterClockWise));
         if (Shader == nullptr) {
@@ -88,8 +89,10 @@ namespace LimitEngine {
                 mShader_draw2d = ShaderManager::GetSingleton().GetShader("Draw2D");
             else DrawCommand::BindShader(mShader_draw2d.Get());
         }
-        else
+        else {
             DrawCommand::BindShader(Shader);
+            DrawCommand::BindConstantBuffer(Buffer);
+        }
         mVertexbuffer_draw2d.BindToDrawManager();
         DrawCommand::DrawPrimitive(PrimitiveType, mVertex_draw2d_start, mVertex_draw2d_used - mVertex_draw2d_start);
         mVertex_draw2d_start = mVertex_draw2d_used;

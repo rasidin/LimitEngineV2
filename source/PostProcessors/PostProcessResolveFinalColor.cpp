@@ -45,6 +45,8 @@ void PostProcessResolveFinalColor::Init(const InitializeOptions &Options)
         mResolveShader = LE_ShaderManager.GetShader("ResolveSceneColorPQ");
         break;
     }
+    mResolveCB = new ConstantBuffer();
+    mResolveCB->Create(mResolveShader.Get());
 }
 
 void PostProcessResolveFinalColor::Process(PostProcessContext &Context, VectorArray<PooledRenderTarget> &RenderTargets)
@@ -61,10 +63,10 @@ void PostProcessResolveFinalColor::Process(PostProcessContext &Context, VectorAr
     if (MainCamera.IsValid()) {
         int EVOffsetParam = mResolveShader->GetUniformLocation("EVOffset");
         if (EVOffsetParam >= 0) {
-            DrawCommand::SetShaderUniformFloat1(mResolveShader.Get(), EVOffsetParam, MainCamera->GetExposure());
+            DrawCommand::SetShaderUniformFloat1(mResolveShader.Get(), mResolveCB.Get(), EVOffsetParam, MainCamera->GetExposure());
         }
     }
 
-    LE_Draw2DManager.DrawScreen(mResolveShader.Get());
+    LE_Draw2DManager.DrawScreen(mResolveShader.Get(), mResolveCB.Get());
 }
 } // LimitEngine

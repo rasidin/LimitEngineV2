@@ -87,6 +87,7 @@ namespace LimitEngine {
         struct Cache
         {
             Shader                  *CurrentShader;
+            ConstantBuffer          *CurrentConstantBuffer;
             uint32                   CurrentFVF;
             uint32                   DepthState;
             RendererFlag::TestFlags  DepthFunc;
@@ -97,6 +98,7 @@ namespace LimitEngine {
             bool                     CullingModified;
             Cache()
                 : CurrentShader(nullptr)
+                , CurrentConstantBuffer(nullptr)
                 , CurrentFVF(0u)
                 , DepthState(DepthStateDefault)
                 , DepthFunc(RendererFlag::TestFlags::LESS)
@@ -234,9 +236,9 @@ namespace LimitEngine {
                 else
                     return false;
             }
-            // Ready shader before drawing
-            if (cache.CurrentShader) {
-                cache.CurrentShader->PrepareForDrawing();
+            if (cache.CurrentConstantBuffer)
+            {
+                cache.CurrentConstantBuffer->PrepareForDrawing();
             }
             return true;
         }
@@ -284,6 +286,10 @@ namespace LimitEngine {
             if (Shader)
                 Shader->Bind();
             cache.CurrentShader = Shader;
+        }
+        void BindConstantBuffer(ConstantBuffer *InConstantBuffer) override
+        {
+            cache.CurrentConstantBuffer = InConstantBuffer;
         }
         void BindTargetTexture(uint32 index, Texture *texture) override
         {
@@ -346,12 +352,6 @@ namespace LimitEngine {
             if (mD3DDeviceContext) {
                 mD3DDeviceContext->IASetPrimitiveTopology(ConvertPrimitiveType(type));
                 mD3DDeviceContext->Draw(count, offset);
-            }
-        }
-        void DrawPrimitiveUp(uint32 type, uint32 count, void *data, uint32 stride) override
-        { // Unimplemented
-            if (mD3DDeviceContext) {
-                mD3DDeviceContext->IASetPrimitiveTopology(ConvertPrimitiveType(type));
             }
         }
         void DrawIndexedPrimitive(uint32 type, uint32 vtxcount, uint32 count) override

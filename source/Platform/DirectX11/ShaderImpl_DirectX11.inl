@@ -1,11 +1,30 @@
-/***********************************************************
-LIMITEngine Header File
-Copyright (C), LIMITGAME, 2020
------------------------------------------------------------
+/*********************************************************************
+Copyright (c) 2020 LIMITGAME
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify,
+merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+----------------------------------------------------------------------
 @file  LE_ShaderImpl_DirectX11.inl
 @brief Shader Implement (DX11)
 @author minseob (leeminseob@outlook.com)
-***********************************************************/
+**********************************************************************/
 #ifdef USE_DX11
 #include "Core/Debug.h"
 #include "Containers/MapArray.h"
@@ -19,6 +38,13 @@ Copyright (C), LIMITGAME, 2020
 
 namespace LimitEngine
 {
+    enum ShaderType {
+        SHADER_VS = 0,
+        SHADER_PS,
+        SHADER_CS,
+        SHADER_COUNT,
+    };
+
     template <typename T> struct ShaderData_DirectX11 : public Object<LimitEngineMemoryCategory_Graphics>
     {
         static const uint32 ConstantBufferMaxCount = 8;
@@ -33,8 +59,7 @@ namespace LimitEngine
             mShader = nullptr;
             mReflection = nullptr;
             mConstantBufferCount = 0u;
-            ::memset(mConstantBuffer, 0, sizeof(mConstantBuffer));
-            ::memset(mConstantBufferPointer, 0, sizeof(mConstantBufferPointer));
+            ::memset(mConstantBufferSize, 0, sizeof(mConstantBufferSize));
         }
         void Release()
         {
@@ -46,31 +71,18 @@ namespace LimitEngine
 
         T						*mShader;
         ID3D11ShaderReflection	*mReflection;
-        ID3D11Buffer			*mConstantBuffer[ConstantBufferMaxCount];
-        void					*mConstantBufferPointer[ConstantBufferMaxCount];
+        size_t                   mConstantBufferSize[ConstantBufferMaxCount];
         uint32					 mConstantBufferCount;
     private:
         void releaseCommon()
         {
             if (mReflection)
                 mReflection->Release();
-            for (uint32 cbpidx = 0; cbpidx < mConstantBufferCount; cbpidx++) {
-                if (mConstantBufferPointer[cbpidx]) {
-                    free(mConstantBufferPointer[cbpidx]);
-                }
-            }
         }
     };
     class ShaderImpl_DirectX11 : public ShaderImpl
     {
         typedef uint32 FVFID;
-
-        enum ShaderType {
-            SHADER_VS = 0,
-            SHADER_PS,
-            SHADER_CS,
-            SHADER_COUNT,
-        };
 
         static const uint32 ConstantBufferCount = 8;
 
@@ -122,33 +134,6 @@ namespace LimitEngine
 
         bool PrepareForDrawing() override
         {
-            ID3D11DeviceContext *deviceContext = (ID3D11DeviceContext*)sDrawManager->GetDeviceContext();
-            LEASSERT(deviceContext);
-
-            for (uint32 vcbidx = 0; vcbidx < mVertexShader.mConstantBufferCount; vcbidx++) {
-                D3D11_MAPPED_SUBRESOURCE mappedSubResource;
-                if (deviceContext->Map(mVertexShader.mConstantBuffer[vcbidx], 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubResource) == S_OK) {
-                    ::memcpy(mappedSubResource.pData, mVertexShader.mConstantBufferPointer[vcbidx], mappedSubResource.RowPitch);
-                    deviceContext->Unmap(mVertexShader.mConstantBuffer[vcbidx], 0);
-                }
-            }
-            deviceContext->VSSetConstantBuffers(0, mVertexShader.mConstantBufferCount, &mVertexShader.mConstantBuffer[0]);
-            for (uint32 pcbidx = 0; pcbidx < mPixelShader.mConstantBufferCount; pcbidx++) {
-                D3D11_MAPPED_SUBRESOURCE mappedSubResource;
-                if (deviceContext->Map(mPixelShader.mConstantBuffer[pcbidx], 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubResource) == S_OK) {
-                    ::memcpy(mappedSubResource.pData, mPixelShader.mConstantBufferPointer[pcbidx], mappedSubResource.RowPitch);
-                    deviceContext->Unmap(mPixelShader.mConstantBuffer[pcbidx], 0);
-                }
-            }
-            deviceContext->PSSetConstantBuffers(0, mPixelShader.mConstantBufferCount, &mPixelShader.mConstantBuffer[0]);
-            for (uint32 pcbidx = 0; pcbidx < mComputeShader.mConstantBufferCount; pcbidx++) {
-                D3D11_MAPPED_SUBRESOURCE mappedSubResource;
-                if (deviceContext->Map(mComputeShader.mConstantBuffer[pcbidx], 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubResource) == S_OK) {
-                    ::memcpy(mappedSubResource.pData, mComputeShader.mConstantBufferPointer[pcbidx], mappedSubResource.RowPitch);
-                    deviceContext->Unmap(mComputeShader.mConstantBuffer[pcbidx], 0);
-                }
-            }
-            deviceContext->CSSetConstantBuffers(0, mComputeShader.mConstantBufferCount, &mComputeShader.mConstantBuffer[0]);
             return true;
         }
 
@@ -169,7 +154,7 @@ namespace LimitEngine
                         return false;
                     }
                     if (D3DReflect(pCode->GetBufferPointer(), pCode->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&mVertexShader.mReflection) == S_OK) {
-                        mVertexShader.mConstantBufferCount = readyConstantBuffer(SHADER_VS, mVertexShader.mReflection, mVertexShader.mConstantBuffer, mVertexShader.mConstantBufferPointer);
+                        mVertexShader.mConstantBufferCount = readyConstantBuffer(SHADER_VS, mVertexShader.mReflection, mVertexShader.mConstantBufferSize);
                     }
                     mOriginalVSCodeDataSize = pCode->GetBufferSize();
                     mOriginalVSCodeData = malloc(mOriginalVSCodeDataSize);
@@ -189,7 +174,7 @@ namespace LimitEngine
                         return false;
                     }
                     if (D3DReflect(pCode->GetBufferPointer(), pCode->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&mPixelShader.mReflection) == S_OK) {
-                        mPixelShader.mConstantBufferCount = readyConstantBuffer(SHADER_PS, mPixelShader.mReflection, mPixelShader.mConstantBuffer, mPixelShader.mConstantBufferPointer);
+                        mPixelShader.mConstantBufferCount = readyConstantBuffer(SHADER_PS, mPixelShader.mReflection, mPixelShader.mConstantBufferSize);
                     }
                     pCode->Release();
                 }
@@ -206,7 +191,7 @@ namespace LimitEngine
                         return false;
                     }
                     if (D3DReflect(pCode->GetBufferPointer(), pCode->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&mComputeShader.mReflection) == S_OK) {
-                        mComputeShader.mConstantBufferCount = readyConstantBuffer(SHADER_PS, mComputeShader.mReflection, mComputeShader.mConstantBuffer, mComputeShader.mConstantBufferPointer);
+                        mComputeShader.mConstantBufferCount = readyConstantBuffer(SHADER_PS, mComputeShader.mReflection, mComputeShader.mConstantBufferSize);
                     }
                     pCode->Release();
                 }
@@ -231,7 +216,7 @@ namespace LimitEngine
                     return false;
                 }
                 if (D3DReflect(bin, size, IID_ID3D11ShaderReflection, (void**)&mVertexShader.mReflection) == S_OK) {
-                    mVertexShader.mConstantBufferCount = readyConstantBuffer(SHADER_VS, mVertexShader.mReflection, mVertexShader.mConstantBuffer, mVertexShader.mConstantBufferPointer);
+                    mVertexShader.mConstantBufferCount = readyConstantBuffer(SHADER_VS, mVertexShader.mReflection, mVertexShader.mConstantBufferSize);
                 }
                 mOriginalVSCodeDataSize = size;
                 mOriginalVSCodeData = malloc(mOriginalVSCodeDataSize);
@@ -243,7 +228,7 @@ namespace LimitEngine
                     return false;
                 }
                 if (D3DReflect(bin, size, IID_ID3D11ShaderReflection, (void**)&mPixelShader.mReflection) == S_OK) {
-                    mPixelShader.mConstantBufferCount = readyConstantBuffer(SHADER_PS, mPixelShader.mReflection, mPixelShader.mConstantBuffer, mPixelShader.mConstantBufferPointer);
+                    mPixelShader.mConstantBufferCount = readyConstantBuffer(SHADER_PS, mPixelShader.mReflection, mPixelShader.mConstantBufferSize);
                 }
                 return true;
             case Shader::TYPE_COMPUTE:
@@ -252,7 +237,7 @@ namespace LimitEngine
                     return false;
                 }
                 if (D3DReflect(bin, size, IID_ID3D11ShaderReflection, (void**)&mComputeShader.mReflection) == S_OK) {
-                    mComputeShader.mConstantBufferCount = readyConstantBuffer(SHADER_CS, mComputeShader.mReflection, mComputeShader.mConstantBuffer, mComputeShader.mConstantBufferPointer);
+                    mComputeShader.mConstantBufferCount = readyConstantBuffer(SHADER_CS, mComputeShader.mReflection, mComputeShader.mConstantBufferSize);
                 }
                 return true;
             default:
@@ -315,123 +300,93 @@ namespace LimitEngine
         void SetUniformParameter(const char *name, uint32 n) override
         { // unimplemented
         }
-        void SetUniformFloat1(int loc, const float &f) override
+        void SetUniformFloat1(ConstantBuffer *Buffer, int loc, const float &f) override
         {
             if (loc < 0 || loc >= static_cast<int>(mShaderVariables.GetSize()))
                 return;
 
             ShaderVariable &variable = mShaderVariables[loc];
-            switch (variable.shaderType)
-            {
-            case SHADER_VS:
-                *(float*)(((uint8*)mVertexShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = f;
-                break;
-            case SHADER_PS:
-                *(float*)(((uint8*)mPixelShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = f;
-                break;
-            case SHADER_CS:
-                *(float*)(((uint8*)mComputeShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = f;
-                break;
-            default: break;
+            if (ConstantBufferImpl *CBImpl = dynamic_cast<ConstantBufferImpl*>(Buffer->GetImplementation())) {
+                CBImpl->Set(variable.shaderType, variable.constantBufferIndex, variable.variableDesc.StartOffset, &f, sizeof(float));
             }
         }
-        void SetUniformFloat2(int loc, const LEMath::FloatVector2 &v) override
+        void SetUniformFloat2(ConstantBuffer *Buffer, int loc, const LEMath::FloatVector2 &v) override
         {
             if (loc < 0 || loc >= static_cast<int>(mShaderVariables.GetSize()))
                 return;
 
             ShaderVariable &variable = mShaderVariables[loc];
-            switch (variable.shaderType)
-            {
-            case SHADER_VS:
-                *(LEMath::FloatVector2*)(((uint8*)mVertexShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = v;
-                break;
-            case SHADER_PS:
-                *(LEMath::FloatVector2*)(((uint8*)mPixelShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = v;
-                break;
-            case SHADER_CS:
-                *(LEMath::FloatVector2*)(((uint8*)mComputeShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = v;
-                break;
-            default: break;
+            if (ConstantBufferImpl *CBImpl = dynamic_cast<ConstantBufferImpl*>(Buffer->GetImplementation())) {
+                CBImpl->Set(variable.shaderType, variable.constantBufferIndex, variable.variableDesc.StartOffset, &v, sizeof(LEMath::FloatVector2));
             }
         }
-        void SetUniformFloat4(int loc, const LEMath::FloatVector4 &v) override
+        void SetUniformFloat3(ConstantBuffer *Buffer, int loc, const LEMath::FloatVector3 &v) override
         {
             if (loc < 0 || loc >= static_cast<int>(mShaderVariables.GetSize()))
                 return;
 
             ShaderVariable &variable = mShaderVariables[loc];
-            switch (variable.shaderType)
-            {
-            case SHADER_VS:
-                *(LEMath::FloatVector4*)(((uint8*)mVertexShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = v;
-                break;
-            case SHADER_PS:
-                *(LEMath::FloatVector4*)(((uint8*)mPixelShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = v;
-                break;
-            case SHADER_CS:
-                *(LEMath::FloatVector4*)(((uint8*)mComputeShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = v;
-                break;
-            default: break;
+            if (ConstantBufferImpl *CBImpl = dynamic_cast<ConstantBufferImpl*>(Buffer->GetImplementation())) {
+                CBImpl->Set(variable.shaderType, variable.constantBufferIndex, variable.variableDesc.StartOffset, &v, sizeof(LEMath::FloatVector3));
             }
         }
-        void SetUniformInt1(int loc, const int32 &n) override
-        {
-            if (loc < 0 || loc >= static_cast<int>(mShaderVariables.GetSize()))
-                return;
-            ShaderVariable &variable = mShaderVariables[loc];
-            switch (variable.shaderType)
-            {
-            case SHADER_VS:
-                *(int32*)(((uint8*)mVertexShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = n;
-                break;
-            case SHADER_PS:
-                *(int32*)(((uint8*)mPixelShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = n;
-                break;
-            case SHADER_CS:
-                *(int32*)(((uint8*)mComputeShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = n;
-                break;
-            default: break;
-            }
-        }
-        void SetUniformInt4(int loc, const LEMath::IntVector4 &v)
+        void SetUniformFloat4(ConstantBuffer *Buffer, int loc, const LEMath::FloatVector4 &v) override
         {
             if (loc < 0 || loc >= static_cast<int>(mShaderVariables.GetSize()))
                 return;
 
             ShaderVariable &variable = mShaderVariables[loc];
-            switch (variable.shaderType)
-            {
-            case SHADER_VS:
-                *(LEMath::IntVector4*)(((uint8*)mVertexShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = v;
-                break;
-            case SHADER_PS:
-                *(LEMath::IntVector4*)(((uint8*)mPixelShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = v;
-                break;
-            case SHADER_CS:
-                *(LEMath::IntVector4*)(((uint8*)mComputeShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset) = v;
-                break;
-            default: break;
+            if (ConstantBufferImpl *CBImpl = dynamic_cast<ConstantBufferImpl*>(Buffer->GetImplementation())) {
+                CBImpl->Set(variable.shaderType, variable.constantBufferIndex, variable.variableDesc.StartOffset, &v, sizeof(LEMath::FloatVector4));
             }
         }
-        void SetUniformMatrix4(int loc, int size, float *f) override
+        void SetUniformInt1(ConstantBuffer *Buffer, int loc, const int32 &n) override
+        {
+            if (loc < 0 || loc >= static_cast<int>(mShaderVariables.GetSize()))
+                return;
+            ShaderVariable &variable = mShaderVariables[loc];
+            if (ConstantBufferImpl *CBImpl = dynamic_cast<ConstantBufferImpl*>(Buffer->GetImplementation())) {
+                CBImpl->Set(variable.shaderType, variable.constantBufferIndex, variable.variableDesc.StartOffset, &n, sizeof(int32));
+            }
+        }
+        void SetUniformInt2(ConstantBuffer *Buffer, int loc, const LEMath::IntVector2 &v)
         {
             if (loc < 0 || loc >= static_cast<int>(mShaderVariables.GetSize()))
                 return;
 
             ShaderVariable &variable = mShaderVariables[loc];
-            switch (variable.shaderType)
-            {
-            case SHADER_VS:
-                ::memcpy(((uint8*)mVertexShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset, f, sizeof(float) * 16);
-                break;
-            case SHADER_PS:
-                ::memcpy(((uint8*)mPixelShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset, f, sizeof(float) * 16);
-                break;
-            case SHADER_CS:
-                ::memcpy(((uint8*)mComputeShader.mConstantBufferPointer[variable.constantBufferIndex]) + variable.variableDesc.StartOffset, f, sizeof(float) * 16);
-                break;
-            default: break;
+            if (ConstantBufferImpl *CBImpl = dynamic_cast<ConstantBufferImpl*>(Buffer->GetImplementation())) {
+                CBImpl->Set(variable.shaderType, variable.constantBufferIndex, variable.variableDesc.StartOffset, &v, sizeof(LEMath::IntVector2));
+            }
+        }
+        void SetUniformInt3(ConstantBuffer *Buffer, int loc, const LEMath::IntVector3 &v)
+        {
+            if (loc < 0 || loc >= static_cast<int>(mShaderVariables.GetSize()))
+                return;
+
+            ShaderVariable &variable = mShaderVariables[loc];
+            if (ConstantBufferImpl *CBImpl = dynamic_cast<ConstantBufferImpl*>(Buffer->GetImplementation())) {
+                CBImpl->Set(variable.shaderType, variable.constantBufferIndex, variable.variableDesc.StartOffset, &v, sizeof(LEMath::IntVector3));
+            }
+        }
+        void SetUniformInt4(ConstantBuffer *Buffer, int loc, const LEMath::IntVector4 &v)
+        {
+            if (loc < 0 || loc >= static_cast<int>(mShaderVariables.GetSize()))
+                return;
+
+            ShaderVariable &variable = mShaderVariables[loc];
+            if (ConstantBufferImpl *CBImpl = dynamic_cast<ConstantBufferImpl*>(Buffer->GetImplementation())) {
+                CBImpl->Set(variable.shaderType, variable.constantBufferIndex, variable.variableDesc.StartOffset, &v, sizeof(LEMath::IntVector4));
+            }
+        }
+        void SetUniformMatrix4(ConstantBuffer *Buffer, int loc, int size, float *f) override
+        {
+            if (loc < 0 || loc >= static_cast<int>(mShaderVariables.GetSize()))
+                return;
+
+            ShaderVariable &variable = mShaderVariables[loc];
+            if (ConstantBufferImpl *CBImpl = dynamic_cast<ConstantBufferImpl*>(Buffer->GetImplementation())) {
+                CBImpl->Set(variable.shaderType, variable.constantBufferIndex, variable.variableDesc.StartOffset, f, sizeof(LEMath::FloatMatrix4x4));
             }
         }
         int ConvertType(int type) override
@@ -557,7 +512,7 @@ namespace LimitEngine
             return output;
         }
     private:
-        int readyConstantBuffer(ShaderType shType, ID3D11ShaderReflection *reflection, ID3D11Buffer **constantBuffers, void **constantBufferPointers)
+        int readyConstantBuffer(ShaderType shType, ID3D11ShaderReflection *reflection, size_t *constantBufferSizes)
         {
             ID3D11Device *device = reinterpret_cast<ID3D11Device*>(LE_DrawManager.GetDeviceHandle());
             LEASSERT(device);
@@ -583,17 +538,9 @@ namespace LimitEngine
                     shaderVar.variableDesc.Name = shaderVar.Name;
                 }
 
-                D3D11_BUFFER_DESC newCBDesc;
-                newCBDesc.ByteWidth = cbDesc.Size;
-                newCBDesc.Usage = D3D11_USAGE_DYNAMIC;
-                newCBDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-                newCBDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-                newCBDesc.MiscFlags = 0;
-                newCBDesc.StructureByteStride = 0;
-                device->CreateBuffer(&newCBDesc, NULL, &constantBuffers[cbidx]);
-
-                constantBufferPointers[cbidx] = malloc(cbDesc.Size);
+                constantBufferSizes[cbidx] = cbDesc.Size;
             }
+            mShaderResources.Reserve(shaderDesc.BoundResources);
             for (uint32 rbidx = 0; rbidx < shaderDesc.BoundResources; rbidx++) {
                 D3D11_SHADER_INPUT_BIND_DESC ibDesc;
                 reflection->GetResourceBindingDesc(rbidx, &ibDesc);
@@ -617,6 +564,147 @@ namespace LimitEngine
 
         void                                       *mOriginalVSCodeData;
         size_t										mOriginalVSCodeDataSize;
+
+        friend class ConstantBufferImpl_DirectX11;
+    };
+
+    class ConstantBufferImpl_DirectX11 : public ConstantBufferImpl
+    {
+        struct ConstantBufferSet
+        {
+            static constexpr uint32 ConstantBufferMaxCount = 0x8;
+
+            uint32           mConstantBufferCount;
+            bool             mIsDirtyFlags[ConstantBufferMaxCount];
+            ID3D11Buffer    *mConstantBuffers[ConstantBufferMaxCount];
+            void            *mWritableConstantBuffers[ConstantBufferMaxCount];
+            void Initialize() {
+                mConstantBufferCount = 0u;
+                ::memset(mIsDirtyFlags, 0, sizeof(mIsDirtyFlags));
+                ::memset(mConstantBuffers, 0, sizeof(mConstantBuffers));
+                ::memset(mWritableConstantBuffers, 0, sizeof(mWritableConstantBuffers));
+            }
+            void Create(uint32 InBufferCount, size_t* InBufferSizes) {
+                ID3D11Device *device = reinterpret_cast<ID3D11Device*>(LE_DrawManager.GetDeviceHandle());
+                LEASSERT(device);
+
+                mConstantBufferCount = InBufferCount;
+                for (uint32 bufIndex = 0; bufIndex < InBufferCount; bufIndex++) {
+                    D3D11_BUFFER_DESC newCBDesc;
+                    newCBDesc.ByteWidth = InBufferSizes[bufIndex];
+                    newCBDesc.Usage = D3D11_USAGE_DYNAMIC;
+                    newCBDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+                    newCBDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+                    newCBDesc.MiscFlags = 0;
+                    newCBDesc.StructureByteStride = 0;
+                    device->CreateBuffer(&newCBDesc, NULL, &mConstantBuffers[bufIndex]);
+
+                    mWritableConstantBuffers[bufIndex] = MemoryAllocator::Alloc(InBufferSizes[bufIndex]);
+                    ::memset(mWritableConstantBuffers[bufIndex], 0, InBufferSizes[bufIndex]);
+                }
+            }
+            void Release() {
+                for (uint32 cbIndex = 0; cbIndex < mConstantBufferCount; cbIndex++) {
+                    if (mConstantBuffers[cbIndex])
+                        mConstantBuffers[cbIndex]->Release();
+                    if (mWritableConstantBuffers[cbIndex])
+                        MemoryAllocator::Free(mWritableConstantBuffers[cbIndex]);
+                }
+                Initialize();
+            }
+            void Update() {
+                if (mConstantBufferCount == 0) return;
+       
+                ID3D11DeviceContext *deviceContext = (ID3D11DeviceContext*)sDrawManager->GetDeviceContext();
+                LEASSERT(deviceContext);
+                
+                for (uint32 cbIndex = 0; cbIndex < mConstantBufferCount; cbIndex++) {
+                    if (mIsDirtyFlags[cbIndex] == false) continue;
+
+                    D3D11_MAPPED_SUBRESOURCE mappedSubResource;
+                    if (deviceContext->Map(mConstantBuffers[cbIndex], 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubResource) == S_OK) {
+                        ::memcpy(mappedSubResource.pData, mWritableConstantBuffers[cbIndex], mappedSubResource.RowPitch);
+                        deviceContext->Unmap(mConstantBuffers[cbIndex], 0);
+                    }
+                }
+            }
+            void Bind(ShaderType InShaderType) {
+                if (mConstantBufferCount == 0) return;
+
+                ID3D11DeviceContext *deviceContext = (ID3D11DeviceContext*)sDrawManager->GetDeviceContext();
+                LEASSERT(deviceContext);
+
+                switch (InShaderType) {
+                case SHADER_VS:
+                    deviceContext->VSSetConstantBuffers(0, mConstantBufferCount, &mConstantBuffers[0]);
+                    break;
+                case SHADER_PS:
+                    deviceContext->PSSetConstantBuffers(0, mConstantBufferCount, &mConstantBuffers[0]);
+                    break;
+                case SHADER_CS:
+                    deviceContext->CSSetConstantBuffers(0, mConstantBufferCount, &mConstantBuffers[0]);
+                    break;
+                default: // Error!
+                    LEASSERT(false);
+                    break;
+                }
+            }
+            void SetData(uint32 BufferIndex, uint32 Offset, const void *Src, size_t SizeOfData) {
+                if (!mWritableConstantBuffers[BufferIndex]) return;
+
+                uint8* Dst = (uint8*)mWritableConstantBuffers[BufferIndex] + Offset;
+                if (::memcmp(Src, Dst, SizeOfData) != 0) {
+                    mIsDirtyFlags[BufferIndex] = true;
+                    ::memcpy(Dst, Src, SizeOfData);
+                }
+            }
+        };
+    public:
+        ConstantBufferImpl_DirectX11() 
+        {
+            for (uint32 shIndex = 0, shCount = SHADER_COUNT; shIndex < shCount; shIndex++) {
+                mConstantBufferSets[shIndex].Initialize();
+            }
+        }
+        virtual ~ConstantBufferImpl_DirectX11() {}
+
+        virtual void Create(Shader *InShader) override
+        {
+            if (ShaderImpl_DirectX11 *ShaderImpl = dynamic_cast<ShaderImpl_DirectX11*>(InShader->GetImplementation())) {
+                for (uint32 shType = 0, shTypeCount = (uint32)SHADER_COUNT; shType < shTypeCount; shType++)
+                {
+                    switch ((ShaderType)shType)
+                    {
+                    case SHADER_VS:
+                    {
+                        mConstantBufferSets[shType].Create(ShaderImpl->mVertexShader.mConstantBufferCount, ShaderImpl->mVertexShader.mConstantBufferSize);
+                    } break;
+                    case SHADER_PS:
+                    {
+                        mConstantBufferSets[shType].Create(ShaderImpl->mPixelShader.mConstantBufferCount, ShaderImpl->mPixelShader.mConstantBufferSize);
+                    } break;
+                    case SHADER_CS:
+                    {
+                        mConstantBufferSets[shType].Create(ShaderImpl->mComputeShader.mConstantBufferCount, ShaderImpl->mComputeShader.mConstantBufferSize);
+                    } break;
+                    }
+                }
+            }
+        }
+        virtual void PrepareForDrawing() override
+        {
+            for (uint32 shIndex = 0, shCount = (uint32)SHADER_COUNT; shIndex < shCount; shIndex++) {
+                mConstantBufferSets[shIndex].Update();
+                mConstantBufferSets[shIndex].Bind((ShaderType)shIndex);
+            }
+        }
+
+        virtual void Set(uint32 ShaderType, uint32 BufferIndex, uint32 Offset, const void *Data, size_t Size) override
+        {
+            mConstantBufferSets[ShaderType].SetData(BufferIndex, Offset, Data, Size);
+        }
+    private:
+        ConstantBufferSet mConstantBufferSets[(uint32)SHADER_COUNT];
     };
 }
 #endif

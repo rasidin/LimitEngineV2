@@ -1,11 +1,30 @@
-/***********************************************************
- LIMITEngine Header File
- Copyright (C), LIMITGAME, 2020
- -----------------------------------------------------------
- @file  Material.h
- @brief Material Class
- @author minseob (leeminseob@outlook.com)
- ***********************************************************/
+/*******************************************************************
+Copyright (c) 2020 LIMITGAME
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify,
+merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+----------------------------------------------------------------------
+@file  Material.h
+@brief Material Class
+@author minseob (leeminseob@outlook.com)
+**********************************************************************/
 
 #pragma once
 
@@ -43,8 +62,13 @@ namespace LimitEngine {
         void SetName(const String &name) { mName = name; }
         const String& GetName() const { return mName; }
         
+        bool IsEnabledRenderPass(const RenderPass& InRenderPass) const;
+        void SetEnabledRenderPass(const RenderPass& InRenderPass, bool InEnabled) { mIsEnabledRenderPass[(uint32)InRenderPass] = InEnabled; }
+
 		void SetShader(const RenderPass &InRenderPass, Shader *shader) { mShader[(uint32)InRenderPass] = shader; setupShaderParameters(); }
         ShaderRefPtr GetShader(const RenderPass &InRenderPass) const { return mShader[(uint32)InRenderPass]; }
+
+        ConstantBufferRefPtr GetConstantBuffer(const RenderPass &InRenderPass) const { return mConstantBuffer[(uint32)InRenderPass]; }
 
 		void SetParameter(const String &name, const ShaderParameter &param) { mParameters.Add(name, param); }
 		ShaderParameter GetParameter(const String &name) const { return mParameters[name]; }
@@ -55,10 +79,13 @@ namespace LimitEngine {
         String                              mId;
         String                              mName;
 
+        bool                                mIsEnabledRenderPass[(uint32)RenderPass::NumOfRenderPass];
+
         MapArray<String, ShaderParameter>   mParameters;
-        ShaderDriverParameter              *mShaderDriverParameter;
+        ShaderDriverParameter              *mShaderDriverParameter[(uint32)RenderPass::NumOfRenderPass];
 
         ShaderRefPtr                        mShader[(uint32)RenderPass::NumOfRenderPass];
+        ConstantBufferRefPtr                mConstantBuffer[(uint32)RenderPass::NumOfRenderPass];
 
         friend Archive;
     };

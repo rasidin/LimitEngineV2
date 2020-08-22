@@ -32,7 +32,7 @@ namespace LimitEngine {
     }
     bool ShaderDriverLight::IsValid(const Shader *InShader) const
     {
-        return InShader->GetTextureLocation("IBLIrradianceTexture") >= 0 || InShader->GetTextureLocation("IBLReflectionTexture") >= 0;
+        return InShader->GetTextureLocation("IBLIrradianceTexture") >= 0 || InShader->GetTextureLocation("IBLReflectionTexture") >= 0 || InShader->GetTextureLocation("EnvironmentBRDFTexture") >= 0;
     }
 	void ShaderDriverLight::Apply(const RenderState &rs, const Material *material)
     {
@@ -57,7 +57,7 @@ namespace LimitEngine {
             DrawCommand::BindTexture(mIBLIrrTex_Position, rs.GetIBLIrradianceTexture().Get());
         }
         if (IsValidShaderParameterPosition(mTemporalContext_Position)) {
-            DrawCommand::SetShaderUniformInt4(material->GetShader(rs.GetRenderPass()).Get(), mTemporalContext_Position, rs.GetTemporalContext());
+            DrawCommand::SetShaderUniformInt4(material->GetShader(rs.GetRenderPass()).Get(), material->GetConstantBuffer(rs.GetRenderPass()).Get(), mTemporalContext_Position, rs.GetTemporalContext());
         }
         if (IsValidShaderParameterPosition(mEnvBRDFTex_Position)) {
             DrawCommand::BindSampler(mEnvBRDFSam_Position,

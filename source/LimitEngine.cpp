@@ -105,6 +105,18 @@ void LimitEngine::SetBackgroundImage(const TextureRefPtr &Image, BackgroundImage
         mSceneManager->SetBackgroundImage(Image, Type);
     }
 }
+void LimitEngine::SetBackgroundXYZScale(const LEMath::FloatVector3 &InScale)
+{
+    if (mSceneManager) {
+        mSceneManager->SetBackgroundScaleXYZ(InScale);
+    }
+}
+void LimitEngine::SetBackgroundExposure(float InExposure)
+{
+    if (mSceneManager) {
+        mSceneManager->SetBackgroundExposure(InExposure);
+    }
+}
 void LimitEngine::SetMainCamera(const CameraRefPtr &InCamera)
 {
     mSceneManager->SetCamera(InCamera);
@@ -229,5 +241,8 @@ void LimitEngine::Update()
 void LimitEngine::DrawDebugUI()
 {
     mSystemFont->Draw(LEMath::IntPoint(10, 10), "LimitEngine");
+    if (mSceneManager) {
+        mSceneManager->DrawDebugUI(mSystemFont.Get());
+    }
 }
 }

@@ -39,7 +39,7 @@ namespace LimitEngine {
 			String sampler;
 			int paramLocation;
 			union Data {
-				LimitEngine::Texture *texture;
+				Texture *texture;
 				float floatData[16];
 				int intData[16];
 			} data;

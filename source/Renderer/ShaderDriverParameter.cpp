@@ -10,7 +10,9 @@
 
 #include "Managers/DrawManager.h"
 #include "Renderer/DrawCommand.h"
+#include "Renderer/Shader.h"
 #include "Renderer/ShaderParameterparser.h"
+#include "Renderer/Material.h"
 #include "Renderer/RenderContext.h"
 
 namespace LimitEngine {
@@ -41,10 +43,10 @@ namespace LimitEngine {
                 }
                 break;
             case ShaderParameter::ParameterType_Float4x4:
-                DrawCommand::SetShaderUniformMatrix4(mOwnerShader, param.paramLocation, sizeof(float) * 16, param.data.floatData);
+                DrawCommand::SetShaderUniformMatrix4(mOwnerShader, material->GetConstantBuffer(rs.GetRenderPass()).Get(), param.paramLocation, sizeof(float) * 16, param.data.floatData);
                 break;
             case ShaderParameter::ParameterType_Float:
-                DrawCommand::SetShaderUniformFloat1(mOwnerShader, param.paramLocation, param.data.floatData[0]);
+                DrawCommand::SetShaderUniformFloat1(mOwnerShader, material->GetConstantBuffer(rs.GetRenderPass()).Get(), param.paramLocation, param.data.floatData[0]);
                 break;
             case ShaderParameter::ParameterType_Float2:
                 break;

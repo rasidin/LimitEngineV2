@@ -47,9 +47,11 @@ float3 CameraPosition;
 int4 TemporalContext;
 
 // Material parameters
-//float3 BaseColor;
-//float Metallic;
-//float Roughness;
+#ifdef PARAMETER_ONLY
+float4 BaseColor;
+float Metallic;
+float Roughness;
+#endif
 
 float4 ps_main_prepass(PS_INPUT In) : SV_TARGET
 {
@@ -58,10 +60,15 @@ float4 ps_main_prepass(PS_INPUT In) : SV_TARGET
 
 float4 ps_main_basepass(PS_INPUT In) : SV_TARGET
 {
+#ifndef PARAMETER_ONLY
     // Test settings
-    float3 BaseColor = float3(0.18, 0.18, 0.18);
-    float Metallic = 0.02;
+    //float3 BaseColor = float3(0.18, 0.18, 0.18);
+    //float Metallic = 0.02;
+    //float Roughness = 0.05;
+    float4 BaseColor = float4(0.0, 0.0, 0.0, 1);
+    float Metallic = 0.04;
     float Roughness = 0.05;
+#endif 
 
     float F0 = Metallic;
     float3 V = normalize(CameraPosition.xyz - In.WorldPosition.xyz);
@@ -71,8 +78,8 @@ float4 ps_main_basepass(PS_INPUT In) : SV_TARGET
 
     float F = Fresnel(F0, NoV);
 
-    float3 diffuse = (1 - F) * Irradiance(N);
-    float3 specular = Radiance(TemporalContext, F0, Roughness, N, V);
+    float3 diffuse = Irradiance(N) * BaseColor.rgb;
+    float3 specular = Radiance(TemporalContext, F0, Roughness, N, V, In.WorldPosition.xyz);
 
     float3 finalColor = diffuse + specular;
     uint3 aoResolution = 0;
@@ -81,6 +88,38 @@ float4 ps_main_basepass(PS_INPUT In) : SV_TARGET
     finalColor *= GetAmbientOcclusionValue(positionInAOUV);
 
     return float4(finalColor, 1);
+}
+
+float4 ps_main_translucencypass(PS_INPUT In) : SV_TARGET
+{
+#ifndef PARAMETER_ONLY
+    // Test settings
+    //float3 BaseColor = float3(0.18, 0.18, 0.18);
+    //float Metallic = 0.02;
+    //float Roughness = 0.05;
+    float4 BaseColor = float4(1.0, 0.0, 0.0, 1);
+    float Metallic = 0.04;
+    float Roughness = 0.05;
+#endif 
+
+    float F0 = Metallic;
+    float3 V = normalize(CameraPosition.xyz - In.WorldPosition.xyz);
+    float3 N = normalize(In.WorldNormal.xyz);
+
+    float NoV = max(1.0e-4, dot(V, N));
+
+    float F = Fresnel(F0, NoV);
+
+    float3 diffuse = Irradiance(N) * BaseColor.rgb;
+    float3 specular = Radiance(TemporalContext, F0, Roughness, N, V, In.WorldPosition.xyz);
+
+    float3 finalColor = diffuse + specular;
+    uint3 aoResolution = 0;
+    AmbientOcclusionTexture.GetDimensions(0, aoResolution.x, aoResolution.y, aoResolution.z);
+    float2 positionInAOUV = float2((In.Position.x + 0.5) / (float)aoResolution.x, (In.Position.y + 0.5) / (float)aoResolution.y);
+    finalColor *= GetAmbientOcclusionValue(positionInAOUV);
+
+    return float4(finalColor, BaseColor.a);
 }
 
 float4 ps_main(PS_INPUT In) : SV_TARGET

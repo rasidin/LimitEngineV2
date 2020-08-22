@@ -74,6 +74,15 @@ public:
     void PostInit(const InitializeOptions &InitOptions);
     void Update();
     void Draw();
+    void DrawDebugUI(Font *SystemFont);
+
+    void SetBackgroundExposure(float InExposure) { mBackgroundColorCovertParameter.SetW(InExposure); }
+    void SetBackgroundScaleXYZ(const LEMath::FloatVector3 &InXYZScale)
+    {
+        mBackgroundColorCovertParameter.SetX(InXYZScale.X());
+        mBackgroundColorCovertParameter.SetY(InXYZScale.Y());
+        mBackgroundColorCovertParameter.SetZ(InXYZScale.Z());
+    }
 
     void AddModel_UpdateTask(Model *InModel, uint32 InID);
     void AddLight_UpdateTask(Light *InLight);
@@ -102,6 +111,7 @@ private:
     ReferenceCountedPointer<Texture>    mBackgroundImage;
     BackgroundImageType                 mBackgroundType;
     VectorArray<ShaderRefPtr>           mBackgroundShaders;
+    VectorArray<ConstantBufferRefPtr>   mBackgroundConstantBuffers;
 
     PooledRenderTarget                  mPendingReleaseRenderTargets[PendingDeleteRenderTargetCount];      //!< Pending release for draw thread
 
@@ -110,6 +120,9 @@ private:
     PooledDepthStencil                  mSceneDepth;
 
     class PostProcessAmbientOcclusion  *mAmbientOcclusion;
+
+    int                                 mBackgroundColorCovertParameterIndex;
+    LEMath::FloatVector4                mBackgroundColorCovertParameter;
 
     VectorArray<SceneUpdateTask*>       mUpdateTasks;
 

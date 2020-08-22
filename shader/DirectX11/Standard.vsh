@@ -31,12 +31,12 @@ struct VS_OUTPUT
 
 VS_OUTPUT vs_main(VS_INPUT In)
 {
-    VS_OUTPUT Out;
+    VS_OUTPUT Out = (VS_OUTPUT)0;
     Out.Position = mul(WorldViewProjMatrix, In.Position);
     Out.Normal = In.Normal;
     Out.Color = In.Color;
     Out.Texcoord0 = In.Texcoord0;
     Out.WorldPosition = mul(WorldMatrix, In.Position);
-    Out.WorldNormal = In.Normal;
+    Out.WorldNormal.xyz = normalize(mul((float3x3)WorldMatrix, In.Normal.xyz));
     return Out;
 }

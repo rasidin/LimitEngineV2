@@ -35,8 +35,8 @@ namespace LimitEngine {
 
         Vertex2D* GetVertexBuffer2D(uint32 size);                           //!< Get temporary vertex buffer for drawing GUI...
 
-        void DrawScreen(Shader *Shader = nullptr);
-        void FlushDraw2D(const RendererFlag::PrimitiveTypes &PrimitiveType, Shader *Shader = nullptr);
+        void DrawScreen(Shader *Shader = nullptr, ConstantBuffer *buffer = nullptr);
+        void FlushDraw2D(const RendererFlag::PrimitiveTypes &PrimitiveType, Shader *Shader = nullptr, ConstantBuffer *buffer = nullptr);
     private:
         VertexBuffer2D   mVertexbuffer_draw2d;     //!< Vertex buffer for drawing 2D
         VertexBuffer2D   mVertexbuffer_drawscr;    //!< Vertex buffer for drawing screen (ex.post filter)

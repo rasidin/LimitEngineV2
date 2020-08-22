@@ -49,23 +49,23 @@ namespace LimitEngine {
 		if(mOwnerShader == NULL)
 			return;
 		if(IsValidShaderParameterPosition(mParameter_wvpMat)) {
-			DrawCommand::SetShaderUniformMatrix4(mOwnerShader, mParameter_wvpMat, 1, (float*)&rs.GetWorldViewProjMatrix());
+			DrawCommand::SetShaderUniformMatrix4(mOwnerShader, material->GetConstantBuffer(rs.GetRenderPass()).Get(), mParameter_wvpMat, 1, (float*)&rs.GetWorldViewProjMatrix());
 		}
 		if(IsValidShaderParameterPosition(mParameter_invViewMat)) {
-            DrawCommand::SetShaderUniformMatrix4(mOwnerShader, mParameter_invViewMat, 1, (float*)&rs.GetInvViewMatrix());
+            DrawCommand::SetShaderUniformMatrix4(mOwnerShader, material->GetConstantBuffer(rs.GetRenderPass()).Get(), mParameter_invViewMat, 1, (float*)&rs.GetInvViewMatrix());
 		}
         if(IsValidShaderParameterPosition(mParameter_invViewProjMat)) {
-            DrawCommand::SetShaderUniformMatrix4(mOwnerShader, mParameter_invViewProjMat, 1, (float*)&rs.GetInvViewProjMatrix());
+            DrawCommand::SetShaderUniformMatrix4(mOwnerShader, material->GetConstantBuffer(rs.GetRenderPass()).Get(), mParameter_invViewProjMat, 1, (float*)&rs.GetInvViewProjMatrix());
         }
         if(IsValidShaderParameterPosition(mParameter_worldMat)) {
-            DrawCommand::SetShaderUniformMatrix4(mOwnerShader, mParameter_worldMat, 1, (float*)&rs.GetWorldMatrix());
+            DrawCommand::SetShaderUniformMatrix4(mOwnerShader, material->GetConstantBuffer(rs.GetRenderPass()).Get(), mParameter_worldMat, 1, (float*)&rs.GetWorldMatrix());
         }
         if(IsValidShaderParameterPosition(mParameter_camPos)) {
             const LEMath::FloatVector3 &camPos = LE_SceneManager.GetCamera()->GetPosition();
-            DrawCommand::SetShaderUniformFloat4(mOwnerShader, mParameter_camPos, (LEMath::DataContainer)camPos);
+            DrawCommand::SetShaderUniformFloat4(mOwnerShader, material->GetConstantBuffer(rs.GetRenderPass()).Get(), mParameter_camPos, (LEMath::DataContainer)camPos);
         }
         if(IsValidShaderParameterPosition(mParameter_bluenoise)) {
-            DrawCommand::SetShaderUniformFloat4(mOwnerShader, mParameter_bluenoise, rs.GetBlueNoiseContext());
+            DrawCommand::SetShaderUniformFloat4(mOwnerShader, material->GetConstantBuffer(rs.GetRenderPass()).Get(), mParameter_bluenoise, rs.GetBlueNoiseContext());
         }
 	}
 } // namespace LimitEngine

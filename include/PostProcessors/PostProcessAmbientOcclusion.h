@@ -51,6 +51,8 @@ private:
 private:
     ShaderRefPtr mAmbientOcclusionShader;
     ShaderRefPtr mAmbientOcclusionBlurShader;
+    ConstantBufferRefPtr mAmbientOcclusionCB;
+    ConstantBufferRefPtr mAmbientOcclusionBlurCB;
 
     struct AmbientOcclusionShader_Parameters
     {

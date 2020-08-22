@@ -38,8 +38,9 @@ public:
     ShaderParameter()
         : m_Type(Type_None)
         , m_Data(NULL)
-        , m_IndexOfShaderParameter(-1)
     {
+        for (uint32 rpIndex = 0, rpCount = (uint32)RenderPass::NumOfRenderPass; rpIndex < rpCount; rpIndex++)
+            m_IndexOfShaderParameter[rpIndex] = -1;
     }
     virtual ~ShaderParameter()
     {
@@ -61,8 +62,8 @@ public:
 		}
     }
     Type GetType() const { return m_Type; }
-    int IndexOfShaderParameter() const { return m_IndexOfShaderParameter; }
-    void SetIndexOfShaderParameter(uint32 m) { m_IndexOfShaderParameter = m; }
+    int IndexOfShaderParameter(uint32 InRenderPass) const { return m_IndexOfShaderParameter[InRenderPass]; }
+    void SetIndexOfShaderParameter(uint32 InRenderPass, uint32 m) { m_IndexOfShaderParameter[InRenderPass] = m; }
     ShaderParameter& operator=(int v)
     {
         SetType(Type_Integer);
@@ -141,6 +142,17 @@ public:
             default: return 0.0f;
         }
     }
+    operator LEMath::FloatVector2() {
+        switch (m_Type) {
+        case Type_Integer: { float value = static_cast<float>(*static_cast<int*>(m_Data)); return LEMath::FloatVector3(value, value, value); }
+        case Type_Float: { float value = *static_cast<float*>(m_Data); return LEMath::FloatVector3(value, value, value); }
+        case Type_Float2: return *static_cast<LEMath::FloatVector2*>(m_Data);
+        case Type_Float3:
+        case Type_Float4:
+        case Type_Matrix4x4: return *static_cast<LEMath::FloatVector2*>(m_Data);
+        default: return LEMath::FloatVector2(0.0f);
+        }
+    }
     operator LEMath::FloatVector3() {
         switch (m_Type) {
             case Type_Integer: { float value = static_cast<float>(*static_cast<int*>(m_Data)); return LEMath::FloatVector3(value, value, value); }
@@ -176,7 +188,7 @@ public:
     }
 private:
     Type    m_Type;
-    int     m_IndexOfShaderParameter;
+    int     m_IndexOfShaderParameter[(uint32)RenderPass::NumOfRenderPass];
     void   *m_Data;
 };
 }

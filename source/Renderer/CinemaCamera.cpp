@@ -15,7 +15,7 @@
 namespace LimitEngine {
 float CinemaCamera::GetFovRadians() const
 {
-    return 2.0f * atanf(mSensorSize.Width() * 0.5f / mFocalLength);
+    return 2.0f * atanf(mSensorSize.Height() * mCloppedScale.X() * 0.5f / mFocalLength);
 }
 float CinemaCamera::GetExposure() const
 {

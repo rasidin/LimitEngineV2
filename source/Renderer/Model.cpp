@@ -514,6 +514,8 @@ namespace LimitEngine {
                 // Set material
                 if (Material *material = drawGroup->material)
                 {
+                    if (!material->IsEnabledRenderPass(rs.GetRenderPass())) continue;
+
                     // Set RenderState
                     RenderState rsCopied(rs);
                     rsCopied.SetWorldMatrix(/*mesh->worldMatrix * */modelTransformMatrix);

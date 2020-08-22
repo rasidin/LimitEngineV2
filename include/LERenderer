@@ -13,6 +13,7 @@ namespace LimitEngine {
 class AmbientLight;
 class Camera;
 class CommandBuffer;
+class ConstantBuffer;
 class DirectionalLight;
 class DrawCommand;
 class Font;
@@ -36,14 +37,15 @@ class RenderState;
 class RenderContext;
 class RenderTargetPoolManager;
 
-#define CameraRefPtr		ReferenceCountedPointer<Camera> 
-#define FontRefPtr			ReferenceCountedPointer<Font>   
-#define LightRefPtr			ReferenceCountedPointer<Light>  
-#define ModelRefPtr			ReferenceCountedPointer<Model>  
-#define ModelInstRefPtr		ReferenceCountedPointer<ModelInstance>
-#define SamplerStateRefPtr	ReferenceCountedPointer<SamplerState>
-#define TextureRefPtr		ReferenceCountedPointer<Texture>
-#define ShaderRefPtr		ReferenceCountedPointer<Shader> 
+#define CameraRefPtr			ReferenceCountedPointer<Camera> 
+#define FontRefPtr				ReferenceCountedPointer<Font>   
+#define LightRefPtr				ReferenceCountedPointer<Light>  
+#define ModelRefPtr				ReferenceCountedPointer<Model>  
+#define ModelInstRefPtr			ReferenceCountedPointer<ModelInstance>
+#define SamplerStateRefPtr		ReferenceCountedPointer<SamplerState>
+#define TextureRefPtr			ReferenceCountedPointer<Texture>
+#define ShaderRefPtr			ReferenceCountedPointer<Shader> 
+#define ConstantBufferRefPtr	ReferenceCountedPointer<ConstantBuffer>
 
 #define InstanceIDNone 0xffffffff
 }

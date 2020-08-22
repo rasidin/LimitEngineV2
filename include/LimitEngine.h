@@ -37,6 +37,8 @@ public: // Public functions
 
     void SetResourceRootPath(const char *RootPath);
     void SetBackgroundImage(const TextureRefPtr &Image, BackgroundImageType Type);
+    void SetBackgroundXYZScale(const LEMath::FloatVector3 &InScale);
+    void SetBackgroundExposure(float InExposure);
 
     void SetMainCamera(const CameraRefPtr &InCamera);
 

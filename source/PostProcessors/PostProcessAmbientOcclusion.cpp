@@ -40,6 +40,9 @@ void PostProcessAmbientOcclusion::Init(const InitializeOptions &Options)
     mAmbientOcclusionShader = LE_ShaderManager.GetShader("AmbientOcclusion");
     if (mAmbientOcclusionShader.IsValid())
     {
+        mAmbientOcclusionCB = new ConstantBuffer();
+        mAmbientOcclusionCB->Create(mAmbientOcclusionShader.Get());
+
         mAmbientOcclusionShader_Parameters.Position_ViewMatrix = mAmbientOcclusionShader->GetUniformLocation("ViewMatrix");
         mAmbientOcclusionShader_Parameters.Position_ViewProjMatrix = mAmbientOcclusionShader->GetUniformLocation("ViewProjectionMatrix");
         mAmbientOcclusionShader_Parameters.Position_UVtoViewParameter = mAmbientOcclusionShader->GetUniformLocation("UVtoViewParameter");
@@ -60,6 +63,9 @@ void PostProcessAmbientOcclusion::Init(const InitializeOptions &Options)
     mAmbientOcclusionBlurShader = LE_ShaderManager.GetShader("AmbientOcclusionBlur");
     if (mAmbientOcclusionBlurShader.IsValid())
     {
+        mAmbientOcclusionBlurCB = new ConstantBuffer();
+        mAmbientOcclusionBlurCB->Create(mAmbientOcclusionBlurShader.Get());
+
         mAmbientOcclusionBlurShader_Parameters.Position_AmbientOcclusionTexture = mAmbientOcclusionBlurShader->GetTextureLocation("AmbientOcclusionTexture");
         mAmbientOcclusionBlurShader_Parameters.Position_AmbientOcclusionSampler = mAmbientOcclusionBlurShader->GetTextureLocation("AmbientOcclusionSampler");
         mAmbientOcclusionBlurShader_Parameters.Position_BlurParameters = mAmbientOcclusionBlurShader->GetUniformLocation("BlurParameters");
@@ -80,39 +86,47 @@ bool PostProcessAmbientOcclusion::processAmbientOcclusion(PostProcessContext &Co
 
         DrawCommand::SetShaderUniformMatrix4(
             mAmbientOcclusionShader.Get(),
+            mAmbientOcclusionCB.Get(),
             mAmbientOcclusionShader_Parameters.Position_ViewMatrix,
             sizeof(LEMath::FloatMatrix4x4),
             (float*)&Context.RenderStateContext->GetViewMatrix()
         );
         DrawCommand::SetShaderUniformMatrix4(
             mAmbientOcclusionShader.Get(),
+            mAmbientOcclusionCB.Get(),
             mAmbientOcclusionShader_Parameters.Position_ViewProjMatrix,
             sizeof(LEMath::FloatMatrix4x4),
             (float*)&Context.RenderStateContext->GetViewProjMatrix()
         );
         DrawCommand::SetShaderUniformFloat4(
             mAmbientOcclusionShader.Get(),
+            mAmbientOcclusionCB.Get(),
             mAmbientOcclusionShader_Parameters.Position_UVtoViewParameter,
             LE_SceneManager.GetUVtoViewParameter());
         DrawCommand::SetShaderUniformFloat4(
             mAmbientOcclusionShader.Get(),
+            mAmbientOcclusionCB.Get(),
             mAmbientOcclusionShader_Parameters.Position_PerspectiveProjectionParameters,
             LE_SceneManager.GetPerspectiveProjectionParameters());
         DrawCommand::SetShaderUniformFloat4(
             mAmbientOcclusionShader.Get(),
+            mAmbientOcclusionCB.Get(),
             mAmbientOcclusionShader_Parameters.Position_AOParameters,
             LEMath::FloatVector4(1.0f, 1.0f * 1.0f, 1.0f / 1.0f, 0.4f));
         DrawCommand::SetShaderUniformFloat4(
             mAmbientOcclusionShader.Get(),
+            mAmbientOcclusionCB.Get(),
             mAmbientOcclusionShader_Parameters.Position_AOResolutionParameters,
             LEMath::FloatVector4((float)AmbientOcclusionBufferDesc.Size.Width(), (float)AmbientOcclusionBufferDesc.Size.Height(), 1.0f / AmbientOcclusionBufferDesc.Size.Width(), 1.0f / AmbientOcclusionBufferDesc.Size.Height()));
         DrawCommand::SetShaderUniformInt4(
             mAmbientOcclusionShader.Get(),
+            mAmbientOcclusionCB.Get(),
             mAmbientOcclusionShader_Parameters.Position_FrameIndexContext,
             Context.FrameIndexContext
         );
         DrawCommand::SetShaderUniformFloat4(
             mAmbientOcclusionShader.Get(),
+            mAmbientOcclusionCB.Get(),
             mAmbientOcclusionShader_Parameters.Position_BlueNoiseContext,
             Context.BlueNoiseContext);
         DrawCommand::BindSampler(mAmbientOcclusionShader_Parameters.Position_BlueNoiseSampler,
@@ -140,7 +154,7 @@ bool PostProcessAmbientOcclusion::processAmbientOcclusion(PostProcessContext &Co
             )));
         DrawCommand::BindTexture(mAmbientOcclusionShader_Parameters.Position_SceneNormalTexture, Context.SceneNormal);
 
-        LE_Draw2DManager.DrawScreen(mAmbientOcclusionShader.Get());
+        LE_Draw2DManager.DrawScreen(mAmbientOcclusionShader.Get(), mAmbientOcclusionCB.Get());
 
         RenderTargets[0] = Output;
 
@@ -162,6 +176,7 @@ bool PostProcessAmbientOcclusion::processAmbientOcclusionBlur(PostProcessContext
 
         DrawCommand::SetShaderUniformFloat4(
             mAmbientOcclusionBlurShader.Get(),
+            mAmbientOcclusionBlurCB.Get(),
             mAmbientOcclusionBlurShader_Parameters.Position_BlurParameters,
             LEMath::FloatVector4(UVDirection.X(), UVDirection.Y(), 1.0f / 25.0f * 2.78f, 0.1f));
         DrawCommand::BindSampler(mAmbientOcclusionBlurShader_Parameters.Position_AmbientOcclusionSampler,
@@ -173,7 +188,7 @@ bool PostProcessAmbientOcclusion::processAmbientOcclusionBlur(PostProcessContext
             )));
         DrawCommand::BindTexture(mAmbientOcclusionBlurShader_Parameters.Position_AmbientOcclusionTexture, RenderTargets[0]);
 
-        LE_Draw2DManager.DrawScreen(mAmbientOcclusionBlurShader.Get());
+        LE_Draw2DManager.DrawScreen(mAmbientOcclusionBlurShader.Get(), mAmbientOcclusionBlurCB.Get());
 
         RenderTargets[0] = Output;
         return true;

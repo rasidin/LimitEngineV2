@@ -65,6 +65,18 @@ static const unsigned char Shader_Standard_BasePass_PS[] = {
 static const unsigned char Shader_Standard_TranslucencyPass_PS[] = {
 #include "shader/DirectX11/bin/Standard.TranslucencyPass.ps.txt"
 };
+static const unsigned char Shader_StandardParamOnly_BasePass_PS[] = {
+#include "shader/DirectX11/bin/StandardParamOnly.BasePass.ps.txt"
+};
+static const unsigned char Shader_StandardParamOnly_TranslucencyPass_PS[] = {
+#include "shader/DirectX11/bin/StandardParamOnly.TranslucencyPass.ps.txt"
+};
+static const unsigned char Shader_OcclusionOnly_PrePass_PS[] = {
+#include "shader/DirectX11/bin/OcclusionOnly.PrePass.ps.txt"
+};
+static const unsigned char Shader_OcclusionOnly_BasePass_PS[] = {
+#include "shader/DirectX11/bin/OcclusionOnly.BasePass.ps.txt"
+};
 #endif
 
 namespace LimitEngine {
@@ -105,6 +117,46 @@ namespace LimitEngine {
             shader = new Shader("Standard.TranslucencyPass");
             shader->SetCompiledBinary(Shader_Standard_VS, sizeof(Shader_Standard_VS), Shader::TYPE_VERTEX);
             shader->SetCompiledBinary(Shader_Standard_TranslucencyPass_PS, sizeof(Shader_Standard_TranslucencyPass_PS), Shader::TYPE_PIXEL);
+            AddShader(shader);
+        }
+
+        // Set StandardParamOnly shader (PrePass)
+        {
+            shader = new Shader("StandardParamOnly.PrePass");
+            shader->SetCompiledBinary(Shader_Standard_VS, sizeof(Shader_Standard_VS), Shader::TYPE_VERTEX);
+            shader->SetCompiledBinary(Shader_Standard_PrePass_PS, sizeof(Shader_Standard_PrePass_PS), Shader::TYPE_PIXEL);
+            AddShader(shader);
+        }
+
+        // Set StandardParamOnly shader (BasePass)
+        {
+            shader = new Shader("StandardParamOnly.BasePass");
+            shader->SetCompiledBinary(Shader_Standard_VS, sizeof(Shader_Standard_VS), Shader::TYPE_VERTEX);
+            shader->SetCompiledBinary(Shader_StandardParamOnly_BasePass_PS, sizeof(Shader_StandardParamOnly_BasePass_PS), Shader::TYPE_PIXEL);
+            AddShader(shader);
+        }
+
+        // Set StandardParamOnly shader (TranslucencyPass)
+        {
+            shader = new Shader("StandardParamOnly.TranslucencyPass");
+            shader->SetCompiledBinary(Shader_Standard_VS, sizeof(Shader_Standard_VS), Shader::TYPE_VERTEX);
+            shader->SetCompiledBinary(Shader_StandardParamOnly_TranslucencyPass_PS, sizeof(Shader_StandardParamOnly_TranslucencyPass_PS), Shader::TYPE_PIXEL);
+            AddShader(shader);
+        }
+
+        // Set StandardParamOnly shader (PrePass)
+        {
+            shader = new Shader("OcclusionOnly.PrePass");
+            shader->SetCompiledBinary(Shader_Standard_VS, sizeof(Shader_Standard_VS), Shader::TYPE_VERTEX);
+            shader->SetCompiledBinary(Shader_OcclusionOnly_PrePass_PS, sizeof(Shader_OcclusionOnly_PrePass_PS), Shader::TYPE_PIXEL);
+            AddShader(shader);
+        }
+
+        // Set StandardParamOnly shader (BasePass)
+        {
+            shader = new Shader("OcclusionOnly.BasePass");
+            shader->SetCompiledBinary(Shader_Standard_VS, sizeof(Shader_Standard_VS), Shader::TYPE_VERTEX);
+            shader->SetCompiledBinary(Shader_OcclusionOnly_BasePass_PS, sizeof(Shader_OcclusionOnly_BasePass_PS), Shader::TYPE_PIXEL);
             AddShader(shader);
         }
 

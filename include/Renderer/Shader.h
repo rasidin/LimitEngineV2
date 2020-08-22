@@ -25,6 +25,30 @@
 #include "Containers/VectorArray.h"
 
 namespace LimitEngine {
+    class ConstantBufferImpl : public Object<LimitEngineMemoryCategory_Graphics>
+    {public:
+        ConstantBufferImpl() {}
+        virtual ~ConstantBufferImpl() {}
+
+        virtual void Create(Shader *InShader) = 0;
+        virtual void PrepareForDrawing() = 0;
+
+        virtual void Set(uint32 ShaderType, uint32 BufferIndex, uint32 Offset, const void *Data, size_t Size) = 0;
+    };
+    class ConstantBuffer : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>
+    {
+    public:
+        ConstantBuffer();
+        virtual ~ConstantBuffer();
+
+        ConstantBufferImpl* GetImplementation() { return mImpl; }
+
+        void Create(class Shader *InShader);
+        void PrepareForDrawing();
+    private:
+        ConstantBufferImpl *mImpl;
+    };
+
     class Texture;
     class ShaderImpl : public Object<LimitEngineMemoryCategory_Graphics>
     {public:
@@ -45,13 +69,17 @@ namespace LimitEngine {
         virtual int  GetTextureLocation(int loc_id) const = 0;
         virtual void SetUniformTexture(const char *name, uint32 n) = 0;
         virtual void SetUniformParameter(const char *name, uint32 n) = 0;
-        virtual void SetUniformFloat1(int loc, const float &f) = 0;
-        virtual void SetUniformFloat2(int loc, const LEMath::FloatVector2 &v) = 0;
-        virtual void SetUniformFloat4(int loc, const LEMath::FloatVector4 &v) = 0;
-        virtual void SetUniformInt1(int loc, const int32 &n) = 0;
-        virtual void SetUniformInt4(int loc, const LEMath::IntVector4 &v) = 0;
 
-        virtual void SetUniformMatrix4(int loc, int size, float *f) = 0;
+        virtual void SetUniformFloat1 (ConstantBuffer *Buffer, int loc, const float &f) = 0;
+        virtual void SetUniformFloat2 (ConstantBuffer *Buffer, int loc, const LEMath::FloatVector2 &v) = 0;
+        virtual void SetUniformFloat3 (ConstantBuffer *Buffer, int loc, const LEMath::FloatVector3 &v) = 0;
+        virtual void SetUniformFloat4 (ConstantBuffer *Buffer, int loc, const LEMath::FloatVector4 &v) = 0;
+        virtual void SetUniformInt1   (ConstantBuffer *Buffer, int loc, const int32 &n) = 0;
+        virtual void SetUniformInt2   (ConstantBuffer *Buffer, int loc, const LEMath::IntVector2 &n) = 0;
+        virtual void SetUniformInt3   (ConstantBuffer *Buffer, int loc, const LEMath::IntVector3 &n) = 0;
+        virtual void SetUniformInt4   (ConstantBuffer *Buffer, int loc, const LEMath::IntVector4 &v) = 0;
+        virtual void SetUniformMatrix4(ConstantBuffer *Buffer, int loc, int size, float *f) = 0;
+
         virtual void* GetInputLayout(void *device, uint32 flag) = 0;
         
         virtual int ConvertType(int type) = 0;
@@ -128,18 +156,24 @@ namespace LimitEngine {
         { if (mImpl) mImpl->SetUniformParameter(name, n); }
         void SetUniformTexture(const char *name, uint32 n)
         { if (mImpl) mImpl->SetUniformTexture(name, n); }
-        void SetUniformFloat1(int location, const float v)
-        { if (mImpl) mImpl->SetUniformFloat1(location, v); }
-        void SetUniformFloat2(int location, const LEMath::FloatVector2& v)
-        { if (mImpl) mImpl->SetUniformFloat2(location, v); }
-        void SetUniformFloat4(int location, const LEMath::FloatVector4& v)
-        { if (mImpl) mImpl->SetUniformFloat4(location, v); }
-        void SetUniformInt1(int location, const int32 v)
-        { if (mImpl) mImpl->SetUniformInt1(location, v); }
-        void SetUniformInt4(int location, const LEMath::IntVector4 &v)
-        { if (mImpl) mImpl->SetUniformInt4(location, v); }
-        void SetUniformMatrix4(int location, int size, float *pointer)
-        { if (mImpl) mImpl->SetUniformMatrix4(location, size, pointer); }
+        void SetUniformFloat1(ConstantBuffer *buf, int location, const float v)
+        { if (mImpl) mImpl->SetUniformFloat1(buf, location, v); }
+        void SetUniformFloat2(ConstantBuffer *buf, int location, const LEMath::FloatVector2& v)
+        { if (mImpl) mImpl->SetUniformFloat2(buf, location, v); }
+        void SetUniformFloat3(ConstantBuffer *buf, int location, const LEMath::FloatVector3& v)
+        { if (mImpl) mImpl->SetUniformFloat3(buf, location, v); }
+        void SetUniformFloat4(ConstantBuffer *buf, int location, const LEMath::FloatVector4& v)
+        { if (mImpl) mImpl->SetUniformFloat4(buf, location, v); }
+        void SetUniformInt1(ConstantBuffer *buf, int location, const int32 v)
+        { if (mImpl) mImpl->SetUniformInt1(buf, location, v); }
+        void SetUniformInt2(ConstantBuffer *buf, int location, const LEMath::IntVector2 &v)
+        { if (mImpl) mImpl->SetUniformInt2(buf, location, v); }
+        void SetUniformInt3(ConstantBuffer *buf, int location, const LEMath::IntVector3 &v)
+        { if (mImpl) mImpl->SetUniformInt3(buf, location, v); }
+        void SetUniformInt4(ConstantBuffer *buf, int location, const LEMath::IntVector4 &v)
+        { if (mImpl) mImpl->SetUniformInt4(buf, location, v); }
+        void SetUniformMatrix4(ConstantBuffer *buf, int location, int size, float *pointer)
+        { if (mImpl) mImpl->SetUniformMatrix4(buf, location, size, pointer); }
         void* GetInputLayout(void *device, uint32 flag) const
         { return mImpl?mImpl->GetInputLayout(device, flag):nullptr; }
 

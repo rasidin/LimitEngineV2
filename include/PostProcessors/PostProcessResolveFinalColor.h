@@ -45,5 +45,6 @@ public:
 
 private:
     ShaderRefPtr mResolveShader;
+    ConstantBufferRefPtr mResolveCB;
 };
 } // LimitEngine
