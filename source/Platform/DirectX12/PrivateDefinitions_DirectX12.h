@@ -21,23 +21,43 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
-@file  PrivateDefinitions_DirectX.h
-@brief Private definitions for DirectX
+@file   PrivateDefinitions_DirectX12.h
+@brief  Private definitions for DirectX12
 @author minseob(leeminseob@outlook.com)
 **********************************************************************/
 #pragma once
-#include <d3d11.h>
-#include <d3d11_1.h>
+#include <d3d12.h>
 
 #include "Core/Object.h"
 
-namespace LimitEngine {
+namespace LimitEngine{
+enum class CommandQueueType
+{
+    Graphics = 0,
+    Compute,
+    Copy,
+    Num
+};
+static constexpr uint32 CommandQueueTypeNum = static_cast<uint32>(CommandQueueType::Num);
+static constexpr LPCWSTR CommandQueueTypeName[] = {
+    L"Graphics",
+    L"Compute",
+    L"Copy"
+};
+static constexpr LPCWSTR CommandQueueTypeFenceName[] = {
+    L"GraphicsFence",
+    L"ComputeFence",
+    L"CopyFence",
+};
+static const D3D12_COMMAND_LIST_TYPE CommandQueueTypeToD3D12[] = {
+    D3D12_COMMAND_LIST_TYPE_DIRECT,
+    D3D12_COMMAND_LIST_TYPE_COMPUTE,
+    D3D12_COMMAND_LIST_TYPE_COPY,
+};
 struct CommandInit_Parameter : public Object<LimitEngineMemoryCategory_Graphics>
 {
-    ID3D11Device			    *mD3DDevice             = nullptr;
-    ID3D11DeviceContext		    *mD3DDeviceContext      = nullptr;
-    ID3DUserDefinedAnnotation   *mD3DPerf               = nullptr;
-    ID3D11RenderTargetView	    *mBaseRenderTargetView  = nullptr;
-    ID3D11DepthStencilView	    *mBaseDepthStencilView  = nullptr;
+    ID3D12Device            *mD3DDevice;
+    ID3D12CommandQueue      *mCommandQueue[CommandQueueTypeNum];
+    ID3D12Fence             *mCommandQueueFence[CommandQueueTypeNum];
 };
 }

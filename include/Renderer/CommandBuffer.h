@@ -32,13 +32,18 @@ public:
     virtual void Init(void *Parameter) = 0;
     virtual void Term() = 0;
 
+    virtual void* GetCommandListHandle() = 0;
+    virtual void ReadyToExecute() = 0;
+    virtual void Finish() = 0;
+    virtual void ProcessAfterPresent() = 0;
+
     virtual void BeginScene() = 0;
     virtual void EndScene() = 0;
     virtual bool PrepareForDrawing() = 0;
     virtual bool PrepareForDrawingModel() = 0;
     virtual void ClearScreen(const LEMath::FloatColorRGBA &Color) = 0;
     virtual void BindVertexBuffer(void *Handle, void *Buffer, uint32 Offset, uint32 Size, uint32 Stride) = 0;
-    virtual void BindIndexBuffer(void *Handle) = 0;
+    virtual void BindIndexBuffer(void *Handle, uint32 Size) = 0;
     virtual void BindShader(Shader *Shd) = 0;
     virtual void BindConstantBuffer(ConstantBuffer *cb) = 0;
     virtual void BindTargetTexture(uint32 Index, Texture *Tex) = 0;
@@ -54,9 +59,13 @@ public:
     virtual void SetEnabled(uint32 Flag) = 0;
     virtual void SetDisable(uint32 Flag) = 0;
     virtual void SetRenderTarget(uint32 Index, Texture *Color, Texture *Depth, uint32 SurfaceIndex) = 0;
+    virtual void CopyResource(void* Dst, uint32 DstOffset, void* Org, uint32 OrgOffset, uint32 Size) = 0;
+    virtual void ResourceBarrier(void* Resource, const ResourceState& Before, const ResourceState& After) = 0;
     virtual void SetMarker(const char *InMarkerName) = 0;
     virtual void BeginEvent(const char *InEventName) = 0;
     virtual void EndEvent() = 0;
+    virtual void* AllocateGPUBuffer(size_t size) = 0;
+    virtual void UploadToGPUBuffer(void* gpubuffer, void* data, size_t size) = 0;
     //virtual void SetUniformFloat1(int Location, float Value) = 0;
     //virtual void SetUniformFloat2(int Location, const LEMath::FloatVector2 &Value) = 0;
     //virtual void SetUniformFloat4(int Location, const LEMath::FloatVector4 &Value) = 0;
@@ -109,6 +118,8 @@ private:            // Private Structure
             cSetDepthFunc,
             cSetBlendFunc,
             cSetRenderTarget,
+            cCopyBuffer,
+            cResourceBarrier,
             cSetMarker,
             cBeginEvent,
             cEndEvent,
@@ -180,12 +191,14 @@ private:            // Private Structure
     // Bind index buffer before drawing model
     typedef struct _COMMAND_BINDINDEXBUFFER : public _COMMAND_COMMON
     {
-        _COMMAND_BINDINDEXBUFFER(void *hd)
+        _COMMAND_BINDINDEXBUFFER(void *hd, uint32 InSize)
             : _COMMAND_COMMON(cBindIndexBuffer)
             , handle(hd)
+            , size(InSize)
         {
         }
         void *handle;
+        uint32 size;
     } COMMAND_BINDINDEXBUFFER;
     // Bind target(RW) texture
     typedef struct _COMMAND_BINDTARGETTEXTURE : public _COMMAND_COMMON
@@ -520,6 +533,54 @@ private:            // Private Structure
         Texture             *color;
         Texture             *depthstencil;
     } COMMAND_SETRENDERTARGET;
+    typedef struct _COMMAND_COPYBUFFER : public _COMMAND_COMMON
+    {
+        _COMMAND_COPYBUFFER(void* Dst, uint32 DstOffset, void* Org, uint32 OrgOffset, uint32 Size)
+            : _COMMAND_COMMON(cCopyBuffer)
+            , dst(Dst)
+            , dstoffset(DstOffset)
+            , org(Org)
+            , orgoffset(OrgOffset)
+            , size(Size)
+        {}
+        void                *dst;
+        void                *org;
+        uint32               dstoffset;
+        uint32               orgoffset;
+        uint32               size;
+    } COMMAND_COPYBUFFER;
+    typedef struct _COMMAND_RESOURCEBARRIER : public _COMMAND_COMMON
+    {
+        _COMMAND_RESOURCEBARRIER(Texture* InTexture, const ResourceState& InState)
+            : _COMMAND_COMMON(cResourceBarrier)
+            , texture(InTexture)
+            , type(Type::Texture)
+            , state(InState)
+        {}
+        _COMMAND_RESOURCEBARRIER(IndexBuffer* InIndexBuffer, const ResourceState& InState)
+            : _COMMAND_COMMON(cResourceBarrier)
+            , indexBuffer(InIndexBuffer)
+            , type(Type::IndexBuffer)
+            , state(InState)
+        {}
+        _COMMAND_RESOURCEBARRIER(VertexBufferGeneric* InVertexBuffer, const ResourceState& InState)
+            : _COMMAND_COMMON(cResourceBarrier)
+            , vertexBuffer(InVertexBuffer)
+            , type(Type::VertexBuffer)
+            , state(InState)
+        {}
+        union {
+            Texture                 *texture;
+            IndexBuffer             *indexBuffer;
+            VertexBufferGeneric     *vertexBuffer;
+        };
+        enum class Type : uint8 {
+            Texture = 0,
+            IndexBuffer,
+            VertexBuffer
+        } type;
+        ResourceState        state;
+    } COMMAND_RESOURCEBARRIER;
     typedef struct _COMMAND_SETMARKER : public _COMMAND_COMMON
     {
         _COMMAND_SETMARKER(char *InMarkerName)
@@ -550,6 +611,11 @@ public:
     void Init(void *Parameter) { if (mImpl) mImpl->Init(Parameter); }
     void Term() { if (mImpl) mImpl->Term(); }
 
+    void* GetCommandListHandle() const { return mImpl->GetCommandListHandle(); }
+    void ReadyToExecute() const { mImpl->ReadyToExecute(); }
+    void Finish() const { mImpl->Finish(); }
+    void ProcessAfterPresent() const { mImpl->ProcessAfterPresent(); }
+
     uint32 CalculateCommandOffset(COMMAND *cmd);
 
     void SetCommand(COMMAND_COMMON *cmd);
@@ -559,6 +625,7 @@ public:
     void Flush(RenderState *rs);
 private:
     void* allocateFromCommandBuffer(size_t size);
+    void* copyDataToGPUBuffer(void *data, size_t size);
     float* copyMatrixToBuffer(float *ptr);
     char* duplicateString(const char *src);
 

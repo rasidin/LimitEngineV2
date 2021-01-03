@@ -211,7 +211,7 @@ namespace LimitEngine {
             ++ areasCount;
             curArea = curArea->getNextMemoryArea();
             if (curArea->allocated) {
-                DEBUG_MESSAGE("[MemoryAllocator] MemoryLeak : category %s size %d address %llx (%llx)\n", LimitEngineMemoryCategoryName[curArea->category], curArea->memBlocks * MEMORY_BLOCK_SIZE, intptr_t(curArea+1) - intptr_t(mPool), intptr_t(curArea + 1));
+                DEBUG_MESSAGE("[MemoryAllocator] MemoryLeak : category %s size %d address %llx (%llx)\n", LimitEngineMemoryCategoryName[curArea->category], static_cast<int>(curArea->memBlocks * MEMORY_BLOCK_SIZE), static_cast<uint64>(intptr_t(curArea + 1) - intptr_t(mPool)), static_cast<uint64>(intptr_t(curArea + 1)));
             }
         }
         

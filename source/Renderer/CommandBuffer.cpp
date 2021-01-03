@@ -25,18 +25,23 @@ OTHER DEALINGS IN THE SOFTWARE.
 @brief CommandBuffer for rendering
 @author minseob (leeminseob@outlook.com)
 **********************************************************************/
+#include "Renderer/CommandBuffer.h"
+
 #include <LEFloatMatrix4x4.h>
 
 #include "Core/Debug.h"
 #include "Core/Util.h"
-#include "Renderer/CommandBuffer.h"
 #include "Renderer/DrawCommand.h"
+#include "Renderer/IndexBuffer.h"
 #include "Renderer/RenderContext.h"
+#include "Renderer/VertexBuffer.h"
 #include "Managers/ShaderManager.h"
 #include "Managers/DrawManager.h"
 
 #ifdef USE_DX11
 #include "../Platform/DirectX11/CommandImpl_DirectX11.inl"
+#elif USE_DX12
+#include "../Platform/DirectX12/CommandImpl_DirectX12.inl"
 #else
 #error No implementation for CommandBuffer
 #endif
@@ -51,6 +56,8 @@ CommandBuffer::CommandBuffer(size_t bufferSize)
 {
 #ifdef USE_DX11
     mImpl = new CommandImpl_DirectX11();
+#elif USE_DX12
+    mImpl = new CommandImpl_DirectX12();
 #endif
     mCommandBuffer = malloc(bufferSize);
     mPushCommandBufferPointer = mCommandBuffer;
@@ -84,7 +91,7 @@ CommandBuffer::COMMAND* CommandBuffer::nextPushCommandBuffer(int count)
     void *LastPushCommand = mPushCommandBufferPointer;
     mPushCommandBufferPointer = (COMMAND*)mPushCommandBufferPointer + count;
     if (((intptr_t)mPushCommandBufferPointer) - ((intptr_t)mCommandBuffer) >= CommandReservedMemorySize) {
-        intptr_t overMemoryOffset = GetSizeAlign((intptr_t)mPushCommandBufferPointer - ((intptr_t)mCommandBuffer + CommandReservedMemorySize), sizeof(COMMAND));
+        intptr_t overMemoryOffset = GetSizeAlign<intptr_t>((intptr_t)mPushCommandBufferPointer - ((intptr_t)mCommandBuffer + CommandReservedMemorySize), static_cast<intptr_t>(sizeof(COMMAND)));
         mPushCommandBufferPointer = (uint8*)mCommandBuffer + overMemoryOffset;
     }
     return (COMMAND*)mPushCommandBufferPointer;
@@ -132,6 +139,13 @@ void* CommandBuffer::allocateFromCommandBuffer(size_t size)
     }
     
     return outputPointer;
+}
+
+void* CommandBuffer::copyDataToGPUBuffer(void* Data, size_t Size)
+{
+    void* gpuResource = mImpl->AllocateGPUBuffer(Size);
+    mImpl->UploadToGPUBuffer(gpuResource, Data, Size);
+    return gpuResource;
 }
 
 float* CommandBuffer::copyMatrixToBuffer(float *ptr)
@@ -217,7 +231,7 @@ void CommandBuffer::Flush(RenderState *rs)
             case COMMAND::cBindIndexBuffer:
             {
                 COMMAND_BINDINDEXBUFFER *command = reinterpret_cast<COMMAND_BINDINDEXBUFFER*>(currentCommand);
-                mImpl->BindIndexBuffer(command->handle);
+                mImpl->BindIndexBuffer(command->handle, command->size);
 				bindedIndexBufferHandle = command->handle;
 			} break;
 			case COMMAND::cDispatch:
@@ -386,6 +400,44 @@ void CommandBuffer::Flush(RenderState *rs)
                     command->texture.Release();
                 }
             } break;
+            case COMMAND::cCopyBuffer:
+            {
+                COMMAND_COPYBUFFER* command = reinterpret_cast<COMMAND_COPYBUFFER*>(currentCommand);
+                mImpl->CopyResource(command->dst, command->dstoffset, command->org, command->orgoffset, command->size);
+            } break;
+            case COMMAND::cResourceBarrier:
+            {
+                COMMAND_RESOURCEBARRIER* command = reinterpret_cast<COMMAND_RESOURCEBARRIER*>(currentCommand);
+                void* resource = nullptr;
+                ResourceState beforeState = ResourceState::Common;
+                switch (command->type) {
+                case COMMAND_RESOURCEBARRIER::Type::Texture:
+                    resource = command->texture->GetResource();
+                    beforeState = command->texture->GetResourceState();
+                    break;
+                case COMMAND_RESOURCEBARRIER::Type::IndexBuffer:
+                    resource = command->indexBuffer->GetResource();
+                    beforeState = command->indexBuffer->GetResourceState();
+                    break;
+                case COMMAND_RESOURCEBARRIER::Type::VertexBuffer:
+                    resource = command->vertexBuffer->GetResource();
+                    beforeState = command->vertexBuffer->GetResourceState();
+                    break;
+                }
+                if (resource && beforeState != command->state)
+                    mImpl->ResourceBarrier(resource, beforeState, command->state);
+                switch (command->type) {
+                case COMMAND_RESOURCEBARRIER::Type::Texture:
+                    command->texture->SetResourceState(command->state);
+                    break;
+                case COMMAND_RESOURCEBARRIER::Type::IndexBuffer:
+                    command->indexBuffer->SetResourceState(command->state);
+                    break;
+                case COMMAND_RESOURCEBARRIER::Type::VertexBuffer:
+                    command->vertexBuffer->SetResourceState(command->state);
+                    break;
+                }
+            } break;
             case COMMAND::cSetMarker:
             {
                 COMMAND_SETMARKER *command = reinterpret_cast<COMMAND_SETMARKER*>(currentCommand);
@@ -439,14 +491,15 @@ void DrawCommand::EndDrawing()
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_ENDDRAWING();
 }
 
-void DrawCommand::BindVertexBuffer(void *handle, void *buffer, uint32 offset, uint32 size, uint32 stride)
+void DrawCommand::BindVertexBuffer(VertexBufferGeneric *VertexBuffer)
 {
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDVERTEXBUFFER(handle, buffer, offset, size, stride);
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETFVF(VertexBuffer->GetFVF());
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDVERTEXBUFFER(VertexBuffer->GetHandle(), VertexBuffer->GetBuffer(), 0, VertexBuffer->GetBufferSize(), VertexBuffer->GetStride());
 }
 
-void DrawCommand::BindIndexBuffer(void *handle)
+void DrawCommand::BindIndexBuffer(IndexBuffer *InIndexBuffer)
 {
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDINDEXBUFFER(handle);
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDINDEXBUFFER(InIndexBuffer->GetHandle(), InIndexBuffer->GetSize());
 }
 
 void DrawCommand::Dispatch(int x, int y, int z)
@@ -499,6 +552,26 @@ void DrawCommand::SetRenderTarget(uint32 index, Texture *color, Texture *depth, 
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETRENDERTARGET(index, color, depth, surfaceIndex);
 }
 
+void DrawCommand::CopyBuffer(void* Dst, uint32 DstOffset, void* Org, uint32 OrgOffset, uint32 Size)
+{
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_COPYBUFFER(Dst, DstOffset, LE_DrawManager.getCommandBuffer()->copyDataToGPUBuffer(Org, Size), OrgOffset, Size);
+}
+
+void DrawCommand::ResourceBarrier(Texture *InTexture, const ResourceState &InResourceState)
+{
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_RESOURCEBARRIER(InTexture, InResourceState);
+}
+
+void DrawCommand::ResourceBarrier(IndexBuffer* InIndexBuffer, const ResourceState& InResourceState)
+{
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_RESOURCEBARRIER(InIndexBuffer, InResourceState);
+}
+
+void DrawCommand::ResourceBarrier(VertexBufferGeneric* InVertexBuffer, const ResourceState& InResourceState)
+{
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_RESOURCEBARRIER(InVertexBuffer, InResourceState);
+}
+
 void DrawCommand::BindShader(Shader *sh)
 {
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDSHADER(sh);
@@ -538,7 +611,7 @@ void DrawCommand::SetShaderUniformFloat4(Shader *shader, ConstantBuffer *buffer,
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETSHADERUNIFORMFLOAT4(shader, buffer, location, value);
 }
 
-void DrawCommand::SetShaderUniformInt1(Shader *shader, ConstantBuffer *buffer, int location, const int value)
+void DrawCommand::SetShaderUniformInt1(Shader *shader, ConstantBuffer *buffer, int location, const int32 value)
 {
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETSHADERUNIFORMINT1(shader, buffer, location, value);
 }

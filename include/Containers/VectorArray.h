@@ -28,6 +28,9 @@ template <typename T> class VectorArrayIterator : public std::iterator<std::forw
 	friend VectorArray<T>;
 
 public:
+    static constexpr uint32 EndIndex = 0xffffffffu;
+
+public:
 	VectorArrayIterator(const VectorArrayIterator &iterator)
 		: mOwnerArray(iterator.mOwnerArray)
 		, mCurrentIndex(iterator.mCurrentIndex)
@@ -39,7 +42,7 @@ public:
 		// Mark end
 		if (mCurrentIndex >= mOwnerArray->GetSize()) {
 			mOwnerArray = NULL;
-			mCurrentIndex = 0xffffffffu;
+			mCurrentIndex = EndIndex;
 		}
 		return *this;
 	}
@@ -50,7 +53,7 @@ public:
 		// Mark end
 		if (mCurrentIndex >= mOwnerArray->GetSize()) {
 			mOwnerArray = NULL;
-			mCurrentIndex = 0xffffffffu;
+			mCurrentIndex = EndIndex;
 		}
 		return result;
 	}
@@ -244,6 +247,10 @@ public:
             _reserved = 0;
         }
     }
+    T& First() { return _data[0]; }
+    const T& First() const { return _data[0]; }
+    T& Last() { return _data[_size - 1]; }
+    const T& Last() const { return _data[_size - 1]; }
 
     T& operator [] (uint32 n)                { LEASSERT(n < _size); return *(_data + n); }
     const T& operator [] (uint32 n) const   { LEASSERT(n < _size); return *(_data + n); }
@@ -257,7 +264,7 @@ public:
     }
 
 	typedef VectorArrayIterator<T> Iterator;
-	Iterator begin() { return Iterator(this, 0); }
+	Iterator begin() { return _size > 0 ? Iterator(this, 0) : Iterator(); }
 	Iterator end() { return Iterator(); }
 private:
     uint32    _size;

@@ -45,6 +45,7 @@ void PostProcessTemporalAA::Process(PostProcessContext &Context, VectorArray<Poo
     if (!mTemporalAAShader.IsValid()) return;
 
     PooledRenderTarget Output = LE_RenderTargetPoolManager.GetRenderTarget(Context.SceneColor.GetDesc());
+    DrawCommand::ResourceBarrier(Output.Get(), ResourceState::RenderTarget);
     DrawCommand::SetRenderTarget(0, Output.Get(), nullptr);
     DrawCommand::BindTexture(mShaderParameterPosition_SceneColor, RenderTargets[0]);
     if (mHistorySceneColor.Get())
@@ -55,6 +56,8 @@ void PostProcessTemporalAA::Process(PostProcessContext &Context, VectorArray<Poo
     DrawCommand::SetBlendFunc(0, RendererFlag::BlendFlags::SOURCE);
 
     LE_Draw2DManager.DrawScreen(mTemporalAAShader.Get());
+
+    DrawCommand::ResourceBarrier(Output.Get(), ResourceState::Common);
 
     mHistorySceneColor = Output;
     RenderTargets[0] = Output;

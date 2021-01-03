@@ -18,6 +18,8 @@
 #include "DirectX9/LE_VertexBufferImpl_DirectX9.h"
 #elif defined(USE_DX11)
 #include "../Platform/DirectX11/VertexBufferImpl_DirectX11.inl"
+#elif defined(USE_DX12)
+#include "../Platform/DirectX12/VertexBufferImpl_DirectX12.inl"
 #else
 #error No implementation for VertexBuffer
 #endif
@@ -31,6 +33,8 @@ VertexBufferImpl* CreateImplementation()
     return new VertexBufferImpl_DirectX9();
 #elif defined(USE_DX11)
     return new VertexBufferImpl_DirectX11();
+#elif defined(USE_DX12)
+    return new VertexBufferImpl_DirectX12();
 #else
 #error No implementation for VertexBuffer New
 #endif

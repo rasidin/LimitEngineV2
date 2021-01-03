@@ -34,6 +34,8 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "DirectX9/LE_ShaderImpl_DirectX9.h"
 #elif  defined(USE_DX11)
 #include "../Platform/DirectX11/ShaderImpl_DirectX11.inl"
+#elif defined(USE_DX12)
+#include "../Platform/DirectX12/ShaderImpl_DirectX12.inl"
 #else
 #error No implementation of shader
 #endif
@@ -53,8 +55,12 @@ namespace LimitEngine {
         mImpl = new ConstantBufferImpl_OpenGLES();
 #elif defined(USE_DX11)
         mImpl = new ConstantBufferImpl_DirectX11();
+#elif defined(USE_DX12)
+        mImpl = new ConstantBufferImpl_DirectX12();
 #elif defined(USE_DX9)
         mImpl = new ConstantBufferImpl_DirectX9();
+#else
+#error No implementation of ConstantBuffer for this platform!
 #endif
     }
     ConstantBuffer::~ConstantBuffer()
@@ -153,6 +159,8 @@ namespace LimitEngine {
         mImpl = new ShaderImpl_OpenGLES();
 #elif defined(USE_DX11)
         mImpl = new ShaderImpl_DirectX11();
+#elif defined(USE_DX12)
+        mImpl = new ShaderImpl_DirectX12();
 #elif defined(USE_DX9)
 		mImpl = new ShaderImpl_DirectX9();
 #endif

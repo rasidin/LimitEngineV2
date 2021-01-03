@@ -28,6 +28,8 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
 
+#include <LERenderer>
+
 #include <LEIntVector2.h>
 #include <LEIntVector3.h>
 #include <LEIntVector4.h>
@@ -72,14 +74,16 @@ enum TEXTURE_DEPTH_FORMAT
     TEXTURE_DEPTH_FORMAT_D24S8,
 };
 class TextureImpl : public Object<LimitEngineMemoryCategory_Graphics>
-{public:
-    TextureImpl() {}
+{
+public:
+    TextureImpl(class Texture *InOwner) : mOwner(InOwner) {}
     virtual ~TextureImpl() {}
     
-    virtual LEMath::IntSize GetSize() = 0;
-    virtual TEXTURE_COLOR_FORMAT GetFormat() = 0;
-    virtual void* GetHandle() = 0;
-    virtual void* GetDepthSurfaceHandle() = 0;
+    virtual LEMath::IntSize GetSize() const = 0;
+    virtual TEXTURE_COLOR_FORMAT GetFormat() const = 0;
+    virtual void* GetHandle() const = 0;
+    virtual void* GetResource() const = 0;
+    virtual void* GetDepthSurfaceHandle() const = 0;
     
     virtual void LoadFromMemory(const void *data, size_t size) = 0;
     virtual bool Create(const LEMath::IntSize &size, TEXTURE_COLOR_FORMAT format, uint32 usage, uint32 mipLevels, void *initializeData = NULL, size_t initDataSize = 0u) = 0;
@@ -97,6 +101,9 @@ class TextureImpl : public Object<LimitEngineMemoryCategory_Graphics>
 
     virtual void* Lock(const LEMath::IntRect &rect, int mipLevel = 0) = 0;
     virtual void Unlock(int mipLevel = 0) = 0;
+
+protected:
+    class Texture* mOwner = nullptr;
 };
 class TextureSourceImage : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>
 {
@@ -172,6 +179,10 @@ public:
 
     virtual void InitResource() override;
 
+    void* GetResource() const { return mImpl->GetResource(); }
+    ResourceState GetResourceState() const { return mResourceState; }
+    void SetResourceState(const ResourceState& InState) { mResourceState = InState; }
+
     void LoadFromMemory(const void *data, size_t size);
 	void LoadFromMERLBRDFData(const void *data, size_t size);
 
@@ -222,10 +233,13 @@ private:
 	uint32					    mDepth;
     TEXTURE_COLOR_FORMAT        mFormat;
 
+    ResourceState               mResourceState;
+
     SerializedTextureSource    *mSource;
 
     char                        mDebugName[DebugNameLength];
 
     friend class TextureFactory;
+    friend class CommandBuffer;
 };
 }

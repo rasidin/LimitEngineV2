@@ -514,9 +514,6 @@ namespace LimitEngine
     private:
         int readyConstantBuffer(ShaderType shType, ID3D11ShaderReflection *reflection, size_t *constantBufferSizes)
         {
-            ID3D11Device *device = reinterpret_cast<ID3D11Device*>(LE_DrawManager.GetDeviceHandle());
-            LEASSERT(device);
-
             D3D11_SHADER_DESC shaderDesc;
             reflection->GetDesc(&shaderDesc);
 

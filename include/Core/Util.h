@@ -27,7 +27,8 @@ namespace LimitEngine {
      * @param align [In] alignment boundary
      * @return size aligned
      */
-    size_t GetSizeAlign(size_t size, size_t align);
+    template<typename T>
+    T GetSizeAlign(T size, T align) { return (size + align - 1) & (~(align - 1)); }
     /* @brief Swap a between b
      * @param a [In/Out] target A
      * @param b [In/Out] target B

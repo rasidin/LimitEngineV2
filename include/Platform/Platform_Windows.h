@@ -15,7 +15,7 @@ History:
 typedef HANDLE THREADHANDLE;
 
 #ifdef _DEBUG
-#define DEBUG_MESSAGE(str, ...) { char text[0xfff]; sprintf_s<0xfff>(text, str, __VA_ARGS__); OutputDebugString(text); }
+#define DEBUG_MESSAGE(str, ...) { char text[0xfff]; snprintf(text, 0xfff, str, __VA_ARGS__); OutputDebugString(text); }
 #else
 #define DEBUG_MESSAGE(str, ...)
 #endif

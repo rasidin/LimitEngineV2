@@ -1,14 +1,30 @@
-/***********************************************************
- LIMITEngine Header File
- Copyright (C), LIMITGAME, 2012
- -----------------------------------------------------------
- @file  LE_Shader.h
- @brief Shader Class
- @author minseob (leeminseob@outlook.com)
- -----------------------------------------------------------
- History:
- - 2012/6/19 Created by minseob
- ***********************************************************/
+/*********************************************************************
+Copyright(c) 2020 LIMITGAME
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this softwareand associated documentation
+files(the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify,
+merge, publish, distribute, sublicense, and /or sell copies of
+the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions :
+
+The above copyright noticeand this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+----------------------------------------------------------------------
+@file Shader.h
+@brief Shader
+@author minseob (leeminseob@outlook.com)
+**********************************************************************/
 
 #ifndef _LE_SHADER_H_
 #define _LE_SHADER_H_
@@ -23,6 +39,17 @@
 #include "Core/String.h"
 #include "Core/Mutex.h"
 #include "Containers/VectorArray.h"
+
+#if defined(USE_DX9)
+#define SHADER_DATA_PATH_VS(name) "shader/DirectX9/##name.vs.txt"
+#define SHADER_DATA_PATH_PS(name) "shader/DirectX9/##name.ps.txt"
+#elif defined(USE_DX11)
+#define SHADER_DATA_PATH_VS(name) "shader/DirectX11/##name.vs.txt"
+#define SHADER_DATA_PATH_PS(name) "shader/DirectX11/##name.ps.txt"
+#elif defined(USE_DX12)
+#define SHADER_DATA_PATH_VS(name) "shader/DirectX12/##name.vs.txt"
+#define SHADER_DATA_PATH_PS(name) "shader/DirectX12/##name.ps.txt"
+#endif
 
 namespace LimitEngine {
     class ConstantBufferImpl : public Object<LimitEngineMemoryCategory_Graphics>
@@ -98,6 +125,7 @@ namespace LimitEngine {
             TYPE_VERTEX = 0,
             TYPE_PIXEL,
 			TYPE_COMPUTE,
+            TYPE_NUM,
         };
         enum ShaderParameter
         {

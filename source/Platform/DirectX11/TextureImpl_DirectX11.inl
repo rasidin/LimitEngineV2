@@ -1,4 +1,4 @@
-/***********************************************************
+/*********************************************************************
 Copyright (c) 2020 LIMITGAME
 
 Permission is hereby granted, free of charge, to any person
@@ -20,11 +20,11 @@ HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
------------------------------------------------------------
+---------------------------------------------------------------------
 @file  TextureImpl_DirectX11.inl
 @brief Texture (DirectX11)
 @author minseob (leeminseob@outlook.com)
-***********************************************************/
+*********************************************************************/
 #ifdef USE_DX11
 #include <d3d11.h>
 
@@ -186,10 +186,10 @@ namespace LimitEngine {
             mShaderResourceView = nullptr;
         }
 
-        LEMath::IntSize GetSize() override { return mSize; }
-        TEXTURE_COLOR_FORMAT GetFormat() override { return mFormat; }
-        void* GetHandle() override { return mShaderResourceView; }
-        void* GetDepthSurfaceHandle() override { return nullptr; }
+        LEMath::IntSize GetSize() const override { return mSize; }
+        TEXTURE_COLOR_FORMAT GetFormat() const override { return mFormat; }
+        void* GetHandle() const override { return mShaderResourceView; }
+        void* GetDepthSurfaceHandle() const override { return nullptr; }
 
         void Load(const char *filename)
         {

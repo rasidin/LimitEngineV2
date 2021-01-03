@@ -12,4 +12,3 @@ ExternalProject_Get_Property(LEMath)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/depends/source/LEMath/include)
 link_directories(${CMAKE_CURRENT_BINARY_DIR}/lib)
-

@@ -1,17 +1,40 @@
-/*****************************************************************************
- LIMITEngine Source File
- Copyright (C), LIMITGAME, 2020
- -----------------------------------------------------------
- * @file    ShaderManager.cpp
- * @brief    Shader Manager
- * @author    minseob
- *****************************************************************************/
+/*********************************************************************
+Copyright(c) 2020 LIMITGAME
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this softwareand associated documentation
+files(the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify,
+merge, publish, distribute, sublicense, and /or sell copies of
+the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions :
+
+The above copyright noticeand this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+----------------------------------------------------------------------
+@file ShaderManager.h
+@brief ShaderManager
+@author minseob (leeminseob@outlook.com)
+**********************************************************************/
 
 #include "Managers/ShaderManager.h"
 
 #include "Managers/DrawManager.h"
 #include "Managers/ShaderDriverManager.h"
 
+//#include "Shaders/Shader_Draw2D.vs.h"
+//#include "Shaders/Shader_ResolveSceneColorSRGB.ps.h"
+
+#if 0
 #ifdef USE_DX9
 static const unsigned char Shader_Draw2D_VS[] = {
 #include "shader/DirectX9/bin/Draw2D.vs.txt"
@@ -77,6 +100,58 @@ static const unsigned char Shader_OcclusionOnly_PrePass_PS[] = {
 static const unsigned char Shader_OcclusionOnly_BasePass_PS[] = {
 #include "shader/DirectX11/bin/OcclusionOnly.BasePass.ps.txt"
 };
+#elif defined(USE_DX12)
+static const unsigned char Shader_Draw2D_VS[] = {
+#include "shader/DirectX11/bin/Draw2D.vs.txt"
+};
+static const unsigned char Shader_Draw2D_PS[] = {
+#include "shader/DirectX11/bin/Draw2D.ps.txt"
+};
+static const unsigned char Shader_DrawFullscreen_PS[] = {
+#include "shader/DirectX11/bin/DrawFullscreen.ps.txt"
+};
+static const unsigned char Shader_ResolveSceneColorSRGB_PS[] = {
+#include "shader/DirectX11/bin/ResolveSceneColorSRGB.ps.txt"
+};
+static const unsigned char Shader_TemporalAA_PS[] = {
+#include "shader/DirectX11/bin/TemporalAA.ps.txt"
+};
+static const unsigned char Shader_AmbientOcclusion_PS[] = {
+#include "shader/DirectX11/bin/AmbientOcclusion.ps.txt"
+};
+static const unsigned char Shader_AmbientOcclusionBlur_PS[] = {
+#include "shader/DirectX11/bin/AmbientOcclusionBlur.ps.txt"
+};
+static const unsigned char Shader_DrawFont_PS[] = {
+#include "shader/DirectX11/bin/DrawFont.ps.txt"
+};
+static const unsigned char Shader_Standard_VS[] = {
+#include "shader/DirectX11/bin/Standard.vs.txt"
+};
+static const unsigned char Shader_Standard_PrePass_PS[] = {
+#include "shader/DirectX11/bin/Standard.PrePass.ps.txt"
+};
+static const unsigned char Shader_Standard_BasePass_PS[] = {
+#include "shader/DirectX11/bin/Standard.BasePass.ps.txt"
+};
+static const unsigned char Shader_Standard_TranslucencyPass_PS[] = {
+#include "shader/DirectX11/bin/Standard.TranslucencyPass.ps.txt"
+};
+static const unsigned char Shader_StandardParamOnly_BasePass_PS[] = {
+#include "shader/DirectX11/bin/StandardParamOnly.BasePass.ps.txt"
+};
+static const unsigned char Shader_StandardParamOnly_TranslucencyPass_PS[] = {
+#include "shader/DirectX11/bin/StandardParamOnly.TranslucencyPass.ps.txt"
+};
+static const unsigned char Shader_OcclusionOnly_PrePass_PS[] = {
+#include "shader/DirectX11/bin/OcclusionOnly.PrePass.ps.txt"
+};
+static const unsigned char Shader_OcclusionOnly_BasePass_PS[] = {
+#include "shader/DirectX11/bin/OcclusionOnly.BasePass.ps.txt"
+};
+#else
+#error No implementation for shaders
+#endif
 #endif
 
 namespace LimitEngine {
@@ -95,7 +170,7 @@ namespace LimitEngine {
     void ShaderManager::Init()
     {
         Shader *shader;
-
+/*
         // Set Standard shader (PrePass)
         {
             shader = new Shader("Standard.PrePass");
@@ -184,14 +259,6 @@ namespace LimitEngine {
             AddShader(shader);
         }
 
-        // Set Resolve scene color (SRGB)
-        {
-            shader = new Shader("ResolveSceneColorSRGB");
-            shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
-            shader->SetCompiledBinary(Shader_ResolveSceneColorSRGB_PS, sizeof(Shader_ResolveSceneColorSRGB_PS), Shader::TYPE_PIXEL);
-            AddShader(shader);
-        }
-
         // PostProcess TemporalAA
         {
             shader = new Shader("TemporalAA");
@@ -207,6 +274,7 @@ namespace LimitEngine {
             shader->SetCompiledBinary(Shader_AmbientOcclusion_PS, sizeof(Shader_AmbientOcclusion_PS), Shader::TYPE_PIXEL);
             AddShader(shader);
         }
+
         // PostProcess AmbientOcclusion Blur
         {
             shader = new Shader("AmbientOcclusionBlur");
@@ -214,6 +282,14 @@ namespace LimitEngine {
             shader->SetCompiledBinary(Shader_AmbientOcclusionBlur_PS, sizeof(Shader_AmbientOcclusionBlur_PS), Shader::TYPE_PIXEL);
             AddShader(shader);
         }
+*/
+        // Set Resolve scene color (SRGB)
+        //{
+        //    shader = new Shader("ResolveSceneColorSRGB");
+        //    shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
+        //    shader->SetCompiledBinary(Shader_ResolveSceneColorSRGB_PS, sizeof(Shader_ResolveSceneColorSRGB_PS), Shader::TYPE_PIXEL);
+        //    AddShader(shader);
+        //}
     }
     void ShaderManager::Term()
     {

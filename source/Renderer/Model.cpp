@@ -526,9 +526,8 @@ namespace LimitEngine {
                     material->Bind(rsCopied);
                 }
                 // Draw
-                ((RigidVertexBuffer *)mesh->vertexbuffer)->BindToDrawManager();
-                if (drawGroup->indexBuffer)
-                    drawGroup->indexBuffer->Bind();
+                DrawCommand::BindVertexBuffer(mesh->vertexbuffer);
+                DrawCommand::BindIndexBuffer(drawGroup->indexBuffer);
                 DrawCommand::DrawIndexedPrimitive( RendererFlag::PrimitiveTypes::TRIANGLELIST,
                                                    static_cast<uint32>(((RigidVertexBuffer *)mesh->vertexbuffer)->GetSize()), 
                                                    static_cast<uint32>(drawGroup->indexBuffer->GetSize()));

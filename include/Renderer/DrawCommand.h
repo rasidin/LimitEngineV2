@@ -27,8 +27,8 @@ class DrawCommand
     static void EndScene();
     static void BeginDrawing();
     static void EndDrawing();
-    static void BindVertexBuffer(void *handle, void *buffer, uint32 offset, uint32 size, uint32 stride);
-    static void BindIndexBuffer(void *handle);
+    static void BindVertexBuffer(VertexBufferGeneric* VertexBuffer);
+    static void BindIndexBuffer(IndexBuffer* InIndexBuffer);
 	static void BindTargetTexture(uint32 index, Texture *texture);
     static void BindSampler(uint32 index, SamplerState *sampler);
     static void BindTexture(uint32 index, Texture *texture);
@@ -56,6 +56,10 @@ class DrawCommand
     static void SetDisable(uint32 f);
     static void SetBlendFunc(uint32 rt, RendererFlag::BlendFlags func);
     static void SetDepthFunc(RendererFlag::TestFlags f);
+    static void CopyBuffer(void *Dst, uint32 DstOffset, void *Org, uint32 OrgOffset, uint32 Size);
+    static void ResourceBarrier(class Texture *InTexture, const ResourceState& InResourceState);
+    static void ResourceBarrier(class VertexBufferGeneric* InVertexBuffer, const ResourceState& InResourceState);
+    static void ResourceBarrier(class IndexBuffer *InIndexBuffer, const ResourceState &InResourceState);
     static void SetMarker(const char *InMarkerName);
     static void BeginEvent(const char *InEventName);
     static void EndEvent();

@@ -82,6 +82,7 @@ bool PostProcessAmbientOcclusion::processAmbientOcclusion(PostProcessContext &Co
     PooledRenderTarget AmbientOcclusionBuffer = LE_RenderTargetPoolManager.GetRenderTarget(AmbientOcclusionBufferDesc);
     if (mAmbientOcclusionShader.IsValid()) {
         PooledRenderTarget Output = LE_RenderTargetPoolManager.GetRenderTarget(AmbientOcclusionBufferDesc);
+        DrawCommand::ResourceBarrier(Output.Get(), ResourceState::RenderTarget);
         DrawCommand::SetRenderTarget(0, Output.Get(), nullptr);
 
         DrawCommand::SetShaderUniformMatrix4(
@@ -156,6 +157,7 @@ bool PostProcessAmbientOcclusion::processAmbientOcclusion(PostProcessContext &Co
 
         LE_Draw2DManager.DrawScreen(mAmbientOcclusionShader.Get(), mAmbientOcclusionCB.Get());
 
+        DrawCommand::ResourceBarrier(Output.Get(), ResourceState::Common);
         RenderTargets[0] = Output;
 
         return true;
@@ -172,6 +174,7 @@ bool PostProcessAmbientOcclusion::processAmbientOcclusionBlur(PostProcessContext
     );
     if (mAmbientOcclusionBlurShader.IsValid()) {
         PooledRenderTarget Output = LE_RenderTargetPoolManager.GetRenderTarget(AmbientOcclusionBlurBufferDesc);
+        DrawCommand::ResourceBarrier(Output.Get(), ResourceState::RenderTarget);
         DrawCommand::SetRenderTarget(0, Output.Get(), nullptr);
 
         DrawCommand::SetShaderUniformFloat4(
@@ -190,6 +193,7 @@ bool PostProcessAmbientOcclusion::processAmbientOcclusionBlur(PostProcessContext
 
         LE_Draw2DManager.DrawScreen(mAmbientOcclusionBlurShader.Get(), mAmbientOcclusionBlurCB.Get());
 
+        DrawCommand::ResourceBarrier(Output.Get(), ResourceState::Common);
         RenderTargets[0] = Output;
         return true;
     }

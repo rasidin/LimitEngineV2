@@ -25,7 +25,7 @@ PostProcessManager::PostProcessManager()
     : SingletonPostProcessManager()
 {
     //PostProcessors.Add(new PostProcessAmbientOcclusion());
-    PostProcessors.Add(new PostProcessTemporalAA());
+    //PostProcessors.Add(new PostProcessTemporalAA());
     PostProcessors.Add(new PostProcessResolveFinalColor());
 }
 PostProcessManager::~PostProcessManager()

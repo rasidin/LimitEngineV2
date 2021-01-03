@@ -24,7 +24,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 @file  DrawManager.cpp
 @brief DrawManager Class
 @author minseob (leeminseob@outlook.com)
-***********************************************************/
+**********************************************************************/
 
 #include "Managers/DrawManager.h"
 
@@ -34,6 +34,8 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "Platform/DirectX9/DrawManagerImpl_DirectX9.h"
 #elif defined(USE_DX11)
 #include "../Platform/DirectX11/DrawManagerImpl_DirectX11.inl"
+#elif defined(USE_DX12)
+#include "../Platform/DirectX12/DrawManagerImpl_DirectX12.inl"
 #elif defined(USE_OPENGLES)
 #include "Platform/OpenGLES/DrawManagerImpl_OpenGLES.h"
 #else
@@ -118,8 +120,12 @@ namespace LimitEngine
         mImpl = new DrawManagerImpl_DirectX9();
 #elif defined(USE_DX11)
         mImpl = new DrawManagerImpl_DirectX11();
+#elif defined(USE_DX12)
+        mImpl = new DrawManagerImpl_DirectX12();
 #elif defined(USE_OPENGLES)
         mImpl = new DrawManagerImpl_OpenGLES();
+#else
+#error No implementation for DrawManager
 #endif
         mRenderContext = new RenderContext();
 
@@ -153,8 +159,16 @@ namespace LimitEngine
         // Wait for frame
         WaitForFlushing();
 
+        mCommandBuffer->Finish();
+
+        // Finish drawing
+        mImpl->Finish(mCommandBuffer);
+
         // Present screen
         mImpl->Present();
+
+        // Finish command buffer
+        mCommandBuffer->ProcessAfterPresent();
 
         runRendererTasks();
         // Run drawing commands

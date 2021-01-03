@@ -14,7 +14,6 @@
 #include "Managers/DrawManager.h"
 
 namespace LimitEngine {
-	size_t GetSizeAlign(size_t size, size_t align)	{ return (size + align - 1) & (~(align-1)); }
     void Swap(float &a, float &b)                   { float c = b; b = a; a = c; }
     bool IsNan(float f) { return f != f; }
     void LowerCase(char *text)

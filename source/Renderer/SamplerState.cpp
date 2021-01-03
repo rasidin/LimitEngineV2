@@ -29,6 +29,8 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 #if defined(USE_DX11)
 #include "../Platform/DirectX11/SamplerStateImpl_DirectX11.inl"
+#elif defined(USE_DX12)
+#include "../Platform/DirectX12/SamplerStateImpl_DirectX12.inl"
 #else
 #error No implementation for TextureSampler
 #endif
@@ -65,6 +67,8 @@ SamplerState::SamplerState(const SamplerStateDesc &Desc)
 {
 #if defined(USE_DX11)
     mImpl = new SamplerStateImpl_DirectX11();
+#elif defined(USE_DX12)
+    mImpl = new SamplerStateImpl_DirectX12();
 #else
 #error No implementation for TextureSampler
 #endif

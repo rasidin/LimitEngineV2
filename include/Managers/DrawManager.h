@@ -52,12 +52,14 @@ public:
     
     virtual void Init(WINDOW_HANDLE handle, const InitializeOptions &Options) = 0;
     virtual void ResizeScreen(const LEMath::IntSize &size) = 0;
+    virtual void Finish(CommandBuffer* commandBuffer) = 0;
     virtual void Present() = 0;
     virtual void Term() = 0;
     
     virtual void* GetDeviceHandle() const = 0;
     virtual void* GetDeviceContext() const = 0;
-    virtual void* GetFrameBuffer() const = 0;
+    virtual void* GetCurrentFrameBuffer() const = 0;
+    virtual void* GetCurrentFrameBufferView() const = 0;
 };
 
 class RendererTask : public Object<LimitEngineMemoryCategory_Graphics>
@@ -111,13 +113,16 @@ public:                    // Interfaces
     void Run();
 
     // Device
-    void* GetDeviceHandle() const { return mImpl?mImpl->GetDeviceHandle():NULL; }
+    void* GetDeviceHandle() const { return mImpl ? mImpl->GetDeviceHandle():NULL; }
 
     // Get device context
     void* GetDeviceContext() const { return mImpl ? mImpl->GetDeviceContext() : nullptr; }
 
     // Get frame buffer
-    void* GetFrameBuffer() const { return mImpl ? mImpl->GetFrameBuffer() : nullptr; }
+    void* GetCurrentFrameBuffer() const { return mImpl ? mImpl->GetCurrentFrameBuffer() : nullptr; }
+
+    // Get frame buffer view
+    void* GetCurrentFrameBufferView() const { return mImpl ? mImpl->GetCurrentFrameBufferView() : nullptr; }
 
     // Is ready to rendering?
     bool IsReadyToRender() { return mReadyToRender; }

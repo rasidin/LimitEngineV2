@@ -78,7 +78,7 @@ namespace LimitEngine {
         else
             DrawCommand::BindShader(Shader);
         DrawCommand::BindConstantBuffer(buffer);
-        mVertexbuffer_drawscr.BindToDrawManager();
+        DrawCommand::BindVertexBuffer(&mVertexbuffer_drawscr);
         DrawCommand::DrawPrimitive(RendererFlag::PrimitiveTypes::TRIANGLELIST, 0, 6);
     }
     void Draw2DManager::FlushDraw2D(const RendererFlag::PrimitiveTypes &PrimitiveType, Shader *Shader /*= nullptr*/, ConstantBuffer *Buffer /*= nullptr*/)
@@ -93,7 +93,7 @@ namespace LimitEngine {
             DrawCommand::BindShader(Shader);
             DrawCommand::BindConstantBuffer(Buffer);
         }
-        mVertexbuffer_draw2d.BindToDrawManager();
+        DrawCommand::BindVertexBuffer(&mVertexbuffer_draw2d);
         DrawCommand::DrawPrimitive(PrimitiveType, mVertex_draw2d_start, mVertex_draw2d_used - mVertex_draw2d_start);
         mVertex_draw2d_start = mVertex_draw2d_used;
     }

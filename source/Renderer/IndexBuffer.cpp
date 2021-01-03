@@ -17,6 +17,8 @@
 #include "DirectX9/LE_IndexBufferImpl_DirectX9.h"
 #elif defined(USE_DX11)
 #include "../Platform/DirectX11/IndexBufferImpl_DirectX11.inl"
+#elif defined(USE_DX12)
+#include "../Platform/DirectX12/IndexBufferImpl_DirectX12.inl"
 #else
 #error No implementation for this platform
 #endif
@@ -51,6 +53,8 @@ namespace LimitEngine {
 		mImpl = new IndexBufferImpl_DirectX9();
 #elif defined(USE_DX11)
         mImpl = new IndexBufferImpl_DirectX11();
+#elif defined(USE_DX12)
+        mImpl = new IndexBufferImpl_DirectX12(this);
 #else
 #error No implementation for this platform
 #endif        
@@ -67,10 +71,5 @@ namespace LimitEngine {
         mSize = size;
         AutoPointer<RendererTask> rt_createIndexBuffer = new RendererTask_CreateIndexBuffer( mImpl, static_cast<uint32>(size), buffer );
         LE_DrawManager.AddRendererTask(rt_createIndexBuffer);
-    }
-    void IndexBuffer::Bind()
-    {
-        if (!mImpl) return;
-        DrawCommand::BindIndexBuffer(mImpl->GetHandle());
     }
 }

@@ -17,6 +17,7 @@ class ConstantBuffer;
 class DirectionalLight;
 class DrawCommand;
 class Font;
+class IndexBuffer;
 class Light;
 class LightIBL;
 class LightManager;
@@ -36,6 +37,7 @@ class Texture;
 class RenderState;
 class RenderContext;
 class RenderTargetPoolManager;
+class VertexBufferGeneric;
 
 #define CameraRefPtr			ReferenceCountedPointer<Camera> 
 #define FontRefPtr				ReferenceCountedPointer<Font>   
@@ -48,6 +50,8 @@ class RenderTargetPoolManager;
 #define ConstantBufferRefPtr	ReferenceCountedPointer<ConstantBuffer>
 
 #define InstanceIDNone 0xffffffff
+
+#define UNIMPLEMENTED_ERROR LEASSERT(0);
 }
 
 #include "Renderer/Definitions.h"

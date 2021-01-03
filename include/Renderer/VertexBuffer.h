@@ -26,6 +26,7 @@ namespace LimitEngine {
         virtual void Dispose() = 0;
         virtual void Bind(Shader *shader) = 0;
         virtual void* GetHandle() = 0;
+        virtual void* GetResource() const = 0;
         virtual void DrawPrimitive(uint32 type, size_t count) = 0;
     };
 
@@ -71,6 +72,16 @@ namespace LimitEngine {
     public:
 		VertexBufferGeneric(){};
 		virtual ~VertexBufferGeneric(){};
+
+        virtual uint32 GetFVF() const = 0;
+        virtual void*  GetHandle() const = 0;
+        virtual void*  GetBuffer() const = 0;
+        virtual uint32 GetBufferSize() const = 0;
+        virtual uint32 GetStride() const = 0;
+
+        virtual void* GetResource() const = 0;
+        virtual ResourceState GetResourceState() const = 0;
+        virtual void SetResourceState(const ResourceState &InState) = 0;
     };
     
     VertexBufferImpl* CreateImplementation();
@@ -129,35 +140,28 @@ namespace LimitEngine {
             if (initializeBuffer) {
                 ::memcpy(mVertex, initializeBuffer, size * tSize);
             }
-
-            //AutoPointer<RendererTask> rt_createVertexBuffer = new RendererTask_CreateVertexBuffer(mImpl, tFVF, tSize, size, flag, initializeBuffer);
-            //LE_DrawManager.AddRendererTask(rt_createVertexBuffer);
-
-            //// No need cpu buffer because we don't edit anymore.
-            //if (!(flag & static_cast<uint32>(RendererFlag::CreateBufferFlags::CPU_READABLE))
-            //    && !(flag & static_cast<uint32>(RendererFlag::CreateBufferFlags::CPU_WRITABLE))) {
-            //    delete[] mVertex;
-            //    mVertex = NULL;
-            //}
         }
         void Bind(Shader *sh) { if (mImpl) mImpl->Bind(sh); }
-        void BindToDrawManager()
-        {
-            DrawCommand::SetFVF(tFVF);
-            DrawCommand::BindVertexBuffer(mImpl->GetHandle(), mVertex, 0, static_cast<uint32>(mSize * tSize), static_cast<uint32>(tSize));
-        }
         void DrawPrimitive(uint32 type)         { if (mImpl) mImpl->DrawPrimitive(type, mSize); }
         
         Vertex<tFVF, tSize>* GetVertices()      { return mVertex; }
-        void* GetHandle()                       { if (mImpl) return mImpl->GetHandle(); return NULL; }
-        void* GetBuffer()                       { return &mVertex[0]; }
         size_t GetSize()                        { return mSize; }
         size_t GetVertexSize()                  { return __size; }
-        
+
+        virtual void* GetHandle() const override { if (mImpl) return mImpl->GetHandle(); return nullptr; }
+        virtual void* GetBuffer() const override { return &mVertex[0]; }
+        virtual uint32 GetFVF() const override { return tFVF; }
+        virtual uint32 GetBufferSize() const override { return static_cast<uint32>(mSize * tSize); }
+        virtual uint32 GetStride() const override { return static_cast<uint32>(tSize); }
+        virtual void* GetResource() const override { if (mImpl) return mImpl->GetResource(); return nullptr; }
+        virtual ResourceState GetResourceState() const override { return mResourceState; }
+        virtual void SetResourceState(const ResourceState& InState) override { mResourceState = InState; }
+
     private:        // Private Members
         VertexBufferImpl            *mImpl;
         Vertex<tFVF, tSize>         *mVertex;
         size_t                       mSize;
         uint32                       mCreationFlag;
+        ResourceState                mResourceState;
     };
 }

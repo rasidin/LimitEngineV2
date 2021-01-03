@@ -33,6 +33,8 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "Managers/RenderTargetPoolManager.h"
 #include "Renderer/DrawCommand.h"
 
+#include "Shaders/ResolveSceneColorSRGB.ps.h"
+
 namespace LimitEngine {
 void PostProcessResolveFinalColor::Init(const InitializeOptions &Options)
 {

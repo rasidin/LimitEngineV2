@@ -43,7 +43,7 @@ void LimitEngine::Init(WINDOW_HANDLE handle, const InitializeOptions &Options)
     //if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("fonts/System.font.lea", ArchiveFactory::ID)) {
     //    mSystemFont = (Font*)(LoadedResource->data);
     //}
-    mSystemFont->InitResource();
+    //mSystemFont->InitResource();
 
     //if (TextureFactory *Factory = (TextureFactory*)ResourceManager::GetSingleton().GetFactory(TextureFactory::ID)) {
     //    Factory->SetImportFilter(TextureFactory::TextureImportFilter::EnvironmentBRDF);
@@ -240,9 +240,9 @@ void LimitEngine::Update()
 
 void LimitEngine::DrawDebugUI()
 {
-    mSystemFont->Draw(LEMath::IntPoint(10, 10), "LimitEngine");
-    if (mSceneManager) {
-        mSceneManager->DrawDebugUI(mSystemFont.Get());
-    }
+    //mSystemFont->Draw(LEMath::IntPoint(10, 10), "LimitEngine");
+    //if (mSceneManager) {
+    //    mSceneManager->DrawDebugUI(mSystemFont.Get());
+    //}
 }
 }
