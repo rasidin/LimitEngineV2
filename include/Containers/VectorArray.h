@@ -35,6 +35,10 @@ public:
 		: mOwnerArray(iterator.mOwnerArray)
 		, mCurrentIndex(iterator.mCurrentIndex)
 	{}
+    VectorArrayIterator(VectorArray<T>& owner)
+    {
+        VectorArrayIterator(&owner, 0);
+    }
 
 	VectorArrayIterator& operator++()
 	{
@@ -59,11 +63,14 @@ public:
 	}
 
 	T& operator*() { static T DummyObject = T(); return (!IsValid()) ? (*mOwnerArray)[mCurrentIndex] : DummyObject; }
+    T* operator->() const { return IsValid() ? &(*mOwnerArray)[mCurrentIndex] : nullptr; }
 
 	bool operator==(const VectorArrayIterator &iterator) const { return mOwnerArray == iterator.mOwnerArray && mCurrentIndex == iterator.mCurrentIndex; }
 	bool operator!=(const VectorArrayIterator &iterator) const { return mOwnerArray != iterator.mOwnerArray || mCurrentIndex != iterator.mCurrentIndex; }
 
-	bool IsValid() const { return mCurrentIndex == 0xffffffffu || mOwnerArray == NULL || mOwnerArray->GetSize() <= mCurrentIndex; }
+    bool operator bool() const { return IsValid(); }
+
+	inline bool IsValid() const { return mCurrentIndex == 0xffffffffu || mOwnerArray == NULL || mOwnerArray->GetSize() <= mCurrentIndex; }
 private: // Non-creatable by user
 	VectorArrayIterator()
 		: mOwnerArray(NULL)
@@ -78,7 +85,7 @@ private:
 	VectorArray<T> *mOwnerArray; // Onwer VectorArray
 	uint32 mCurrentIndex;		 // Index of VectorArray
 };
-template <typename T> class VectorArray : public Object<LimitEngineMemoryCategory_Common>, public SerializableResource
+template <typename T> class VectorArray : public Object<LimitEngineMemoryCategory::Common>, public SerializableResource
 {
 #define VECTORARRAY_INIT          _size(0)\
                                 , _data(0)\

@@ -17,7 +17,7 @@ Copyright (C), LIMITGAME, 2020
 #include "Renderer/Texture.h"
 
 namespace LimitEngine {
-class ShaderParameter : Object<LimitEngineMemoryCategory_Graphics>
+class ShaderParameter : Object<LimitEngineMemoryCategory::Graphics>
 {
 public:
     enum Type 

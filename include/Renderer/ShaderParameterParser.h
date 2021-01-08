@@ -14,7 +14,7 @@
 #include "Containers/VectorArray.h"
 
 namespace LimitEngine {
-	class ShaderParameterParser : public Object<LimitEngineMemoryCategory_Common> {
+	class ShaderParameterParser : public Object<LimitEngineMemoryCategory::Common> {
 	public:
 		struct Parameter {
 			MapArray<String, String> attributes;

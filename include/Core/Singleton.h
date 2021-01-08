@@ -17,7 +17,7 @@
 
 namespace LimitEngine
 {
-    template <typename T, uint32 category = LimitEngineMemoryCategory_Unknown> class Singleton : public Object<category>
+    template <typename T, LimitEngineMemoryCategory category = LimitEngineMemoryCategory::Unknown> class Singleton : public Object<category>
     {
     public:
         typedef T InstanceType;

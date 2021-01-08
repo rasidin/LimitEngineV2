@@ -21,7 +21,7 @@
 /// Input filename format : filename.[type].[format]    ex > testModel.model.text
 namespace LimitEngine {
 
-class ResourceLoader : public Object<LimitEngineMemoryCategory_Common>
+class ResourceLoader : public Object<LimitEngineMemoryCategory::Common>
 {
 public:
     ResourceLoader() {}
@@ -33,11 +33,11 @@ public:
 };
 
 class ResourceManager;
-typedef Singleton<ResourceManager, LimitEngineMemoryCategory_Common> SingletonResourceManager;
+typedef Singleton<ResourceManager, LimitEngineMemoryCategory::Common> SingletonResourceManager;
 class ResourceManager : public SingletonResourceManager
 {
 public:
-    typedef struct _RESOURCE : public Object<LimitEngineMemoryCategory_Common>
+    typedef struct _RESOURCE : public Object<LimitEngineMemoryCategory::Common>
     {
         friend ResourceManager;
 

@@ -29,10 +29,9 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "Managers/ShaderManager.h"
 
 #include "Managers/DrawManager.h"
-#include "Managers/ShaderDriverManager.h"
 
 //#include "Shaders/Shader_Draw2D.vs.h"
-//#include "Shaders/Shader_ResolveSceneColorSRGB.ps.h"
+#include "Shaders/ResolveSceneColorSRGB.ps.h"
 
 #if 0
 #ifdef USE_DX9
@@ -299,32 +298,17 @@ namespace LimitEngine {
         }
         mShaders.Clear();
     }
-    void ShaderManager::BindShader(Shader *sh)
+    
+    Shader* ShaderManager::findshader(const ShaderHash& hash) const
     {
-        if (sh) sh->Bind();
-    }
-    void ShaderManager::BindShader(uint32 shaderID)
-    {
-        for(uint32 i=0;i<mShaders.GetSize();i++)
-        {
-            if (mShaders[i]->GetID() == shaderID)
-            {
-                BindShader(mShaders[i].Get());
-                break;
+        for (uint32 shidx = 0; shidx < mShaders.count(); shidx++) {
+            if (mShaders[shidx]->GetShaderHash() == hash) {
+                return mShaders[shidx].Get();
             }
         }
+        return nullptr;
     }
-    void ShaderManager::BindShader(const char *name)
-    {
-        for(uint32 i=0;i<mShaders.GetSize();i++)
-        {
-            if (mShaders[i]->GetName() == name)
-            {
-                BindShader(mShaders[i].Get());
-                break;
-            }
-        }
-    }
+
     void ShaderManager::AddShader(Shader *sh)
     {
         for(uint32 shidx=0;shidx<mShaders.GetSize();shidx++)
@@ -335,11 +319,7 @@ namespace LimitEngine {
                 break;
             }
         }
-        Shader *CapturedShader = sh;
-        ShaderDriverManager *CapturedManager = ShaderDriverManager::GetSingletonPtr();
-        LE_DrawManager.AddRendererTaskLambda([CapturedManager, CapturedShader]() {
-            CapturedManager->SetupShaderDriver(CapturedShader);
-        });
+
         sh->SetID(mShaderID++);
         mShaders.push_back(sh);
     }

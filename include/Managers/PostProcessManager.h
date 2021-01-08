@@ -36,7 +36,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 namespace LimitEngine {
 class PostProcessManager;
-typedef Singleton<PostProcessManager, LimitEngineMemoryCategory_Graphics> SingletonPostProcessManager;
+typedef Singleton<PostProcessManager, LimitEngineMemoryCategory::Graphics> SingletonPostProcessManager;
 class PostProcessManager : public SingletonPostProcessManager
 {
 public:

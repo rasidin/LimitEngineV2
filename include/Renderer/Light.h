@@ -19,7 +19,7 @@ namespace LimitEngine {
 /*
  *!@class Light (Common)
  */
-class Light : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>, public MetaData
+class Light : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>, public MetaData
 {
 public:
     enum TYPE 

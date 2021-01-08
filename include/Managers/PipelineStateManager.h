@@ -21,23 +21,29 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
-@file  PrivateDefinitions_DirectX.h
-@brief Private definitions for DirectX
-@author minseob(leeminseob@outlook.com)
+@file PipelineStateManager.h
+@brief Manager for PipelineState
+@author minseob
 **********************************************************************/
-#pragma once
-#include <d3d11.h>
-#include <d3d11_1.h>
+#ifndef LIMITENGINEV2_MANAGER_PIPELINESTATEMANAGER_H_
+#define LIMITENGINEV2_MANAGER_PIPELINESTATEMANAGER_H_
 
-#include "Core/Object.h"
+#include <LERenderer>
+
+#include "Containers/VectorArray.h"
+#include "Containers/MapArray.h"
+#include "Renderer/PipelineStateDescriptor.h"
 
 namespace LimitEngine {
-struct CommandInit_Parameter : public Object<LimitEngineMemoryCategory::Graphics>
+typedef Singleton<PipelineStateManager, LimitEngineMemoryCategory::Graphics> SingletonPipelineStateManager;
+class PipelineStateManager : public SingletonPipelineStateManager
 {
-    ID3D11Device			    *mD3DDevice             = nullptr;
-    ID3D11DeviceContext		    *mD3DDeviceContext      = nullptr;
-    ID3DUserDefinedAnnotation   *mD3DPerf               = nullptr;
-    ID3D11RenderTargetView	    *mBaseRenderTargetView  = nullptr;
-    ID3D11DepthStencilView	    *mBaseDepthStencilView  = nullptr;
+public:
+    PipelineState* FindOrCreatePipelineState(const PipelineStateDescriptor &desc);
+
+private:
+    MapArray<PipelineStateDescroptor, PipelineStateRefPtr> mPipelineMap;
 };
-}
+} // namespace LimitEngine
+
+#endif // LIMITENGINEV2_MANAGER_PIPELINESTATEMANAGER_H_

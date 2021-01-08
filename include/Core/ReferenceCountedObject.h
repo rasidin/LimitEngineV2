@@ -20,7 +20,7 @@ namespace LimitEngine {
         virtual uint32 SubReferenceCounter() = 0;
     };
 
-    template<uint32 category = LimitEngineMemoryCategory_Unknown>
+    template<LimitEngineMemoryCategory category = LimitEngineMemoryCategory::Unknown>
     class ReferenceCountedObject : public IReferenceCountedObject, public Object<category>
     {
     public:

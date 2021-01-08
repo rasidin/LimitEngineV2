@@ -18,7 +18,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 namespace LimitEngine {
-    class DebugImpl : public Object<LimitEngineMemoryCategory_Debug>
+    class DebugImpl : public Object<LimitEngineMemoryCategory::Debug>
     {
     public:
         DebugImpl() {}
@@ -30,7 +30,7 @@ namespace LimitEngine {
     }; // DebugImpl
 
     class Debug;
-    typedef Singleton<Debug, LimitEngineMemoryCategory_Debug> SingletonDebug;
+    typedef Singleton<Debug, LimitEngineMemoryCategory::Debug> SingletonDebug;
     class Debug : public SingletonDebug
     {
     public:

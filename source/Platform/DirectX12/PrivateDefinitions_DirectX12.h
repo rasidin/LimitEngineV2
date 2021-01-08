@@ -54,7 +54,7 @@ static const D3D12_COMMAND_LIST_TYPE CommandQueueTypeToD3D12[] = {
     D3D12_COMMAND_LIST_TYPE_COMPUTE,
     D3D12_COMMAND_LIST_TYPE_COPY,
 };
-struct CommandInit_Parameter : public Object<LimitEngineMemoryCategory_Graphics>
+struct CommandInit_Parameter : public Object<LimitEngineMemoryCategory::Graphics>
 {
     ID3D12Device            *mD3DDevice;
     ID3D12CommandQueue      *mCommandQueue[CommandQueueTypeNum];

@@ -18,6 +18,7 @@
 #include "Core/Mutex.h"
 #include "Containers/VectorArray.h"
 #include "Renderer/Camera.h"
+#include "Renderer/ConstantBuffer.h"
 #include "Renderer/Model.h"
 #include "Renderer/ModelInstance.h"
 #include "Renderer/Light.h"
@@ -32,14 +33,14 @@ class Light;
 class Model;
 class SceneFactory;
 class SceneManager;
-typedef Singleton<SceneManager, LimitEngineMemoryCategory_Graphics> SingletonSceneManager;
+typedef Singleton<SceneManager, LimitEngineMemoryCategory::Graphics> SingletonSceneManager;
 class SceneManager : public SingletonSceneManager
 {
     friend SceneFactory;
     static constexpr uint32 PendingDeleteRenderTargetCount = 0xfu;
 
 public:
-    struct SceneUpdateTask : public Object<LimitEngineMemoryCategory_Graphics>
+    struct SceneUpdateTask : public Object<LimitEngineMemoryCategory::Graphics>
     {
     public:
         virtual ~SceneUpdateTask() {}

@@ -20,7 +20,7 @@
 #include "Containers/MapArray.h"
 
 namespace LimitEngine {
-	typedef Singleton<RenderContext, LimitEngineMemoryCategory_Graphics> SingletonRenderContext;
+	typedef Singleton<RenderContext, LimitEngineMemoryCategory::Graphics> SingletonRenderContext;
 	class RenderContext : public SingletonRenderContext
 	{
 	public:

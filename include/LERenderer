@@ -25,6 +25,7 @@ class Material;
 class Model;
 class ModelInstance;
 class Mesh;
+class PipelineState;
 class PointLight;
 class PostProcessManager;
 class PostProcessor;
@@ -48,6 +49,7 @@ class VertexBufferGeneric;
 #define TextureRefPtr			ReferenceCountedPointer<Texture>
 #define ShaderRefPtr			ReferenceCountedPointer<Shader> 
 #define ConstantBufferRefPtr	ReferenceCountedPointer<ConstantBuffer>
+#define PipelineStateRefPtr		ReferenceCountedPointer<PipelineState>
 
 #define InstanceIDNone 0xffffffff
 

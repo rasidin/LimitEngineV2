@@ -26,27 +26,6 @@ OTHER DEALINGS IN THE SOFTWARE.
 @author minseob (leeminseob@outlook.com)
 **********************************************************************/
 namespace LimitEngine {
-class ConstantBufferImpl_DirectX12 : public ConstantBufferImpl
-{
-public:
-    ConstantBufferImpl_DirectX12() {}
-    virtual ~ConstantBufferImpl_DirectX12() {}
-
-    virtual void Create(Shader* InShader) override
-    {}
-
-    virtual void PrepareForDrawing() override
-    {}
-
-    virtual void Set(uint32 ShaderType, uint32 BufferIndex, uint32 Offset, const void* Data, size_t Size) override
-    {}
-
-    template<typename T>
-    void Set(uint32 ShaderType, uint32 BufferIndex, uint32 Offset, T* Data)
-    {
-        this->Set(ShaderType, BufferIndex, Offset, Data, sizeof(T));
-    }
-};
 class ShaderImpl_DirectX12 : public ShaderImpl
 {
 public:
@@ -133,97 +112,6 @@ public:
     virtual void SetUniformParameter(const char* name, uint32 n) override
     {
         UNIMPLEMENTED_ERROR
-    }
-
-    virtual void SetUniformFloat1(ConstantBuffer* Buffer, int loc, const float& f) override
-    {
-        if (ConstantBufferImpl_DirectX12* impl = (ConstantBufferImpl_DirectX12*)Buffer->GetImplementation()) {
-            impl->Set(0, 0, loc, &f);
-        }
-
-        if (mConstantBuffers.IndexOf(Buffer) < 0) {
-            mConstantBuffers.Add(Buffer);
-        }
-    }
-    virtual void SetUniformFloat2(ConstantBuffer* Buffer, int loc, const LEMath::FloatVector2 &v) override
-    {
-        if (ConstantBufferImpl_DirectX12* impl = (ConstantBufferImpl_DirectX12*)Buffer->GetImplementation()) {
-            impl->Set(0, 0, loc, &v);
-        }
-
-        if (mConstantBuffers.IndexOf(Buffer) < 0) {
-            mConstantBuffers.Add(Buffer);
-        }
-    }
-    virtual void SetUniformFloat3(ConstantBuffer* Buffer, int loc, const LEMath::FloatVector3& v) override
-    {
-        if (ConstantBufferImpl_DirectX12* impl = (ConstantBufferImpl_DirectX12*)Buffer->GetImplementation()) {
-            impl->Set(0, 0, loc, &v);
-        }
-
-        if (mConstantBuffers.IndexOf(Buffer) < 0) {
-            mConstantBuffers.Add(Buffer);
-        }
-    }
-    virtual void SetUniformFloat4(ConstantBuffer* Buffer, int loc, const LEMath::FloatVector4& v) override
-    {
-        if (ConstantBufferImpl_DirectX12* impl = (ConstantBufferImpl_DirectX12*)Buffer->GetImplementation()) {
-            impl->Set(0, 0, loc, &v);
-        }
-
-        if (mConstantBuffers.IndexOf(Buffer) < 0) {
-            mConstantBuffers.Add(Buffer);
-        }
-    }
-    virtual void SetUniformInt1(ConstantBuffer* Buffer, int loc, const int32& n) override
-    {
-        if (ConstantBufferImpl_DirectX12* impl = (ConstantBufferImpl_DirectX12*)Buffer->GetImplementation()) {
-            impl->Set(0, 0, loc, &n);
-        }
-
-        if (mConstantBuffers.IndexOf(Buffer) < 0) {
-            mConstantBuffers.Add(Buffer);
-        }
-    }
-    virtual void SetUniformInt2(ConstantBuffer* Buffer, int loc, const LEMath::IntVector2 &n) override
-    {
-        if (ConstantBufferImpl_DirectX12* impl = (ConstantBufferImpl_DirectX12*)Buffer->GetImplementation()) {
-            impl->Set(0, 0, loc, &n);
-        }
-
-        if (mConstantBuffers.IndexOf(Buffer) < 0) {
-            mConstantBuffers.Add(Buffer);
-        }
-    }
-    virtual void SetUniformInt3(ConstantBuffer* Buffer, int loc, const LEMath::IntVector3& n) override
-    {
-        if (ConstantBufferImpl_DirectX12* impl = (ConstantBufferImpl_DirectX12*)Buffer->GetImplementation()) {
-            impl->Set(0, 0, loc, &n);
-        }
-
-        if (mConstantBuffers.IndexOf(Buffer) < 0) {
-            mConstantBuffers.Add(Buffer);
-        }
-    }
-    virtual void SetUniformInt4(ConstantBuffer* Buffer, int loc, const LEMath::IntVector4& n) override
-    {
-        if (ConstantBufferImpl_DirectX12* impl = (ConstantBufferImpl_DirectX12*)Buffer->GetImplementation()) {
-            impl->Set(0, 0, loc, &n);
-        }
-
-        if (mConstantBuffers.IndexOf(Buffer) < 0) {
-            mConstantBuffers.Add(Buffer);
-        }
-    }
-    virtual void SetUniformMatrix4(ConstantBuffer* Buffer, int loc, int size, float* f) override
-    {
-        if (ConstantBufferImpl_DirectX12* impl = (ConstantBufferImpl_DirectX12*)Buffer->GetImplementation()) {
-            impl->Set(0, 0, loc, f, size);
-        }
-
-        if (mConstantBuffers.IndexOf(Buffer) < 0) {
-            mConstantBuffers.Add(Buffer);
-        }
     }
 
     virtual void* GetInputLayout(void* device, uint32 flag) override

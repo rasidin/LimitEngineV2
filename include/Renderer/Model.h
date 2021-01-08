@@ -26,7 +26,7 @@
 #include "Core/String.h"
 #include "Core/MetaData.h"
 
-#include "rapidxml/rapidxml.hpp"
+#include "../externals/rapidxml/rapidxml.hpp"
 
 namespace LimitEngine {
     typedef Vertex<FVF_PNCTTB, SIZE_PNCTTB> RigidVertex;
@@ -35,7 +35,7 @@ namespace LimitEngine {
     class IndexBuffer;
     class Material;
     class Shader;
-    class Model : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>, public SerializableResource, public MetaData
+    class Model : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>, public SerializableResource, public MetaData
     {
         friend ModelFactory;
     public:

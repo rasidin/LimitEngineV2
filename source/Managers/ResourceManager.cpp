@@ -19,7 +19,6 @@
 #include "Factories/ModelFactory.h"
 #include "Factories/TextureFactory.h"
 #include "Factories/TextParserFactory.h"
-#include "Factories/ShaderFactory.h"
 
 #include "../Factories/SourceFactories/TGASourceFactory.inl"
 #include "../Factories/SourceFactories/TextParserSourceFactory.inl"
@@ -90,7 +89,6 @@ namespace LimitEngine {
     {
         mFactories.Add(ArchiveFactory::ID,    new ArchiveFactory());
         mFactories.Add(ModelFactory::ID,      new ModelFactory());
-        mFactories.Add(ShaderFactory::ID,     new ShaderFactory());
         mFactories.Add(TextureFactory::ID,    new TextureFactory());
         mFactories.Add(TextParserFactory::ID, new TextParserFactory());
 

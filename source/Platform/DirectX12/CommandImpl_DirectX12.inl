@@ -195,11 +195,6 @@ namespace LimitEngine {
                 IndexBufferView.SizeInBytes = Size;
             }
         }
-        void BindShader(Shader* InShader) override
-        {
-            if (InShader) InShader->Bind();
-            mCache.CurrentShader = InShader;
-        }
         void BindConstantBuffer(ConstantBuffer *InConstantBuffer) override
         {
             mCache.CurrentConstantBuffer = InConstantBuffer;
@@ -208,17 +203,17 @@ namespace LimitEngine {
         {
             if (Index == 0xffffffff) return;
 
-            if (mCache.CurrentShader) {
-                if (mCache.CurrentShader->HasShader(Shader::TYPE_COMPUTE)) {
-                    if (InTexture == nullptr) {
-                        mD3DGraphicsCommandList->SetComputeRootUnorderedAccessView(Index, nullptr);
-                    }
-                    else {
-                        ID3D12Resource* UAV = (ID3D12Resource*)InTexture->GetUnorderedAccessView();
-                        mD3DGraphicsCommandList->SetComputeRootUnorderedAccessView(Index, UAV->GetGPUVirtualAddress());
-                    }
-                }
-            }
+            //if (mCache.CurrentShader) {
+            //    if (mCache.CurrentShader->HasShader(Shader::Type::Compute)) {
+            //        if (InTexture == nullptr) {
+            //            mD3DGraphicsCommandList->SetComputeRootUnorderedAccessView(Index, nullptr);
+            //        }
+            //        else {
+            //            ID3D12Resource* UAV = (ID3D12Resource*)InTexture->GetUnorderedAccessView();
+            //            mD3DGraphicsCommandList->SetComputeRootUnorderedAccessView(Index, UAV->GetGPUVirtualAddress());
+            //        }
+            //    }
+            //}
         }
         void BindSampler(uint32 Index, SamplerState *Sampler) override
         {

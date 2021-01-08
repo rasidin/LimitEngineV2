@@ -21,23 +21,23 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
-@file  PrivateDefinitions_DirectX.h
-@brief Private definitions for DirectX
-@author minseob(leeminseob@outlook.com)
+@file PipelineStateManager.cpp
+@brief Manager for PipelineState
+@author minseob
 **********************************************************************/
-#pragma once
-#include <d3d11.h>
-#include <d3d11_1.h>
-
-#include "Core/Object.h"
+#include "Managers/PipelineStateManager.h"
 
 namespace LimitEngine {
-struct CommandInit_Parameter : public Object<LimitEngineMemoryCategory::Graphics>
+PipelineState* PipelineStateManager::FindOrCreatePipelineState(const PipelineStateDescription& desc)
 {
-    ID3D11Device			    *mD3DDevice             = nullptr;
-    ID3D11DeviceContext		    *mD3DDeviceContext      = nullptr;
-    ID3DUserDefinedAnnotation   *mD3DPerf               = nullptr;
-    ID3D11RenderTargetView	    *mBaseRenderTargetView  = nullptr;
-    ID3D11DepthStencilView	    *mBaseDepthStencilView  = nullptr;
-};
+    // Find pipeline state from cache
+    if (PipelineStateRefPtr* Found = mPipelineMap.Find(desc)) {
+        return (*Found)->Get();
+    }
+    
+    // Create new pipeline
+    PipelineState* newpipelinestate = new PipelineState(desc);
+    mPipelines.Add(desc, newpipelinestate);
+    return newpipelinestate;
 }
+} // namespace LimitEngine

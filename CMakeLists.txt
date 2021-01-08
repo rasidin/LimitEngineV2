@@ -80,13 +80,14 @@ foreach(shaderfile ${FILES_VERTEXSHADERS})
   get_filename_component(shadername ${shaderfilename} NAME_WE)
   set(outshaderpath "include/Shaders/${shadername}")
   list(APPEND FILES_GENERATEDVSHEADERS "${outshaderpath}.vs.h")
-  message("cmd ${CMAKE_CURRENT_BINARY_DIR}/tools/LEShaderConverter.exe -D -O0 -E=vs_main -T=VS_5_0 -N=${shadername}_VS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.vs")
+  message("cmd ${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe -D -O0 -E=vs_main -T=VS_5_0 -N=${shadername}_VS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.vs")
   add_custom_command(
-    OUTPUT "${outshaderpath}.vs.h"
-	COMMAND ${CMAKE_CURRENT_BINARY_DIR}/tools/LEShaderConverter.exe -D -O0 -E=vs_main -T=VS_5_0 -N=${shadername}_VS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.vs
-	DEPENDS ${shaderfile}
+    OUTPUT "${PROJECT_SOURCE_DIR}/{outshaderpath}.vs.h"
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/bin/LEShaderConverter.exe ${PROJECT_SOURCE_DIR}/tools
+	COMMAND ${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe -D -O0 -E=vs_main -T=VS_5_0 -N=${shadername}_VS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.vs
+	DEPENDS ${shaderfile} ${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe
 	COMMENT "Convert ${shaderfile}"
-	COMMENT "${CMAKE_CURRENT_BINARY_DIR}/tools/LEShaderConverter.exe -D -O0 -E=vs_main -T=VS_5_0 -N=${shadername}_VS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.vs"
+	COMMENT "${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe -D -O0 -E=vs_main -T=VS_5_0 -N=${shadername}_VS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.vs"
   )
 endforeach()
 
@@ -96,19 +97,20 @@ foreach(shaderfile ${FILES_PIXELSHADERS})
   get_filename_component(shadername ${shaderfilename} NAME_WE)
   set(outshaderpath "include/Shaders/${shadername}")
   list(APPEND FILES_GENERATEDPSHEADERS "${outshaderpath}.ps.h")
-  message("cmd ${CMAKE_CURRENT_BINARY_DIR}/tools/LEShaderConverter.exe -D -O0 -E=ps_main -T=PS_5_0 -N=${shadername}_PS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.ps")
+  message("cmd ${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe -D -O0 -E=ps_main -T=PS_5_0 -N=${shadername}_PS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.ps")
   add_custom_command(
-	OUTPUT "${outshaderpath}.ps.h"
-	COMMAND ${CMAKE_CURRENT_BINARY_DIR}/tools/LEShaderConverter.exe -D -O0 -E=ps_main -T=PS_5_0 -N=${shadername}_PS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.ps
-	DEPENDS ${shaderfile}
+	OUTPUT "${PROJECT_SOURCE_DIR}/${outshaderpath}.ps.h"
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/bin/LEShaderConverter.exe ${PROJECT_SOURCE_DIR}/tools
+	COMMAND ${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe -D -O0 -E=ps_main -T=PS_5_0 -N=${shadername}_PS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.ps
+	DEPENDS ${shaderfile} ${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe
 	COMMENT "Convert ${shaderfile}"
-	COMMENT "${CMAKE_CURRENT_BINARY_DIR}/tools/LEShaderConverter.exe -D -O0 -E=ps_main -T=PS_5_0 -N=${shadername}_PS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.ps"
+	COMMENT "${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe -D -O0 -E=ps_main -T=PS_5_0 -N=${shadername}_PS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.ps"
   )
 endforeach()
 
 add_custom_target(generatedheaders DEPENDS ${FILES_GENERATEDVSHEADERS} ${FILES_GENERATEDPSHEADERS})
 
-add_library(libLimitEngine
+add_library(LimitEngine
 	source/LimitEngine.cpp
 	${FILES_CORE}
 	${FILES_FACTORIES}
@@ -118,11 +120,11 @@ add_library(libLimitEngine
 	${FILES_POSTPROCESSORS}
 	${FILES_PLATFORM}
 )
-add_dependencies(libLimitEngine generatedheaders)
+add_dependencies(LimitEngine generatedheaders)
 
-target_include_directories(libLimitEngine PUBLIC ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/externals ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(LimitEngine PUBLIC ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/externals ${PROJECT_SOURCE_DIR}/include)
 
-install(TARGETS libLimitEngine
+install(TARGETS LimitEngine
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 		LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 

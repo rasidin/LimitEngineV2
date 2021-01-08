@@ -17,7 +17,7 @@
 #include "Renderer/Frustum.h"
 
 namespace LimitEngine {
-    class Camera : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>, public MetaData
+    class Camera : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>, public MetaData
     {
         static const float DefaultFOVRadians;
     public:

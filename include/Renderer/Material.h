@@ -37,15 +37,15 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "Core/TextParser.h"
 #include "Renderer/Texture.h"
 #include "Containers/MapArray.h"
-#include "Renderer/ShaderDriverParameter.h"
+#include "Renderer/ConstantBuffer.h"
 #include "Renderer/ShaderParameter.h"
 
-#include "rapidxml/rapidxml.hpp"
+#include "../externals/rapidxml/rapidxml.hpp"
 
 namespace LimitEngine {
     class Shader;
     class RendererTask_MaterialSetupShaderParameters;
-    class Material : public Object<LimitEngineMemoryCategory_Graphics>
+    class Material : public Object<LimitEngineMemoryCategory::Graphics>
     {
         friend RendererTask_MaterialSetupShaderParameters;
     public:
@@ -82,7 +82,6 @@ namespace LimitEngine {
         bool                                mIsEnabledRenderPass[(uint32)RenderPass::NumOfRenderPass];
 
         MapArray<String, ShaderParameter>   mParameters;
-        ShaderDriverParameter              *mShaderDriverParameter[(uint32)RenderPass::NumOfRenderPass];
 
         ShaderRefPtr                        mShader[(uint32)RenderPass::NumOfRenderPass];
         ConstantBufferRefPtr                mConstantBuffer[(uint32)RenderPass::NumOfRenderPass];

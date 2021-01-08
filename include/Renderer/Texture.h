@@ -73,7 +73,7 @@ enum TEXTURE_DEPTH_FORMAT
     TEXTURE_DEPTH_FORMAT_D32F,
     TEXTURE_DEPTH_FORMAT_D24S8,
 };
-class TextureImpl : public Object<LimitEngineMemoryCategory_Graphics>
+class TextureImpl : public Object<LimitEngineMemoryCategory::Graphics>
 {
 public:
     TextureImpl(class Texture *InOwner) : mOwner(InOwner) {}
@@ -105,7 +105,7 @@ public:
 protected:
     class Texture* mOwner = nullptr;
 };
-class TextureSourceImage : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>
+class TextureSourceImage : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>
 {
 public:
     TextureSourceImage() {}
@@ -152,7 +152,7 @@ private:
     friend TextureSourceImage;
     friend Archive;
 };
-class Texture : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>, public SerializableResource
+class Texture : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>, public SerializableResource
 {
     friend class RendererTask_LoadTextureFromMemory;
 	friend class RendererTask_LoadTextureFromMERLBRDFData;

@@ -40,7 +40,7 @@ namespace LimitEngine {
         static HANDLE CreateThread(Thread *thread, const ThreadParam &param);
         static void Join(THREADHANDLE threadhandle);
     };
-    class Thread : public Object<LimitEngineMemoryCategory_Common>
+    class Thread : public Object<LimitEngineMemoryCategory::Common>
     {
     public:
         Thread()

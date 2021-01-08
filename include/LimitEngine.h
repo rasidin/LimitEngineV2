@@ -65,7 +65,6 @@ private: // Private members
     PostProcessManager              *mPostProcessManager;
     TaskManager                     *mTaskManager;
     RenderTargetPoolManager         *mRenderTargetPoolManager;
-    ShaderDriverManager             *mShaderDriverManager;
     //GUIManager                      *mGuiManager;
     //ProfileManager                  *mProfileManager;
     //PostFilterManager               *mPostFilterManager;

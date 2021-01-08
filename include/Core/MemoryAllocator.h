@@ -66,7 +66,7 @@ namespace LimitEngine {
         static void InitWithMemoryPool(size_t size);
         static void Term();
         
-        static void* Alloc(size_t size, uint32 category = 0);
+        static void* Alloc(size_t size, LimitEngineMemoryCategory category = LimitEngineMemoryCategory::Unknown);
         static void Free(void* ptr);
 
         static size_t GetStatAllocatedMemory() { return mStats.AllocatedMemory; }

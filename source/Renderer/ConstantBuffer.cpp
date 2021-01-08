@@ -21,23 +21,39 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
-@file  PrivateDefinitions_DirectX.h
-@brief Private definitions for DirectX
-@author minseob(leeminseob@outlook.com)
+@file  ConstantBuffer.cpp
+@brief Constant buffer
+@author minseob (leeminseob@outlook.com)
 **********************************************************************/
-#pragma once
-#include <d3d11.h>
-#include <d3d11_1.h>
+#include "Renderer/ConstantBuffer.h"
 
-#include "Core/Object.h"
+#if defined(USE_DX12)
+#include "../Platform/DirectX12/ConstantBufferImpl_DirectX12.inl"
+#else
+#error No implementation of constant buffer
+#endif
 
 namespace LimitEngine {
-struct CommandInit_Parameter : public Object<LimitEngineMemoryCategory::Graphics>
+ConstantBuffer::ConstantBuffer()
+    : mImpl(nullptr)
 {
-    ID3D11Device			    *mD3DDevice             = nullptr;
-    ID3D11DeviceContext		    *mD3DDeviceContext      = nullptr;
-    ID3DUserDefinedAnnotation   *mD3DPerf               = nullptr;
-    ID3D11RenderTargetView	    *mBaseRenderTargetView  = nullptr;
-    ID3D11DepthStencilView	    *mBaseDepthStencilView  = nullptr;
-};
+#if defined(USE_DX12)
+    mImpl = new ConstantBufferImpl_DirectX12();
+#else
+#error No implementation of ConstantBuffer for this platform!
+#endif
 }
+ConstantBuffer::~ConstantBuffer()
+{
+}
+void ConstantBuffer::Create(Shader* InShader)
+{
+    if (mImpl)
+        mImpl->Create(InShader);
+}
+void ConstantBuffer::PrepareForDrawing()
+{
+    if (mImpl)
+        mImpl->PrepareForDrawing();
+}
+} // namespace LimitEngine

@@ -38,7 +38,7 @@ namespace LimitEngine
 class Shader;
 class Texture;
 class FrameBuffer;
-class DrawManagerImpl : public Object<LimitEngineMemoryCategory_Graphics>
+class DrawManagerImpl : public Object<LimitEngineMemoryCategory::Graphics>
 {
 public:
     DrawManagerImpl() {}
@@ -62,7 +62,7 @@ public:
     virtual void* GetCurrentFrameBufferView() const = 0;
 };
 
-class RendererTask : public Object<LimitEngineMemoryCategory_Graphics>
+class RendererTask : public Object<LimitEngineMemoryCategory::Graphics>
 {
 public:
     virtual ~RendererTask() {}
@@ -86,7 +86,7 @@ private:
 };
 
 class DrawManager;
-typedef Singleton<DrawManager, LimitEngineMemoryCategory_Graphics> SingletonDrawManager;
+typedef Singleton<DrawManager, LimitEngineMemoryCategory::Graphics> SingletonDrawManager;
 class DrawManager : public SingletonDrawManager
 {
     friend DrawCommand;

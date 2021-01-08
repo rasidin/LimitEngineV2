@@ -14,7 +14,7 @@ Copyright (C), LIMITGAME, 2020
 #define GENERATE_RESOURCEFACTORY_ID(a) (a[0] | (a[1] << 8) | (a[2] << 16) | (a[3] << 24))
 
 namespace LimitEngine {
-class ResourceFactory : public Object<LimitEngineMemoryCategory_Common>
+class ResourceFactory : public Object<LimitEngineMemoryCategory::Common>
 {
     static constexpr uint32 FixedSize = 16;
 

@@ -23,7 +23,7 @@ Copyright (C), LIMITGAME, 2020
 #include "Renderer/SamplerState.h"
 
 namespace LimitEngine {
-class CommandImpl : public Object<LimitEngineMemoryCategory_Graphics>
+class CommandImpl : public Object<LimitEngineMemoryCategory::Graphics>
 {
 public:
     CommandImpl() {}
@@ -44,7 +44,6 @@ public:
     virtual void ClearScreen(const LEMath::FloatColorRGBA &Color) = 0;
     virtual void BindVertexBuffer(void *Handle, void *Buffer, uint32 Offset, uint32 Size, uint32 Stride) = 0;
     virtual void BindIndexBuffer(void *Handle, uint32 Size) = 0;
-    virtual void BindShader(Shader *Shd) = 0;
     virtual void BindConstantBuffer(ConstantBuffer *cb) = 0;
     virtual void BindTargetTexture(uint32 Index, Texture *Tex) = 0;
     virtual void BindSampler(uint32 Index, SamplerState *Sampler) = 0;
@@ -66,12 +65,8 @@ public:
     virtual void EndEvent() = 0;
     virtual void* AllocateGPUBuffer(size_t size) = 0;
     virtual void UploadToGPUBuffer(void* gpubuffer, void* data, size_t size) = 0;
-    //virtual void SetUniformFloat1(int Location, float Value) = 0;
-    //virtual void SetUniformFloat2(int Location, const LEMath::FloatVector2 &Value) = 0;
-    //virtual void SetUniformFloat4(int Location, const LEMath::FloatVector4 &Value) = 0;
-    //virtual void SetUniformMatrix4(int Location, const LEMath::FloatMatrix4x4 &Value) = 0;
 };
-class CommandBuffer : public Object<LimitEngineMemoryCategory_Graphics>
+class CommandBuffer : public Object<LimitEngineMemoryCategory::Graphics>
 {
     friend DrawManager;
     friend DrawCommand;
@@ -102,15 +97,8 @@ private:            // Private Structure
             cDispatch,
             cDrawPrimitive,
             cDrawIndexedPrimitive,
-            cSetShaderUniformFloat1,
-            cSetShaderUniformFloat2,
-            cSetShaderUniformFloat3,
-            cSetShaderUniformFloat4,
-            cSetShaderUniformInt1,
-            cSetShaderUniformInt2,
-            cSetShaderUniformInt3,
-            cSetShaderUniformInt4,
-            cSetShaderUniformMatrix4,
+            cUpdateConstantBuffer,
+            cSetConstantBuffer,
             cSetFVF,
             cSetCulling,
             cSetEnable,
@@ -254,148 +242,29 @@ private:            // Private Structure
         uint32             index;
         PooledDepthStencil texture;
     } COMMAND_BINDPOOLEDDEPTHSTENCIL;
-    // Set float value to shader
-    typedef struct _COMMAND_SETSHADERUNIFORMFLOAT1 : public _COMMAND_COMMON
+    // Upload constant buffer using local cpu memory
+    typedef struct _COMMAND_UPDATECONSTANTBUFFER : public _COMMAND_COMMON
     {
-        _COMMAND_SETSHADERUNIFORMFLOAT1(Shader *sh, ConstantBuffer *cb, int l, const float v)
-            : _COMMAND_COMMON(cSetShaderUniformFloat1)
-            , shader(sh)
+        _COMMAND_UPDATECONSTANTBUFFER(ConstantBuffer* cb, void* dt, size_t sz)
+            : _COMMAND_COMMON(cUpdateConstantBuffer)
             , buffer(cb)
-            , location(l)
-            , value(v)
-        {
-        };
-        Shader          *shader;
-        ConstantBuffer  *buffer;
-        int              location;
-        float            value;
-    } COMMAND_SETSHADERUNIFORMFLOAT1;
-    // Set float2 value to shader
-    typedef struct _COMMAND_SETSHADERUNIFORMFLOAT2 : public _COMMAND_COMMON
+            , data(dt)
+            , size(sz)
+        {}
+        ConstantBuffer* buffer;
+        void* data;
+        size_t size;
+    } COMMAND_UPDATECONSTANTBUFFER;
+    // Set constant buffer
+    typedef struct _COMMAND_SETCONSTANTBUFFER : public _COMMAND_COMMON
     {
-        _COMMAND_SETSHADERUNIFORMFLOAT2(Shader *sh, ConstantBuffer *cb, int l, const LEMath::FloatVector2 &v)
-            : _COMMAND_COMMON(cSetShaderUniformFloat2)
-            , shader(sh)
-            , buffer(cb)
-            , location(l)
-            , value(v)
-        {
-        };
-        Shader                  *shader;
-        ConstantBuffer          *buffer;
-        int                      location;
-        LEMath::FloatVector2     value;
-    } COMMAND_SETSHADERUNIFORMFLOAT2;
-    // Set float3 value to shader
-    typedef struct _COMMAND_SETSHADERUNIFORMFLOAT3 : public _COMMAND_COMMON
-    {
-        _COMMAND_SETSHADERUNIFORMFLOAT3(Shader *sh, ConstantBuffer *cb, int l, const LEMath::FloatVector3 &v)
-            : _COMMAND_COMMON(cSetShaderUniformFloat3)
-            , shader(sh)
-            , buffer(cb)
-            , location(l)
-            , value(v)
-        {
-        };
-        Shader                *shader;
-        ConstantBuffer        *buffer;
-        int                    location;
-        LEMath::FloatVector3   value;
-    } COMMAND_SETSHADERUNIFORMFLOAT3;
-    // Set float4 value to shader
-    typedef struct _COMMAND_SETSHADERUNIFORMFLOAT4 : public _COMMAND_COMMON
-    {
-        _COMMAND_SETSHADERUNIFORMFLOAT4(Shader *sh, ConstantBuffer *cb, int l, const LEMath::FloatVector4 &v)
-            : _COMMAND_COMMON(cSetShaderUniformFloat4)
-            , shader(sh)
-            , buffer(cb)
-            , location(l)
-            , value(v)
-        {
-        }
-        Shader                 *shader;
-        ConstantBuffer         *buffer;
-        int                     location;
-        LEMath::FloatVector4    value;
-    } COMMAND_SETSHADERUNIFORMFLOAT4;
-    typedef struct _COMMAND_SETSHADERUNIFORMINT1 : public _COMMAND_COMMON
-    {
-        _COMMAND_SETSHADERUNIFORMINT1(Shader *sh, ConstantBuffer *cb, int l, const int32 v)
-            : _COMMAND_COMMON(cSetShaderUniformInt1)
-            , shader(sh)
-            , buffer(cb)
-            , location(l)
-            , value(v)
-        {
-        };
-        Shader                  *shader;
-        ConstantBuffer          *buffer;
-        int                      location;
-        int32                    value;
-    } COMMAND_SETSHADERUNIFORMINT1;
-    typedef struct _COMMAND_SETSHADERUNIFORMINT2 : public _COMMAND_COMMON
-    {
-        _COMMAND_SETSHADERUNIFORMINT2(Shader *sh, ConstantBuffer *cb, int l, const LEMath::IntVector2 &v)
-            : _COMMAND_COMMON(cSetShaderUniformInt2)
-            , shader(sh)
-            , buffer(cb)
-            , location(l)
-            , value(v)
-        {
-        };
-        Shader                  *shader;
-        ConstantBuffer          *buffer;
-        int                      location;
-        LEMath::IntVector2       value;
-    } COMMAND_SETSHADERUNIFORMINT2;
-    typedef struct _COMMAND_SETSHADERUNIFORMINT3 : public _COMMAND_COMMON
-    {
-        _COMMAND_SETSHADERUNIFORMINT3(Shader *sh, ConstantBuffer *cb, int l, const LEMath::IntVector3 &v)
-            : _COMMAND_COMMON(cSetShaderUniformInt3)
-            , shader(sh)
-            , buffer(cb)
-            , location(l)
-            , value(v)
-        {
-        };
-        Shader                  *shader;
-        ConstantBuffer          *buffer;
-        int                      location;
-        LEMath::IntVector3       value;
-    } COMMAND_SETSHADERUNIFORMINT3;
-    typedef struct _COMMAND_SETSHADERUNIFORMINT4 : public _COMMAND_COMMON
-    {
-        _COMMAND_SETSHADERUNIFORMINT4(Shader *sh, ConstantBuffer *cb, int l, const LEMath::IntVector4 &v)
-            : _COMMAND_COMMON(cSetShaderUniformInt4)
-            , shader(sh)
-            , buffer(cb)
-            , location(l)
-            , value(v)
-        {
-        };
-        Shader                  *shader;
-        ConstantBuffer          *buffer;
-        int                      location;
-        LEMath::IntVector4       value;
-    } COMMAND_SETSHADERUNIFORMINT4;
-    // Set matrix4 value to shader
-    typedef struct _COMMAND_SETSHADERUNIFORMMATRIX4 : public _COMMAND_COMMON
-    {
-        _COMMAND_SETSHADERUNIFORMMATRIX4(Shader *sh, ConstantBuffer *cb, int l, int s, float *p)
-            : _COMMAND_COMMON(cSetShaderUniformMatrix4)
-            , shader(sh)
-            , buffer(cb)
-            , location(l)
-            , size(s)
-            , pointer(p)
-        {
-        }
-        Shader         *shader;
-        ConstantBuffer *buffer;
-        int             location;
-        int             size;
-        float          *pointer;
-    } COMMAND_SETSHADERUNIFORMMATRIX4;
+        _COMMAND_SETCONSTANTBUFFER(uint32 idx, ConstantBuffer* cb)
+            : _COMMAND_COMMON(cSetConstantBuffer)
+            , index(idx)
+        {}
+        uint32 index;
+        ConstantBuffer* buffer;
+    } COMMAND_SETCONSTANTBUFFER;
     // Dispatch
     typedef struct _COMMAND_DISPATCH : public _COMMAND_COMMON
     {
@@ -626,6 +495,7 @@ public:
 private:
     void* allocateFromCommandBuffer(size_t size);
     void* copyDataToGPUBuffer(void *data, size_t size);
+    void* duplicateBuffer(void* data, size_t size);
     float* copyMatrixToBuffer(float *ptr);
     char* duplicateString(const char *src);
 

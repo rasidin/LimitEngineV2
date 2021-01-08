@@ -15,7 +15,7 @@
 #include "Transform.h"
 
 namespace LimitEngine {
-    class ModelInstance : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>
+    class ModelInstance : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>
     {
     public:
         explicit ModelInstance(uint32 ID, const ModelRefPtr &InModel) 

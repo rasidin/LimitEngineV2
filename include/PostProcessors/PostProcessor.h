@@ -46,7 +46,7 @@ struct PostProcessContext
     LEMath::IntVector4   FrameIndexContext;
 };
 
-class PostProcessor : public Object<LimitEngineMemoryCategory_Graphics>
+class PostProcessor : public Object<LimitEngineMemoryCategory::Graphics>
 {
 public:
     virtual void Init(const InitializeOptions &Options) = 0;

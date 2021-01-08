@@ -22,7 +22,7 @@ namespace LimitEngine {
     class FrameBuffer;
     class Texture;
 	class PostFilterManager;
-	typedef Singleton<PostFilterManager, LimitEngineMemoryCategory_Graphics> SingletonPostFilterManager;
+	typedef Singleton<PostFilterManager, LimitEngineMemoryCategory::Graphics> SingletonPostFilterManager;
     class PostFilterManager : public SingletonPostFilterManager
     {
     public:

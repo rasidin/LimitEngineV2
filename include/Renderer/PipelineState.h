@@ -21,23 +21,34 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
-@file  PrivateDefinitions_DirectX.h
-@brief Private definitions for DirectX
-@author minseob(leeminseob@outlook.com)
+@file  PipelineState.h
+@brief PipelineState
+@author minseob (leeminseob@outlook.com)
 **********************************************************************/
-#pragma once
-#include <d3d11.h>
-#include <d3d11_1.h>
+#ifndef LIMITENGINEV2_PIPELINESTATE_H_
+#define LIMITENGINEV2_PIPELINESTATE_H_
 
-#include "Core/Object.h"
+#include <LERenderer>
+
+#include "Core/Memory.h"
+#include "Core/ReferenceCountedObject.h"
+#include "Renderer/PipelineStateDescriptor.h"
 
 namespace LimitEngine {
-struct CommandInit_Parameter : public Object<LimitEngineMemoryCategory::Graphics>
+class PipelineStateImpl
 {
-    ID3D11Device			    *mD3DDevice             = nullptr;
-    ID3D11DeviceContext		    *mD3DDeviceContext      = nullptr;
-    ID3DUserDefinedAnnotation   *mD3DPerf               = nullptr;
-    ID3D11RenderTargetView	    *mBaseRenderTargetView  = nullptr;
-    ID3D11DepthStencilView	    *mBaseDepthStencilView  = nullptr;
+    virtual bool Init(const PipelineStateDescriptor& desc) = 0;
 };
-}
+
+class PipelineState : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>
+{
+public:
+    PipelineState(const PipelineStateDescriptor &desc);
+    virtual ~PipelineState() {}
+
+private:
+    PipelineStateImpl*      mImpl;
+};
+} // namespace LimitEngine
+
+#endif // LIMITENGINEV2_PIPELINESTATE_H_

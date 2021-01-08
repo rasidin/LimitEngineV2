@@ -52,7 +52,7 @@ public:
         if ((TGAHeader::EColorType)mHeader.ColorType == TGAHeader::EColorType::FullColor && mHeader.ColorDepth == 24) { // Convert colors
             mHeader.ColorDepth = 32;
             uint32 pitch = GetRowPitch();
-            mColorData = MemoryAllocator::Alloc(pitch * mHeader.Height, LimitEngineMemoryCategory_Graphics);
+            mColorData = MemoryAllocator::Alloc(pitch * mHeader.Height, LimitEngineMemoryCategory::Graphics);
             uint8* CurrentColorDataPtr = (uint8*)mColorData;
             for (int y = static_cast<int>(mHeader.Height) - 1; y >= 0; y--) {
                 for (int x = 0, width = static_cast<int>(mHeader.Width); x < width; x++) {
@@ -66,7 +66,7 @@ public:
         }
         else { // Copy through
             uint32 pitch = GetRowPitch();
-            mColorData = MemoryAllocator::Alloc(pitch * mHeader.Height, LimitEngineMemoryCategory_Graphics);
+            mColorData = MemoryAllocator::Alloc(pitch * mHeader.Height, LimitEngineMemoryCategory::Graphics);
             uint8* CurrentColorData = static_cast<uint8*>(mColorData);
             for (int y = static_cast<int>(mHeader.Height) - 1; y >= 0; y--) {
                 memcpy(CurrentColorData, mSrcColorData + pitch * y, pitch);

@@ -17,7 +17,7 @@
 #include "Containers/VectorArray.h"
 
 namespace LimitEngine {
-    template<typename T1, typename T2> class MapArray : public Object<LimitEngineMemoryCategory_Common>
+    template<typename T1, typename T2> class MapArray : public Object<LimitEngineMemoryCategory::Common>
     {
     public:
         typedef Pair<T1, T2> MapArrayItem;

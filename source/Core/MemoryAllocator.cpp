@@ -92,7 +92,7 @@ namespace LimitEngine {
         mIsCacheEnable = true;
     }
     
-    void* MemoryAllocator::Alloc(size_t size, uint32 category)
+    void* MemoryAllocator::Alloc(size_t size, LimitEngineMemoryCategory category)
     {
         Mutex::ScopedLock scopedLock(gMutexForMemoryAllocator);
         if( mPool == NULL )
@@ -120,7 +120,7 @@ namespace LimitEngine {
 
 			MEMBLOCKHEADER* nextArea = memAreaUnused->splitMemoryArea(newMemBlocks);
             memAreaUnused->allocated = true;
-			memAreaUnused->category = category;
+			memAreaUnused->category = static_cast<uint32>(category);
 
             if ( mIsCacheEnable )
             {

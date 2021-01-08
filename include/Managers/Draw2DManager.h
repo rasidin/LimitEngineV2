@@ -20,7 +20,7 @@ namespace LimitEngine {
     typedef VertexBuffer<VERTEXTYPE(PCT)> VertexBuffer2D;
 
     class Draw2DManager;
-    typedef Singleton<Draw2DManager, LimitEngineMemoryCategory_Graphics> SingletonDraw2DManager;
+    typedef Singleton<Draw2DManager, LimitEngineMemoryCategory::Graphics> SingletonDraw2DManager;
     class Draw2DManager : public SingletonDraw2DManager
     {
         static constexpr uint32 Vertex2DReserved = 3 * 200;

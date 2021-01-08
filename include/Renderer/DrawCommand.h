@@ -1,12 +1,32 @@
-/***********************************************************
-LIMITEngine Header File
-Copyright (C), LIMITGAME, 2020
------------------------------------------------------------
-@file  CommandBuffer.h
-@brief DrawCommand (just for creation command in commnadbuffer)
-@author minseob (leeminseob@outlook.com)
-***********************************************************/
-#pragma once
+/*********************************************************************
+Copyright (c) 2020 LIMITGAME
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify,
+merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+----------------------------------------------------------------------
+@file DrawCommand.h
+@brief Post processor for Resolving final color
+@author minseob
+**********************************************************************/
+#ifndef LIMITENGINEV2_RENDERER_DRAWCOMMAND_H_
+#define LIMITENGINEV2_RENDERER_DRAWCOMMAND_H_
 
 #include <LERenderer>
 
@@ -42,15 +62,8 @@ class DrawCommand
     static void DrawIndexedPrimitive(RendererFlag::PrimitiveTypes type, uint32 vtxcount, uint32 count);
     static void SetRenderTarget(uint32 index, Texture *color, Texture *depthstencil, uint32 surfaceIndex = 0);
     static void SetFVF(uint32 fvf);
-    static void SetShaderUniformFloat1(Shader *shader, ConstantBuffer *buffer, int location, const float v);
-    static void SetShaderUniformFloat2(Shader *shader, ConstantBuffer *buffer, int location, const LEMath::FloatVector2 &value);
-    static void SetShaderUniformFloat3(Shader *shader, ConstantBuffer *buffer, int location, const LEMath::FloatVector3 &value);
-    static void SetShaderUniformFloat4(Shader *shader, ConstantBuffer *buffer, int location, const LEMath::FloatVector4 &v);
-    static void SetShaderUniformInt1(Shader *shader, ConstantBuffer *buffer, int location, const int32 v);
-    static void SetShaderUniformInt2(Shader *shader, ConstantBuffer *buffer, int location, const LEMath::IntVector2 &v);
-    static void SetShaderUniformInt3(Shader *shader, ConstantBuffer *buffer, int location, const LEMath::IntVector3 &v);
-    static void SetShaderUniformInt4(Shader *shader, ConstantBuffer *buffer, int location, const LEMath::IntVector4 &v);
-    static void SetShaderUniformMatrix4(Shader *shader, ConstantBuffer *buffer, int location, int size, float *pointer);
+    static void UpdateConstantBuffer(ConstantBuffer* buffer, void* data, size_t size);
+    static void SetConstantBuffer(uint32 index, ConstantBuffer* buffer);
     static void SetCulling(uint32 cull);
     static void SetEnable(uint32 f);
     static void SetDisable(uint32 f);
@@ -65,3 +78,4 @@ class DrawCommand
     static void EndEvent();
 }; // DrawCommand
 }
+#endif // LIMITENGINEV2_RENDERER_DRAWCOMMAND_H_

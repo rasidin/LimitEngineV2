@@ -17,7 +17,7 @@
 
 namespace LimitEngine {
     class Shader;
-    class VertexBufferImpl : public Object<LimitEngineMemoryCategory_Graphics>
+    class VertexBufferImpl : public Object<LimitEngineMemoryCategory::Graphics>
     {
     public:
         virtual ~VertexBufferImpl() {}
@@ -67,7 +67,7 @@ namespace LimitEngine {
         void *mInitializeBuffer;
     };
 
-    class VertexBufferGeneric : public Object<LimitEngineMemoryCategory_Graphics>, public SerializableResource
+    class VertexBufferGeneric : public Object<LimitEngineMemoryCategory::Graphics>, public SerializableResource
     {
     public:
 		VertexBufferGeneric(){};

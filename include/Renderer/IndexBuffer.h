@@ -14,7 +14,7 @@
 #include "Core/SerializableResource.h"
 
 namespace LimitEngine {
-    class IndexBufferImpl : public Object<LimitEngineMemoryCategory_Graphics>
+    class IndexBufferImpl : public Object<LimitEngineMemoryCategory::Graphics>
     {public:
         IndexBufferImpl(class IndexBuffer* InBuffer) : mOwner(InBuffer) {}
         virtual ~IndexBufferImpl() {}
@@ -27,7 +27,7 @@ namespace LimitEngine {
     protected:
         class IndexBuffer* mOwner = nullptr;
     };
-    class IndexBuffer : public Object<LimitEngineMemoryCategory_Graphics>, public SerializableResource
+    class IndexBuffer : public Object<LimitEngineMemoryCategory::Graphics>, public SerializableResource
     {
     public:
         IndexBuffer();

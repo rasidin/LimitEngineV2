@@ -40,15 +40,15 @@ void PostProcessResolveFinalColor::Init(const InitializeOptions &Options)
 {
     switch (Options.OutputColorSpace)
     {
-    case InitializeOptions::ColorSpace::sRGB:
-        mResolveShader = LE_ShaderManager.GetShader("ResolveSceneColorSRGB");
-        break;
-    case InitializeOptions::ColorSpace::PQ:
-        mResolveShader = LE_ShaderManager.GetShader("ResolveSceneColorPQ");
-        break;
+    case InitializeOptions::ColorSpace::sRGB: {
+        mResolveShader = LE_ShaderManager.GetShader<ResolveSceneColorSRGB_PS>();
+        mColorSpace = ColorSpace::sRGB;
+    } break;
+    case InitializeOptions::ColorSpace::PQ: {
+        //mResolveShader = LE_ShaderManager.GetShader("ResolveSceneColorPQ");
+        mColorSpace = ColorSpace::PQ;
+    } break;
     }
-    mResolveCB = new ConstantBuffer();
-    mResolveCB->Create(mResolveShader.Get());
 }
 
 void PostProcessResolveFinalColor::Process(PostProcessContext &Context, VectorArray<PooledRenderTarget> &RenderTargets)

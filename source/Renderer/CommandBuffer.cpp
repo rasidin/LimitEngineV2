@@ -141,11 +141,18 @@ void* CommandBuffer::allocateFromCommandBuffer(size_t size)
     return outputPointer;
 }
 
-void* CommandBuffer::copyDataToGPUBuffer(void* Data, size_t Size)
+void* CommandBuffer::copyDataToGPUBuffer(void* data, size_t size)
 {
-    void* gpuResource = mImpl->AllocateGPUBuffer(Size);
-    mImpl->UploadToGPUBuffer(gpuResource, Data, Size);
+    void* gpuResource = mImpl->AllocateGPUBuffer(size);
+    mImpl->UploadToGPUBuffer(gpuResource, data, size);
     return gpuResource;
+}
+
+void* CommandBuffer::duplicateBuffer(void* data, size_t size)
+{
+    void* output = allocateFromCommandBuffer(size);
+    ::memcpy(output, data, size);
+    return output;
 }
 
 float* CommandBuffer::copyMatrixToBuffer(float *ptr)
@@ -297,69 +304,10 @@ void CommandBuffer::Flush(RenderState *rs)
                 COMMAND_SETRENDERTARGET *command = reinterpret_cast<COMMAND_SETRENDERTARGET*>(currentCommand);
                 mImpl->SetRenderTarget(command->index, command->color, command->depthstencil, command->surfaceIndex);
             } break;
-            case COMMAND::cBindShader:
-            {
-                COMMAND_BINDSHADER *command = reinterpret_cast<COMMAND_BINDSHADER*>(currentCommand);
-                mImpl->BindShader(command->shader);
-            } break;
             case COMMAND::cBindConstantBuffer:
             {
                 COMMAND_BINDCONSTANTBUFFER *command = reinterpret_cast<COMMAND_BINDCONSTANTBUFFER*>(currentCommand);
                 mImpl->BindConstantBuffer(command->constantBuffer);
-            } break;
-            case COMMAND::cSetShaderUniformFloat1:
-            {
-                COMMAND_SETSHADERUNIFORMFLOAT1 *command = reinterpret_cast<COMMAND_SETSHADERUNIFORMFLOAT1*>(currentCommand);
-                if (command->shader)
-                    command->shader->SetUniformFloat1(command->buffer, command->location, command->value);
-            } break;
-            case COMMAND::cSetShaderUniformFloat2:
-            {
-                COMMAND_SETSHADERUNIFORMFLOAT2 *command = reinterpret_cast<COMMAND_SETSHADERUNIFORMFLOAT2*>(currentCommand);
-                if (command->shader)
-                    command->shader->SetUniformFloat2(command->buffer, command->location, command->value);
-            } break;
-            case COMMAND::cSetShaderUniformFloat3:
-            {
-                COMMAND_SETSHADERUNIFORMFLOAT3 *command = reinterpret_cast<COMMAND_SETSHADERUNIFORMFLOAT3*>(currentCommand);
-                if (command->shader)
-                    command->shader->SetUniformFloat3(command->buffer, command->location, command->value);
-            } break;
-            case COMMAND::cSetShaderUniformFloat4:
-            {
-                COMMAND_SETSHADERUNIFORMFLOAT4 *command = reinterpret_cast<COMMAND_SETSHADERUNIFORMFLOAT4*>(currentCommand);
-                if (command->shader)
-                    command->shader->SetUniformFloat4(command->buffer, command->location, command->value);
-            } break;
-            case COMMAND::cSetShaderUniformInt1:
-            {
-                COMMAND_SETSHADERUNIFORMINT1 *command = reinterpret_cast<COMMAND_SETSHADERUNIFORMINT1*>(currentCommand);
-                if (command->shader)
-                    command->shader->SetUniformInt1(command->buffer, command->location, command->value);
-            } break;
-            case COMMAND::cSetShaderUniformInt2:
-            {
-                COMMAND_SETSHADERUNIFORMINT2 *command = reinterpret_cast<COMMAND_SETSHADERUNIFORMINT2*>(currentCommand);
-                if (command->shader)
-                    command->shader->SetUniformInt2(command->buffer, command->location, command->value);
-            } break;
-            case COMMAND::cSetShaderUniformInt3:
-            {
-                COMMAND_SETSHADERUNIFORMINT3 *command = reinterpret_cast<COMMAND_SETSHADERUNIFORMINT3*>(currentCommand);
-                if (command->shader)
-                    command->shader->SetUniformInt3(command->buffer, command->location, command->value);
-            } break;
-            case COMMAND::cSetShaderUniformInt4:
-            {
-                COMMAND_SETSHADERUNIFORMINT4 *command = reinterpret_cast<COMMAND_SETSHADERUNIFORMINT4*>(currentCommand);
-                if (command->shader)
-                    command->shader->SetUniformInt4(command->buffer, command->location, command->value);
-            } break;
-            case COMMAND::cSetShaderUniformMatrix4:
-            {
-                COMMAND_SETSHADERUNIFORMMATRIX4 *command = reinterpret_cast<COMMAND_SETSHADERUNIFORMMATRIX4*>(currentCommand);
-                if (command->shader)
-                    command->shader->SetUniformMatrix4(command->buffer, command->location, command->size, command->pointer);
             } break;
 			case COMMAND::cBindTargetTexture:
 			{
@@ -399,6 +347,18 @@ void CommandBuffer::Flush(RenderState *rs)
                     mImpl->BindTexture(command->index, command->texture.Get());
                     command->texture.Release();
                 }
+            } break;
+            case COMMAND::cUpdateConstantBuffer:
+            {
+                COMMAND_UPDATECONSTANTBUFFER* command = reinterpret_cast<COMMAND_UPDATECONSTANTBUFFER*>(currentCommand);
+                if (command->buffer) {
+                    mImpl->UploadConstantBuffer(command->buffer, command->data, command->size);
+                }
+            } break;
+            case COMMAND::cSetConstantBuffer:
+            {
+                COMMAND_SETCONSTANTBUFFER* command = reinterpret_cast<COMMAND_SETCONSTANTBUFFER*>(currentCommand);
+                mImpl->BindConstantBuffer(command->buffer);
             } break;
             case COMMAND::cCopyBuffer:
             {
@@ -572,68 +532,19 @@ void DrawCommand::ResourceBarrier(VertexBufferGeneric* InVertexBuffer, const Res
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_RESOURCEBARRIER(InVertexBuffer, InResourceState);
 }
 
-void DrawCommand::BindShader(Shader *sh)
-{
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDSHADER(sh);
-}
-
-void DrawCommand::BindShader(const char *name)
-{
-    Shader *sh = ShaderManager::GetSingleton().GetShader(name).Get();
-    if (sh)
-    {
-        COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDSHADER(sh);
-    }
-}
-
 void DrawCommand::BindConstantBuffer(ConstantBuffer *cb)
 {
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDCONSTANTBUFFER(cb);
 }
 
-void DrawCommand::SetShaderUniformFloat1(Shader *shader, ConstantBuffer *buffer, int location, const float value)
+void DrawCommand::UploadConstantBuffer(ConstantBuffer* buffer, void* data, size_t size)
 {
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETSHADERUNIFORMFLOAT1(shader, buffer, location, value);
+    CommandBuffer::COMMAND_UPLOADCONSTANTBUFFER* currentcommand = COMMANDBUFFER_NEW CommandBuffer::COMMAND_UPLOADCONSTANTBUFFER(buffer, data, size);
 }
 
-void DrawCommand::SetShaderUniformFloat2(Shader *shader, ConstantBuffer *buffer, int location, const LEMath::FloatVector2 &value)
+void DrawCommand::SetConstantBufferMatrix4(Shader* shader, ConstantBuffer* buffer, int location, int size, float* pointer)
 {
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETSHADERUNIFORMFLOAT2(shader, buffer, location, value);
-}
-
-void DrawCommand::SetShaderUniformFloat3(Shader *shader, ConstantBuffer *buffer, int location, const LEMath::FloatVector3 &value)
-{
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETSHADERUNIFORMFLOAT3(shader, buffer, location, value);
-}
-
-void DrawCommand::SetShaderUniformFloat4(Shader *shader, ConstantBuffer *buffer, int location, const LEMath::FloatVector4 &value)
-{
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETSHADERUNIFORMFLOAT4(shader, buffer, location, value);
-}
-
-void DrawCommand::SetShaderUniformInt1(Shader *shader, ConstantBuffer *buffer, int location, const int32 value)
-{
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETSHADERUNIFORMINT1(shader, buffer, location, value);
-}
-
-void DrawCommand::SetShaderUniformInt2(Shader *shader, ConstantBuffer *buffer, int location, const LEMath::IntVector2 &value)
-{
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETSHADERUNIFORMINT2(shader, buffer, location, value);
-}
-
-void DrawCommand::SetShaderUniformInt3(Shader *shader, ConstantBuffer *buffer, int location, const LEMath::IntVector3 &value)
-{
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETSHADERUNIFORMINT3(shader, buffer, location, value);
-}
-
-void DrawCommand::SetShaderUniformInt4(Shader *shader, ConstantBuffer *buffer, int location, const LEMath::IntVector4 &value)
-{
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETSHADERUNIFORMINT4(shader, buffer, location, value);
-}
-
-void DrawCommand::SetShaderUniformMatrix4(Shader *shader, ConstantBuffer *buffer, int location, int size, float *pointer)
-{
-    CommandBuffer::COMMAND_SETSHADERUNIFORMMATRIX4 *currentCommand = COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETSHADERUNIFORMMATRIX4(shader, buffer, location, size, LE_DrawManager.getCommandBuffer()->copyMatrixToBuffer(pointer));
+    CommandBuffer::COMMAND_SETSHADERUNIFORMMATRIX4* currentCommand = COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETCONSTANTBUFFERMATRIX4(buffer, location, size, LE_DrawManager.getCommandBuffer()->copyMatrixToBuffer(pointer));
     currentCommand->nextOffset = LE_DrawManager.getCommandBuffer()->CalculateCommandOffset((CommandBuffer::COMMAND*)currentCommand);
 }
 

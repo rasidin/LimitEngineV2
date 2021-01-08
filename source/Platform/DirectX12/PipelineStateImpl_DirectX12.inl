@@ -1,4 +1,4 @@
-/*********************************************************************
+/***********************************************************
 Copyright (c) 2020 LIMITGAME
 
 Permission is hereby granted, free of charge, to any person
@@ -20,24 +20,18 @@ HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
-----------------------------------------------------------------------
-@file  PrivateDefinitions_DirectX.h
-@brief Private definitions for DirectX
-@author minseob(leeminseob@outlook.com)
-**********************************************************************/
-#pragma once
-#include <d3d11.h>
-#include <d3d11_1.h>
-
-#include "Core/Object.h"
+-----------------------------------------------------------
+@file  PipelineStateImpl_DirectX12.inl
+@brief PipelineState (DirectX12)
+@author minseob (leeminseob@outlook.com)
+***********************************************************/
+#ifndef LIMITENGINEV2_PIPELINESTATEIMPL_DIRECTX12_INL_
+#define LIMITENGINEV2_PIPELINESTATEIMPL_DIRECTX12_INL_
 
 namespace LimitEngine {
-struct CommandInit_Parameter : public Object<LimitEngineMemoryCategory::Graphics>
+class PipelineStateImpl_DirectX12 : public PipelineStateImpl
 {
-    ID3D11Device			    *mD3DDevice             = nullptr;
-    ID3D11DeviceContext		    *mD3DDeviceContext      = nullptr;
-    ID3DUserDefinedAnnotation   *mD3DPerf               = nullptr;
-    ID3D11RenderTargetView	    *mBaseRenderTargetView  = nullptr;
-    ID3D11DepthStencilView	    *mBaseDepthStencilView  = nullptr;
 };
 }
+
+#endif // LIMITENGINEV2_PIPELINESTATEIMPL_DIRECTX12_INL_

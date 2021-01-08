@@ -36,7 +36,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 namespace LimitEngine {
 class RenderTargetPoolManager;
-typedef Singleton<RenderTargetPoolManager, LimitEngineMemoryCategory_Graphics> SingletonRenderTargetPoolManager;
+typedef Singleton<RenderTargetPoolManager, LimitEngineMemoryCategory::Graphics> SingletonRenderTargetPoolManager;
 struct RenderTargetDesc
 {
     LEMath::IntSize Size;

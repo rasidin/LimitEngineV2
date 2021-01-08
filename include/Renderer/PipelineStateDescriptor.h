@@ -21,23 +21,19 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
-@file  PrivateDefinitions_DirectX.h
-@brief Private definitions for DirectX
-@author minseob(leeminseob@outlook.com)
+@file PipelineStateDescriptor.h
+@brief Descriptor for PipelineState
+@author minseob
 **********************************************************************/
-#pragma once
-#include <d3d11.h>
-#include <d3d11_1.h>
-
-#include "Core/Object.h"
+#ifndef LIMITENGINEV2_PIPELINESTATEDESCRIPTOR_H_
+#define LIMITENGINEV2_PIPELINESTATEDESCRIPTOR_H_
 
 namespace LimitEngine {
-struct CommandInit_Parameter : public Object<LimitEngineMemoryCategory::Graphics>
-{
-    ID3D11Device			    *mD3DDevice             = nullptr;
-    ID3D11DeviceContext		    *mD3DDeviceContext      = nullptr;
-    ID3DUserDefinedAnnotation   *mD3DPerf               = nullptr;
-    ID3D11RenderTargetView	    *mBaseRenderTargetView  = nullptr;
-    ID3D11DepthStencilView	    *mBaseDepthStencilView  = nullptr;
+struct PipelineStateDescriptor {
+    bool operator == (const PipelineStateDescriptor& desc) {
+
+    }
 };
 }
+
+#endif //  LIMITENGINEV2_PIPELINESTATEDESCRIPTOR_H_

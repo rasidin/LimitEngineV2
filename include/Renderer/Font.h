@@ -17,7 +17,7 @@
 
 namespace LimitEngine {
     class Sprite;
-    class Font : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>, public SerializableResource
+    class Font : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>, public SerializableResource
     {
         enum class FileVersion : uint32 {
             FirstVersion = 1,

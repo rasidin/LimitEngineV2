@@ -19,7 +19,7 @@
 namespace LimitEngine {
     class Texture;
     class RenderBuffer;
-    class PostFilter : public Object<LimitEngineMemoryCategory_Graphics>
+    class PostFilter : public Object<LimitEngineMemoryCategory::Graphics>
     {
     public:
                  PostFilter()               {}

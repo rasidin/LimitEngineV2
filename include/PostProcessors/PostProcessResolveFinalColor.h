@@ -30,11 +30,20 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include <LERenderer>
 #include "PostProcessor.h"
 
+#include "Containers/VectorArray.h"
 #include "Renderer/Shader.h"
 
 namespace LimitEngine {
 class PostProcessResolveFinalColor : public PostProcessor
 {
+public:
+    enum class ColorSpace : uint8 {
+        sRGB = 0,
+        PQ,
+        Linear,
+        Num
+    };
+
 public:
     PostProcessResolveFinalColor() {}
     virtual ~PostProcessResolveFinalColor() {}
@@ -44,7 +53,9 @@ public:
     virtual void Process(PostProcessContext &Context, VectorArray<PooledRenderTarget> &RenderTargets) override;
 
 private:
+    ColorSpace mColorSpace;
+
     ShaderRefPtr mResolveShader;
-    ConstantBufferRefPtr mResolveCB;
+    VectorArray<ConstantBufferRefPtr> mConstantBuffers;
 };
 } // LimitEngine

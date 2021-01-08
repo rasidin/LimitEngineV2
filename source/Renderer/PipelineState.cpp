@@ -21,23 +21,27 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
-@file  PrivateDefinitions_DirectX.h
-@brief Private definitions for DirectX
-@author minseob(leeminseob@outlook.com)
+@file  PipelineState.cpp
+@brief PipelineState
+@author minseob (leeminseob@outlook.com)
 **********************************************************************/
-#pragma once
-#include <d3d11.h>
-#include <d3d11_1.h>
+#include "Renderer/PipelineState.h"
 
-#include "Core/Object.h"
+#ifdef USE_DX12
+#include "Platform/DirectX12/PipelineStateImpl_DirectX12.inl"
+#else
+#error No implementatios of this platform!
+#endif
 
 namespace LimitEngine {
-struct CommandInit_Parameter : public Object<LimitEngineMemoryCategory::Graphics>
+PipelineState::PipelineState(const PipelineStateDescriptor &desc)
+    : mImpl(nullptr)
 {
-    ID3D11Device			    *mD3DDevice             = nullptr;
-    ID3D11DeviceContext		    *mD3DDeviceContext      = nullptr;
-    ID3DUserDefinedAnnotation   *mD3DPerf               = nullptr;
-    ID3D11RenderTargetView	    *mBaseRenderTargetView  = nullptr;
-    ID3D11DepthStencilView	    *mBaseDepthStencilView  = nullptr;
-};
+#ifdef USE_DX12
+    mImpl = new PipelineStateImpl_DirectX12();
+#else
+#error No implementatios of this platform!
+#endif
+    mImpl->Init(desc);
 }
+} // namespace LimitEngine

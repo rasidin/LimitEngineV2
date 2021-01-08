@@ -18,7 +18,7 @@
 #include <LEFloatMatrix4x4.h>
 
 namespace LimitEngine {
-    class Archive : public Object<LimitEngineMemoryCategory_Common>
+    class Archive : public Object<LimitEngineMemoryCategory::Common>
     {
         enum class DataMode {
             Loading = 0,

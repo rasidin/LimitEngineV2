@@ -1,5 +1,10 @@
 # LimitEngineV2
+Realtime rendering engine for next-generation.
+
 Work in progress
+
+## What is goal
+Cinematic physically based rendering using raytracing or forward rendering or cpu pathtracing.
 
 ## Test on
 Use VisualStudio2019 on windows10.

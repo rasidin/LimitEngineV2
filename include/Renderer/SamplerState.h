@@ -103,7 +103,7 @@ struct SamplerStateDesc
             MaxLOD == d.MaxLOD;
     }
 };
-class SamplerStateImpl : public Object<LimitEngineMemoryCategory_Graphics>
+class SamplerStateImpl : public Object<LimitEngineMemoryCategory::Graphics>
 {public:
     SamplerStateImpl() {}
     virtual ~SamplerStateImpl() {}
@@ -111,7 +111,7 @@ class SamplerStateImpl : public Object<LimitEngineMemoryCategory_Graphics>
     virtual void Create(const SamplerStateDesc &Desc) = 0;
     virtual void* GetHandle() = 0;
 };
-class SamplerState : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics> {
+class SamplerState : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics> {
     static VectorArray<SamplerStateRefPtr> sSamplerCache;
 public:
     virtual ~SamplerState();

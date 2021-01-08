@@ -21,23 +21,29 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
-@file  PrivateDefinitions_DirectX.h
-@brief Private definitions for DirectX
-@author minseob(leeminseob@outlook.com)
+@file  LE_ConstantBufferImpl_DirectX12.inl
+@brief ConstantBuffer Implement (DX12)
+@author minseob (leeminseob@outlook.com)
 **********************************************************************/
-#pragma once
-#include <d3d11.h>
-#include <d3d11_1.h>
-
-#include "Core/Object.h"
-
 namespace LimitEngine {
-struct CommandInit_Parameter : public Object<LimitEngineMemoryCategory::Graphics>
+class ConstantBufferImpl_DirectX12 : public ConstantBufferImpl
 {
-    ID3D11Device			    *mD3DDevice             = nullptr;
-    ID3D11DeviceContext		    *mD3DDeviceContext      = nullptr;
-    ID3DUserDefinedAnnotation   *mD3DPerf               = nullptr;
-    ID3D11RenderTargetView	    *mBaseRenderTargetView  = nullptr;
-    ID3D11DepthStencilView	    *mBaseDepthStencilView  = nullptr;
+public:
+    ConstantBufferImpl_DirectX12() {}
+    virtual ~ConstantBufferImpl_DirectX12() {}
+
+    virtual void PrepareForDrawing() override
+    {
+    }
+
+    virtual void Set(uint32 Offset, const void* Data, size_t Size) override
+    {
+    }
+
+    template<typename T>
+    void Set(uint32 Offset, T* Data)
+    {
+        this->Set(Offset, Data, sizeof(T));
+    }
 };
-}
+} // namespace LimitEngine

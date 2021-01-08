@@ -17,7 +17,7 @@
 
 namespace LimitEngine {
 	class ShaderManager;
-	typedef Singleton<ShaderManager, LimitEngineMemoryCategory_Graphics> SingletonShaderManager;
+	typedef Singleton<ShaderManager, LimitEngineMemoryCategory::Graphics> SingletonShaderManager;
     class ShaderManager : public SingletonShaderManager
     {
     public:
@@ -26,14 +26,17 @@ namespace LimitEngine {
 
         void Init();
         void Term();
+        
+        template<typename T> ReferenceCountedPointer<T> GetShader() { return ReferenceCountedPointer<T>(static_cast<T*>(findshader(T::GetHash()))); }
+
         void LoadShaderSet(const char *filename);
-		void BindShader(Shader *sh);
-        void BindShader(uint32 shaderID);
-		void BindShader(const char *name);
         void AddShader(Shader *shader);
         uint32 GetShaderID(const char *shaderName);
         ShaderRefPtr GetShader(const char *name);
         
+    private:
+        Shader* findshader(const ShaderHash& hash) const;
+
     private:
 		uint32						mShaderID;
         VectorArray<ShaderRefPtr>   mShaders;

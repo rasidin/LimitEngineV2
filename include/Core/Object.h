@@ -12,7 +12,7 @@
 #include "Core/MemoryAllocator.h"
 
 namespace LimitEngine {
-template<uint32 category = LimitEngineMemoryCategory_Unknown>
+template<LimitEngineMemoryCategory category = LimitEngineMemoryCategory::Unknown>
 class Object
 {public:
 	virtual ~Object(){}

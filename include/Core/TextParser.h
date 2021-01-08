@@ -21,7 +21,7 @@
 #include "Renderer/ByteColorRGBA.h"
 
 namespace LimitEngine {
-    class TextParser : public ReferenceCountedObject<LimitEngineMemoryCategory_Common>
+    class TextParser : public ReferenceCountedObject<LimitEngineMemoryCategory::Common>
     {
     public:
         typedef struct _NODE

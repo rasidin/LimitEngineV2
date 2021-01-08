@@ -17,7 +17,7 @@
 
 namespace LimitEngine {
     class Texture;
-    class FrameBufferImpl : public Object<LimitEngineMemoryCategory_Graphics>
+    class FrameBufferImpl : public Object<LimitEngineMemoryCategory::Graphics>
     {
     public:
         enum BindTypes
@@ -40,7 +40,7 @@ namespace LimitEngine {
         virtual void BindTexture(BindTypes type, Texture *texture) = 0;
     };
     
-    class FrameBuffer : public Object<LimitEngineMemoryCategory_Graphics>
+    class FrameBuffer : public Object<LimitEngineMemoryCategory::Graphics>
     {
     public:
         FrameBuffer();

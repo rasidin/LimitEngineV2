@@ -22,7 +22,7 @@
 namespace LimitEngine {
     class Texture;
     class SpriteFactory;
-    class Sprite : public ReferenceCountedObject<LimitEngineMemoryCategory_Graphics>, public SerializableResource
+    class Sprite : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>, public SerializableResource
     {
         friend SpriteFactory;
     private:            // Private Structure

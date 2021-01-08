@@ -17,7 +17,7 @@
 
 namespace LimitEngine {
 class TaskManager;
-typedef Singleton<TaskManager, LimitEngineMemoryCategory_Common> SingletonTaskManager;
+typedef Singleton<TaskManager, LimitEngineMemoryCategory::Common> SingletonTaskManager;
 class TaskManager : public SingletonTaskManager
 {
 private:			// Private Structure
@@ -55,7 +55,7 @@ private:			// Private Structure
         uint32 mStepEnd;
     };
 
-    class ParallelTask : public Object<LimitEngineMemoryCategory_Common>
+    class ParallelTask : public Object<LimitEngineMemoryCategory::Common>
     {
         VectorArray<TASK*> mTasks;
         Thread mThread;

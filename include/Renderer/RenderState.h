@@ -20,7 +20,7 @@
 #include "Renderer/Texture.h"
 
 namespace LimitEngine {
-    class RenderState : public Object<LimitEngineMemoryCategory_Graphics>
+    class RenderState : public Object<LimitEngineMemoryCategory::Graphics>
     {
     public:
         // ----------------------------------------------------

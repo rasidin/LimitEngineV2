@@ -34,7 +34,6 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "Managers/ShaderManager.h"
 #include "Renderer/DrawCommand.h"
 #include "Renderer/Shader.h"
-#include "Renderer/ShaderDriverParameter.h"
 
 namespace LimitEngine {
     class RendererTask_MaterialSetupShaderParameters : public RendererTask
@@ -80,7 +79,6 @@ namespace LimitEngine {
         : mId()
         , mName()
     {
-        ::memset(mShaderDriverParameter, 0, sizeof(ShaderDriverParameter*) * (uint32)RenderPass::NumOfRenderPass);
         ::memset(mIsEnabledRenderPass, 0, sizeof(mIsEnabledRenderPass));
         mIsEnabledRenderPass[(uint32)RenderPass::PrePass] = true;
         mIsEnabledRenderPass[(uint32)RenderPass::BasePass] = true;
@@ -212,35 +210,35 @@ namespace LimitEngine {
     void Material::Bind(const RenderState &rs)
     {
         uint32 renderPass = (uint32)rs.GetRenderPass();
-        if (mShader[renderPass].IsValid()) {
-            DrawCommand::BindShader(mShader[renderPass].Get());
-            DrawCommand::BindConstantBuffer(mConstantBuffer[renderPass].Get());
+        //if (mShader[renderPass].IsValid()) {
+        //    DrawCommand::BindShader(mShader[renderPass].Get());
+        //    DrawCommand::BindConstantBuffer(mConstantBuffer[renderPass].Get());
 
-            for (uint32 prmidx = 0; prmidx < mParameters.size(); prmidx++) {
-                int indexOfShaderParameter = mParameters.GetAt(prmidx).value.IndexOfShaderParameter(renderPass);
-                if (indexOfShaderParameter >= 0) {
-                    ShaderParameter &shaderParameter = mParameters.GetAt(prmidx).value;
-                    switch (shaderParameter.GetType())
-                    {
-                    case ShaderParameter::Type_Float:
-                        mShader[renderPass]->SetUniformFloat1(mConstantBuffer[renderPass].Get(), indexOfShaderParameter, shaderParameter);
-                        break;
-                    case ShaderParameter::Type_Float2:
-                        mShader[renderPass]->SetUniformFloat2(mConstantBuffer[renderPass].Get(), indexOfShaderParameter, shaderParameter);
-                        break;
-                    case ShaderParameter::Type_Float3:
-                        mShader[renderPass]->SetUniformFloat3(mConstantBuffer[renderPass].Get(), indexOfShaderParameter, shaderParameter);
-                        break;
-                    case ShaderParameter::Type_Float4:
-                        mShader[renderPass]->SetUniformFloat4(mConstantBuffer[renderPass].Get(), indexOfShaderParameter, shaderParameter);
-                        break;
-                    default:
-                        break;
-                    }
-                }
-            }
+        //    for (uint32 prmidx = 0; prmidx < mParameters.size(); prmidx++) {
+        //        int indexOfShaderParameter = mParameters.GetAt(prmidx).value.IndexOfShaderParameter(renderPass);
+        //        if (indexOfShaderParameter >= 0) {
+        //            ShaderParameter &shaderParameter = mParameters.GetAt(prmidx).value;
+        //            switch (shaderParameter.GetType())
+        //            {
+        //            case ShaderParameter::Type_Float:
+        //                mShader[renderPass]->SetUniformFloat1(mConstantBuffer[renderPass].Get(), indexOfShaderParameter, shaderParameter);
+        //                break;
+        //            case ShaderParameter::Type_Float2:
+        //                mShader[renderPass]->SetUniformFloat2(mConstantBuffer[renderPass].Get(), indexOfShaderParameter, shaderParameter);
+        //                break;
+        //            case ShaderParameter::Type_Float3:
+        //                mShader[renderPass]->SetUniformFloat3(mConstantBuffer[renderPass].Get(), indexOfShaderParameter, shaderParameter);
+        //                break;
+        //            case ShaderParameter::Type_Float4:
+        //                mShader[renderPass]->SetUniformFloat4(mConstantBuffer[renderPass].Get(), indexOfShaderParameter, shaderParameter);
+        //                break;
+        //            default:
+        //                break;
+        //            }
+        //        }
+        //    }
 
-            mShader[renderPass]->ApplyDrivers(rs, this);
-        }
+        //    mShader[renderPass]->ApplyDrivers(rs, this);
+        //}
     }
 }

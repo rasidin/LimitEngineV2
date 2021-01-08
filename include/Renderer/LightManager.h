@@ -21,7 +21,7 @@
 
 namespace LimitEngine {
     class LightManager;
-    typedef Singleton<LightManager, LimitEngineMemoryCategory_Graphics> SingletonLightManager;
+    typedef Singleton<LightManager, LimitEngineMemoryCategory::Graphics> SingletonLightManager;
     class LightManager : public SingletonLightManager {
     public:
         LightManager();

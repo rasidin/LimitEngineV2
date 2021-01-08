@@ -25,7 +25,8 @@ OTHER DEALINGS IN THE SOFTWARE.
 @brief SamplerState (DirectX12)
 @author minseob (leeminseob@outlook.com)
 ***********************************************************/
-#pragma once
+#ifndef LIMITENGINEV2_SAMPLERSTATEIMPL_DIRECTX12_INL_
+#define LIMITENGINEV2_SAMPLERSTATEIMPL_DIRECTX12_INL_
 
 namespace LimitEngine {
 class SamplerStateImpl_DirectX12 : public SamplerStateImpl
@@ -41,3 +42,5 @@ public:
     void* GetHandle() { return nullptr; }
 };
 }
+
+#endif // LIMITENGINEV2_SAMPLERSTATEIMPL_DIRECTX12_INL_

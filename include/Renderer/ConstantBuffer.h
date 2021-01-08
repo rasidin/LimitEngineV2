@@ -21,23 +21,38 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
-@file  PrivateDefinitions_DirectX.h
-@brief Private definitions for DirectX
-@author minseob(leeminseob@outlook.com)
+@file  ConstantBuffer.h
+@brief Constant buffer
+@author minseob (leeminseob@outlook.com)
 **********************************************************************/
-#pragma once
-#include <d3d11.h>
-#include <d3d11_1.h>
+#ifndef LIMITENGINEV2_RENDERER_CONSTANTBUFFER_H_
+#define LIMITENGINEV2_RENDERER_CONSTANTBUFFER_H_
 
-#include "Core/Object.h"
+#include <LERenderer>
 
 namespace LimitEngine {
-struct CommandInit_Parameter : public Object<LimitEngineMemoryCategory::Graphics>
+class ConstantBufferImpl : public Object<LimitEngineMemoryCategory::Graphics>
 {
-    ID3D11Device			    *mD3DDevice             = nullptr;
-    ID3D11DeviceContext		    *mD3DDeviceContext      = nullptr;
-    ID3DUserDefinedAnnotation   *mD3DPerf               = nullptr;
-    ID3D11RenderTargetView	    *mBaseRenderTargetView  = nullptr;
-    ID3D11DepthStencilView	    *mBaseDepthStencilView  = nullptr;
+public:
+    ConstantBufferImpl() {}
+    virtual ~ConstantBufferImpl() {}
+
+    virtual void PrepareForDrawing() = 0;
+
+    virtual void Set(uint32 ShaderType, uint32 BufferIndex, uint32 Offset, const void *Data, size_t Size) = 0;
+};
+class ConstantBuffer : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>
+{
+public:
+    ConstantBuffer();
+    virtual ~ConstantBuffer();
+
+    inline ConstantBufferImpl* GetImplementation() { return mImpl; }
+
+    void PrepareForDrawing();
+private:
+    ConstantBufferImpl *mImpl;
 };
 }
+
+#endif // LIMITENGINEV2_RENDERER_CONSTANTBUFFER_H_

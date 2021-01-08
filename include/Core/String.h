@@ -19,7 +19,7 @@
 #include "Core/Object.h"
 
 namespace LimitEngine {
-class String : public Object<LimitEngineMemoryCategory_Common>
+class String : public Object<LimitEngineMemoryCategory::Common>
 {
 public:
     String(const char *str = 0);
