@@ -36,14 +36,14 @@ public:
     {
     }
 
-    virtual void Set(uint32 Offset, const void* Data, size_t Size) override
-    {
-    }
+    //virtual void Set(uint32 Offset, const void* Data, size_t Size) override
+    //{
+    //}
 
-    template<typename T>
-    void Set(uint32 Offset, T* Data)
-    {
-        this->Set(Offset, Data, sizeof(T));
-    }
+    //template<typename T>
+    //void Set(uint32 Offset, T* Data)
+    //{
+    //    this->Set(Offset, Data, sizeof(T));
+    //}
 };
 } // namespace LimitEngine

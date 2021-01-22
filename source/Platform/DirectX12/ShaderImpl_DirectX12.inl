@@ -31,15 +31,9 @@ class ShaderImpl_DirectX12 : public ShaderImpl
 public:
     ShaderImpl_DirectX12()
     {
-        ::memset(mShaderBinaries, 0, sizeof(mShaderBinaries));
     }
     virtual ~ShaderImpl_DirectX12()
     {
-        for (uint32 TypeIndex = 0; TypeIndex < Shader::TYPE_NUM; TypeIndex++) {
-            if (mShaderBinaries[TypeIndex]) {
-                free(mShaderBinaries[TypeIndex]);
-            }
-        }
     }
 
     virtual bool PrepareForDrawing() override
@@ -55,12 +49,6 @@ public:
 
     virtual bool SetCompiledBinary(const unsigned char *bin, size_t size, int type) override
     {
-        if (mShaderBinaries[type]) {
-            free(mShaderBinaries[type]);
-        }
-        mShaderBinaries[type] = malloc(size);
-        memcpy(mShaderBinaries[type], bin, size);
-
         return true;
     }
 
@@ -125,9 +113,5 @@ public:
         UNIMPLEMENTED_ERROR
         return -1;
     }
-
-private:
-    void* mShaderBinaries[Shader::TYPE_NUM];
-    VectorArray<ConstantBuffer*> mConstantBuffers;
 };
 }

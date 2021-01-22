@@ -35,31 +35,32 @@ OTHER DEALINGS IN THE SOFTWARE.
 namespace LimitEngine {
 void PostProcessTemporalAA::Init(const InitializeOptions &Options)
 {
-    mTemporalAAShader = LE_ShaderManager.GetShader("TemporalAA");
-    mShaderParameterPosition_SceneColor = 0; // mTemporalAAShader->GetTextureLocation("SceneColor");
-    mShaderParameterPosition_SceneColorHistory = 1; // mTemporalAAShader->GetTextureLocation("SceneColorHistory");
+    //mTemporalAAShader = LE_ShaderManager.GetShader("TemporalAA");
+    //mShaderParameterPosition_SceneColor = 0; // mTemporalAAShader->GetTextureLocation("SceneColor");
+    //mShaderParameterPosition_SceneColorHistory = 1; // mTemporalAAShader->GetTextureLocation("SceneColorHistory");
 }
 
 void PostProcessTemporalAA::Process(PostProcessContext &Context, VectorArray<PooledRenderTarget> &RenderTargets)
 {
-    if (!mTemporalAAShader.IsValid()) return;
+    return;
+    //if (!mTemporalAAShader.IsValid()) return;
 
-    PooledRenderTarget Output = LE_RenderTargetPoolManager.GetRenderTarget(Context.SceneColor.GetDesc());
-    DrawCommand::ResourceBarrier(Output.Get(), ResourceState::RenderTarget);
-    DrawCommand::SetRenderTarget(0, Output.Get(), nullptr);
-    DrawCommand::BindTexture(mShaderParameterPosition_SceneColor, RenderTargets[0]);
-    if (mHistorySceneColor.Get())
-        DrawCommand::BindTexture(mShaderParameterPosition_SceneColorHistory, mHistorySceneColor);
-    else
-        DrawCommand::BindTexture(mShaderParameterPosition_SceneColorHistory, RenderTargets[0]);
-    DrawCommand::SetDepthFunc(RendererFlag::TestFlags::ALWAYS);
-    DrawCommand::SetBlendFunc(0, RendererFlag::BlendFlags::SOURCE);
+    //PooledRenderTarget Output = LE_RenderTargetPoolManager.GetRenderTarget(Context.SceneColor.GetDesc());
+    //DrawCommand::ResourceBarrier(Output.Get(), ResourceState::RenderTarget);
+    //DrawCommand::SetRenderTarget(0, Output.Get(), nullptr);
+    //DrawCommand::BindTexture(mShaderParameterPosition_SceneColor, RenderTargets[0]);
+    //if (mHistorySceneColor.Get())
+    //    DrawCommand::BindTexture(mShaderParameterPosition_SceneColorHistory, mHistorySceneColor);
+    //else
+    //    DrawCommand::BindTexture(mShaderParameterPosition_SceneColorHistory, RenderTargets[0]);
+    //DrawCommand::SetDepthFunc(RendererFlag::TestFlags::Always);
+    //DrawCommand::SetBlendFunc(0, RendererFlag::BlendFlags::Source);
 
-    LE_Draw2DManager.DrawScreen(mTemporalAAShader.Get());
+    //LE_Draw2DManager.DrawScreen(mTemporalAAShader.Get());
 
-    DrawCommand::ResourceBarrier(Output.Get(), ResourceState::Common);
+    //DrawCommand::ResourceBarrier(Output.Get(), ResourceState::Common);
 
-    mHistorySceneColor = Output;
-    RenderTargets[0] = Output;
+    //mHistorySceneColor = Output;
+    //RenderTargets[0] = Output;
 }
 } // LimitEngine

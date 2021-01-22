@@ -68,29 +68,30 @@ void LimitEngine::Init(WINDOW_HANDLE handle, const InitializeOptions &Options)
     //    Factory->SetSizeFilteredImage(LEMath::IntVector2(128, 128));
     //    Factory->SetSampleCount(256);
     //}
-    if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("textures/EnvironmentBRDF.texture.lea", ArchiveFactory::ID)) {
-        mEnvironmentBRDF = dynamic_cast<Texture*>(LoadedResource->data);
-        mEnvironmentBRDF->InitResource();
-        mDrawManager->SetEnvironmentBRDFTexture(mEnvironmentBRDF);
-    }
+    //if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("textures/EnvironmentBRDF.texture.lea", ArchiveFactory::ID)) {
+    //    mEnvironmentBRDF = dynamic_cast<Texture*>(LoadedResource->data);
+    //    mEnvironmentBRDF->InitResource();
+    //    mDrawManager->SetEnvironmentBRDFTexture(mEnvironmentBRDF);
+    //}
 
-    if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("textures/BlueNoise.texture.text", TextureFactory::ID)) {
-        mBlueNoiseTexture = dynamic_cast<Texture*>(LoadedResource->data);
-        mBlueNoiseTexture->InitResource();
-        mDrawManager->SetBlueNoiseTexture(mBlueNoiseTexture);
-        mDrawManager->SetBlueNoiseContext(LEMath::FloatVector4(
-            1.0f / mBlueNoiseTexture.Get()->GetSize().Width(),
-            1.0f / mBlueNoiseTexture.Get()->GetSize().Height(), 
-            1.0f / 8.0f, 0.0f));
-    }
+    //if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("textures/BlueNoise.texture.text", TextureFactory::ID)) {
+    //    mBlueNoiseTexture = dynamic_cast<Texture*>(LoadedResource->data);
+    //    mBlueNoiseTexture->InitResource();
+    //    mDrawManager->SetBlueNoiseTexture(mBlueNoiseTexture);
+    //    mDrawManager->SetBlueNoiseContext(LEMath::FloatVector4(
+    //        1.0f / mBlueNoiseTexture.Get()->GetSize().Width(),
+    //        1.0f / mBlueNoiseTexture.Get()->GetSize().Height(), 
+    //        1.0f / 8.0f, 0.0f));
+    //}
 
     mSceneManager->PostInit(Options);
 
-	mTaskID_UpdateScene     = LE_TaskManager.AddTask("SceneManager::Update",    TaskPriority_Renderer_UpdateScene,      mSceneManager, &SceneManager::Update);
-	mTaskID_DrawScene       = LE_TaskManager.AddTask("SceneManager::Draw",      TaskPriority_Renderer_DrawScene,        mSceneManager, &SceneManager::Draw);
-    mTaskID_PostProcess     = LE_TaskManager.AddTask("PostProcess::Process",    TaskPriority_Renderer_PostProcess,      mPostProcessManager, &PostProcessManager::Process);
-    mTaskID_DrawDebugUI     = LE_TaskManager.AddTask("LimitEngine::DrawDebugUI",TaskPriority_Renderer_DrawDebugUI, this, &LimitEngine::DrawDebugUI);
-    mTaskID_DrawManager_Run = LE_TaskManager.AddTask("DrawManager::Run",        TaskPriority_Renderer_DrawManager_Run,  mDrawManager,  &DrawManager::Run);
+	mTaskID_UpdateScene     = LE_TaskManager.AddTask("SceneManager::Update",    TaskPriority_Renderer_UpdateScene,      mSceneManager,          &SceneManager::Update);
+	mTaskID_DrawScene       = LE_TaskManager.AddTask("SceneManager::Draw",      TaskPriority_Renderer_DrawScene,        mSceneManager,          &SceneManager::Draw);
+    mTaskID_PostProcess     = LE_TaskManager.AddTask("PostProcess::Process",    TaskPriority_Renderer_PostProcess,      mPostProcessManager,    &PostProcessManager::Process);
+    mTaskID_DrawDebugUI     = LE_TaskManager.AddTask("LimitEngine::DrawDebugUI",TaskPriority_Renderer_DrawDebugUI,      this,                   &LimitEngine::DrawDebugUI);
+    mTaskID_DrawEnd         = LE_TaskManager.AddTask("DrawEnd",                 TaskPriority_Renderer_DrawEnd,          mDrawManager,           &DrawManager::DrawEnd);
+    mTaskID_DrawManager_Run = LE_TaskManager.AddTask("DrawManager::Run",        TaskPriority_Renderer_DrawManager_Run,  mDrawManager,           &DrawManager::Run);
 }
 
 void LimitEngine::Term()

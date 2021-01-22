@@ -10,7 +10,7 @@
 
 #include <LERenderer>
 
-#include "Core/Object.h"
+#include "Core/ReferenceCountedObject.h"
 #include "Core/SerializableResource.h"
 
 namespace LimitEngine {
@@ -27,18 +27,12 @@ namespace LimitEngine {
     protected:
         class IndexBuffer* mOwner = nullptr;
     };
-    class IndexBuffer : public Object<LimitEngineMemoryCategory::Graphics>, public SerializableResource
+    class IndexBuffer : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>, public SerializableResource
     {
     public:
         IndexBuffer();
         virtual ~IndexBuffer();
         
-        void* GetResource() { return mImpl ? mImpl->GetResource() : nullptr; }
-
-        ResourceState GetResourceState() const { return mResourceState; }
-        void SetResourceState(const ResourceState& InState) { mResourceState = InState; }
-
-        void* GetHandle() const { return mImpl ? mImpl->GetHandle() : nullptr; }
         size_t GetSize() const  { return mSize; }
         void Create(size_t size, void *buffer);
         void Bind();
@@ -47,5 +41,27 @@ namespace LimitEngine {
         IndexBufferImpl     *mImpl;
         size_t               mSize;
         ResourceState        mResourceState;
+
+        friend class IndexBufferRendererAccessor;
+    };
+    class IndexBufferRendererAccessor
+    {
+    public:
+        IndexBufferRendererAccessor(IndexBuffer* ib)
+            : mIndexBuffer(ib)
+            , mImpl(ib->mImpl)
+            , mSize(ib->GetSize())
+        {}
+
+        void* GetResource() { return mImpl ? mImpl->GetResource() : nullptr; }
+        ResourceState GetResourceState() const { return mIndexBuffer->mResourceState; }
+        void SetResourceState(const ResourceState& InState) { mIndexBuffer->mResourceState = InState; }
+        inline void* GetHandle() const { return mImpl ? mImpl->GetHandle() : nullptr; }
+        inline size_t GetSize() const { return mSize; }
+
+    private:
+        IndexBuffer* mIndexBuffer = nullptr;
+        IndexBufferImpl* mImpl = nullptr;
+        size_t mSize = 0u;
     };
 }

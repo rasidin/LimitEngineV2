@@ -74,7 +74,7 @@ struct SamplerStateDesc
         SamplerStateAddressMode         InAddressW      = SamplerStateAddressMode::Wrap,
         float                           InMipLODBias    = 0.0f,
         uint32                          InMaxAnisotropy = 0,
-        RendererFlag::TestFlags         InCompFunc      = RendererFlag::TestFlags::ALWAYS,
+        RendererFlag::TestFlags         InCompFunc      = RendererFlag::TestFlags::Always,
         const LEMath::FloatColorRGBA&   InBorderColor   = LEMath::FloatColorRGBA::Zero,
         float                           InMinLOD        = 0.0f,
         float                           InMaxLOD        = 255.0f

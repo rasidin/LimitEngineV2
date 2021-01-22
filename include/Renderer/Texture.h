@@ -47,51 +47,25 @@ enum TEXTURE_USAGE
     TEXTURE_USAGE_DEPTHSTENCIL = 1<<1,
     TEXTURE_USAGE_DYNAMIC = 1<<2,
 };
-enum TEXTURE_COLOR_FORMAT
-{
-    TEXTURE_COLOR_FORMAT_UNKNOWN = 0,
-
-    TEXTURE_COLOR_FORMAT_R8,
-
-    TEXTURE_COLOR_FORMAT_R8G8B8,
-    TEXTURE_COLOR_FORMAT_A8R8G8B8,
-
-    TEXTURE_COLOR_FORMAT_R16F,
-    TEXTURE_COLOR_FORMAT_G16R16F,
-    TEXTURE_COLOR_FORMAT_A16B16G16R16F,
-
-    TEXTURE_COLOR_FORMAT_R32F,
-    TEXTURE_COLOR_FORMAT_G32R32F,
-    TEXTURE_COLOR_FORMAT_A32B32G32R32F,
-
-    TEXTURE_COLOR_FORMAT_MAX,
-};
-enum TEXTURE_DEPTH_FORMAT
-{
-    TEXTURE_DEPTH_FORMAT_UNKNOWN = 0,
-
-    TEXTURE_DEPTH_FORMAT_D32F,
-    TEXTURE_DEPTH_FORMAT_D24S8,
-};
 class TextureImpl : public Object<LimitEngineMemoryCategory::Graphics>
 {
 public:
     TextureImpl(class Texture *InOwner) : mOwner(InOwner) {}
     virtual ~TextureImpl() {}
     
-    virtual LEMath::IntSize GetSize() const = 0;
-    virtual TEXTURE_COLOR_FORMAT GetFormat() const = 0;
+    virtual const LEMath::IntSize& GetSize() const = 0;
+    virtual const RendererFlag::BufferFormat& GetFormat() const = 0;
     virtual void* GetHandle() const = 0;
     virtual void* GetResource() const = 0;
     virtual void* GetDepthSurfaceHandle() const = 0;
     
     virtual void LoadFromMemory(const void *data, size_t size) = 0;
-    virtual bool Create(const LEMath::IntSize &size, TEXTURE_COLOR_FORMAT format, uint32 usage, uint32 mipLevels, void *initializeData = NULL, size_t initDataSize = 0u) = 0;
-	virtual bool Create3D(const LEMath::IntVector3 &size, TEXTURE_COLOR_FORMAT format, uint32 usage, uint32 mipLevels, void *initializeData = NULL, size_t initDataSize = 0u) = 0;
+    virtual bool Create(const LEMath::IntSize &size, const RendererFlag::BufferFormat &format, uint32 usage, uint32 mipLevels, void *initializeData = NULL, size_t initDataSize = 0u) = 0;
+	virtual bool Create3D(const LEMath::IntVector3 &size, const RendererFlag::BufferFormat &format, uint32 usage, uint32 mipLevels, void *initializeData = NULL, size_t initDataSize = 0u) = 0;
 	virtual void CreateScreenColor(const LEMath::IntSize &size) = 0;
     virtual void CreateColor(const LEMath::IntSize &size, const ByteColorRGBA &color) = 0;
-    virtual void CreateDepthStencil(const LEMath::IntSize &size, TEXTURE_DEPTH_FORMAT format) = 0;
-    virtual void CreateRenderTarget(const LEMath::IntSize &size, TEXTURE_COLOR_FORMAT format, uint32 usage) = 0;
+    virtual void CreateDepthStencil(const LEMath::IntSize &size, const RendererFlag::BufferFormat &format) = 0;
+    virtual void CreateRenderTarget(const LEMath::IntSize &size, const RendererFlag::BufferFormat &format, uint32 usage) = 0;
     virtual void GenerateMipmap() = 0;
 
     virtual void* GetShaderResourceView() const = 0;
@@ -115,7 +89,7 @@ public:
     virtual LEMath::IntSize GetSize() const = 0;
     virtual uint32 GetDepth() const = 0;
     virtual bool IsCubemap() const = 0;
-    virtual TEXTURE_COLOR_FORMAT GetFormat() const = 0;
+    virtual RendererFlag::BufferFormat GetFormat() const = 0;
     virtual uint32 GetRowPitch() const = 0;
     virtual void* GetColorData() const = 0;
     virtual size_t GetColorDataSize() const = 0;
@@ -124,7 +98,7 @@ public:
 class SerializedTextureSource : public TextureSourceImage
 {
 public:
-    explicit SerializedTextureSource() : mSize(), mRowPitch(0u), mMipCount(1u), mFormat(TEXTURE_COLOR_FORMAT_MAX), mIsCubemap(false) {}
+    explicit SerializedTextureSource() : mSize(), mRowPitch(0u), mMipCount(1u), mFormat(static_cast<uint32>(RendererFlag::BufferFormat::Unknown)), mIsCubemap(false) {}
     explicit SerializedTextureSource(const TextureSourceImage &SourceImage);
     virtual ~SerializedTextureSource();
 
@@ -132,7 +106,7 @@ public:
     virtual LEMath::IntSize GetSize() const override { return mSize.XY(); }
     virtual uint32 GetDepth() const override { return mSize.Z(); }
     virtual bool IsCubemap() const override { return mIsCubemap; }
-    virtual TEXTURE_COLOR_FORMAT GetFormat() const override { return (TEXTURE_COLOR_FORMAT)mFormat; }
+    virtual RendererFlag::BufferFormat GetFormat() const override { return static_cast<RendererFlag::BufferFormat>(mFormat); }
     virtual uint32 GetRowPitch() const override { return mRowPitch; }
     virtual void* GetColorData() const override { return mColorData.GetData(); }
     virtual size_t GetColorDataSize() const override { return mColorData.count();  }
@@ -152,7 +126,49 @@ private:
     friend TextureSourceImage;
     friend Archive;
 };
-class Texture : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>, public SerializableResource
+class TextureInterface : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>
+{
+protected:
+    virtual const LEMath::IntSize& GetSize() const = 0;
+
+    virtual void* GetShaderResourceView() const = 0;
+    virtual void* GetUnorderedAccessView() const = 0;
+    virtual void* GetRenderTargetView() const = 0;
+    virtual void* GetDepthStencilView() const = 0;
+    virtual void* GetResource() const = 0;
+
+    virtual void SetResourceState(const ResourceState& state) = 0;
+    virtual ResourceState GetResourceState() const = 0;
+
+public:
+    virtual RendererFlag::BufferFormat GetFormat() const = 0;
+
+    friend class TextureRendererAccessor;
+};
+class TextureRendererAccessor
+{
+public:
+    TextureRendererAccessor(TextureInterface* inter)
+        : mInterface(inter)
+    {}
+
+    bool IsValid() const { return mInterface != nullptr; }
+
+    void* GetShaderResourceView() const  { return mInterface.IsValid() ? mInterface->GetShaderResourceView() : nullptr; }
+    void* GetUnorderedAccessView() const { return mInterface.IsValid() ? mInterface->GetUnorderedAccessView() : nullptr; }
+    void* GetRenderTargetView() const    { return mInterface.IsValid() ? mInterface->GetRenderTargetView() : nullptr; }
+    void* GetDepthStencilView() const    { return mInterface.IsValid() ? mInterface->GetDepthStencilView() : nullptr; }
+    void* GetResource() const            { return mInterface.IsValid() ? mInterface->GetResource() : nullptr; }
+
+    void SetResourceState(const ResourceState& state) { if (mInterface.IsValid()) mInterface->SetResourceState(state); }
+    ResourceState GetResourceState() const { return mInterface.IsValid() ? mInterface->GetResourceState() : ResourceState::Common; }
+
+    RendererFlag::BufferFormat GetFormat() const { return mInterface.IsValid() ? mInterface->GetFormat() : RendererFlag::BufferFormat::Unknown; }
+
+private:
+    ReferenceCountedPointer<TextureInterface> mInterface;
+};
+class Texture : public TextureInterface, public SerializableResource
 {
     friend class RendererTask_LoadTextureFromMemory;
 	friend class RendererTask_LoadTextureFromMERLBRDFData;
@@ -164,7 +180,7 @@ class Texture : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphic
     friend class RendererTask_CreateRenderTarget;
     friend class RendererTask_CreateDepthStencil;
     friend class TextureFactory;
-    
+
     enum class FileVersion : uint32 {
         FirstVersion = 1,
 
@@ -179,19 +195,15 @@ public:
 
     virtual void InitResource() override;
 
-    void* GetResource() const { return mImpl->GetResource(); }
-    ResourceState GetResourceState() const { return mResourceState; }
-    void SetResourceState(const ResourceState& InState) { mResourceState = InState; }
-
     void LoadFromMemory(const void *data, size_t size);
 	void LoadFromMERLBRDFData(const void *data, size_t size);
 
-    void Create(const LEMath::IntSize &size, TEXTURE_COLOR_FORMAT format, uint32 usage = 0, uint32 mipLevels = 1, void *initailizeData = NULL, size_t initDataSize = 0u);
-	void Create3D(const LEMath::IntVector3 &size, TEXTURE_COLOR_FORMAT format, uint32 usage = 0, uint32 mipLevels = 1, void *initializeData = NULL, size_t initDataSize = 0u);
+    void Create(const LEMath::IntSize &size, const RendererFlag::BufferFormat &format, uint32 usage = 0, uint32 mipLevels = 1, void *initailizeData = NULL, size_t initDataSize = 0u);
+	void Create3D(const LEMath::IntVector3 &size, const RendererFlag::BufferFormat &format, uint32 usage = 0, uint32 mipLevels = 1, void *initializeData = NULL, size_t initDataSize = 0u);
     void CreateScreenColor(const LEMath::IntSize &size);
     void CreateColor(const LEMath::IntSize &size, const ByteColorRGBA &color);
-    void CreateDepthStencil(const LEMath::IntSize &size, TEXTURE_DEPTH_FORMAT format);
-    void CreateRenderTarget(const LEMath::IntSize &size, TEXTURE_COLOR_FORMAT format, uint32 usage = 0);
+    void CreateDepthStencil(const LEMath::IntSize &size, const RendererFlag::BufferFormat &format);
+    void CreateRenderTarget(const LEMath::IntSize &size, const RendererFlag::BufferFormat &format, uint32 usage = 0);
 
     void CreateUsingSourceData();
 
@@ -200,19 +212,29 @@ public:
     void Unlock(int mipLevel = 0)
     { if (mImpl) { mImpl->Unlock(mipLevel); } }
 
-    void GenerateMipmap()                               { if (mImpl) { mImpl->GenerateMipmap(); } }
+    void GenerateMipmap()                                           { if (mImpl) { mImpl->GenerateMipmap(); } }
     
-    const LEMath::IntSize& GetSize() const              { return mSize; }
-    void* GetHandle()                                   { return (mImpl)?mImpl->GetHandle():nullptr; }
-    void* GetDepthSurfaceHandle()                       { return (mImpl)?mImpl->GetDepthSurfaceHandle():nullptr; }
+    void* GetHandle()                                               { return (mImpl)?mImpl->GetHandle():nullptr; }
+    void* GetDepthSurfaceHandle()                                   { return (mImpl)?mImpl->GetDepthSurfaceHandle():nullptr; }
 
-    void* GetShaderResourceView() const                 { return (mImpl)?mImpl->GetShaderResourceView():nullptr; }
-    void* GetUnorderedAccessView() const                { return (mImpl)?mImpl->GetUnorderedAccessView():nullptr; }
-    void* GetRenderTargetView() const                   { return (mImpl)?mImpl->GetRenderTargetView():nullptr; }
-    void* GetDepthStencilView() const                   { return (mImpl)?mImpl->GetDepthStencilView():nullptr; }
+    // Implementation of TextureInterface
+protected:
+    virtual void* GetShaderResourceView() const override            { return (mImpl)?mImpl->GetShaderResourceView():nullptr; }
+    virtual void* GetUnorderedAccessView() const override           { return (mImpl)?mImpl->GetUnorderedAccessView():nullptr; }
+    virtual void* GetRenderTargetView() const override              { return (mImpl)?mImpl->GetRenderTargetView():nullptr; }
+    virtual void* GetDepthStencilView() const override              { return (mImpl)?mImpl->GetDepthStencilView():nullptr; }
+    virtual void* GetResource() const override { return mImpl->GetResource(); }
 
-    void SetSourceImage(SerializedTextureSource *InSource) { if (mSource) delete mSource; mSource = InSource; if (InSource) { mSize = InSource->GetSize(); mDepth = InSource->GetDepth(); mFormat = InSource->GetFormat(); } }
-    SerializedTextureSource* GetSourceImage() const     { return mSource; }
+    virtual void SetResourceState(const ResourceState& InState) override { mResourceState = InState; }
+    virtual ResourceState GetResourceState() const override { return mResourceState; }
+
+public:
+    virtual const LEMath::IntSize& GetSize() const override         { return mSize; }
+    virtual RendererFlag::BufferFormat GetFormat() const override   { return mFormat; }
+
+    void SetSourceImage(SerializedTextureSource *InSource)          { if (mSource) delete mSource; mSource = InSource; if (InSource) { mSize = InSource->GetSize(); mDepth = InSource->GetDepth(); mFormat = InSource->GetFormat(); } }
+    SerializedTextureSource* GetSourceImage() const                 { return mSource; }
+
 
     virtual bool Serialize(Archive &OutArchive) override;
 
@@ -231,7 +253,7 @@ private:
     TextureImpl                *mImpl;
     LEMath::IntSize             mSize;
 	uint32					    mDepth;
-    TEXTURE_COLOR_FORMAT        mFormat;
+    RendererFlag::BufferFormat mFormat;
 
     ResourceState               mResourceState;
 
@@ -241,5 +263,28 @@ private:
 
     friend class TextureFactory;
     friend class CommandBuffer;
+};
+class FrameBufferTexture : public TextureInterface
+{
+public:
+    FrameBufferTexture(const LEMath::IntSize &size) : mSize(size) {}
+    virtual ~FrameBufferTexture() {}
+
+    // Implementation of TextureInterface
+    virtual const LEMath::IntSize& GetSize() const override { return mSize; }
+    virtual RendererFlag::BufferFormat GetFormat() const override;
+
+protected:
+    virtual void* GetShaderResourceView() const override { return nullptr; }
+    virtual void* GetUnorderedAccessView() const override { return nullptr; }
+    virtual void* GetRenderTargetView() const override;
+    virtual void* GetDepthStencilView() const override { return nullptr; }
+    virtual void* GetResource() const override;
+
+    virtual void SetResourceState(const ResourceState& state) override;
+    virtual ResourceState GetResourceState() const override;
+
+private:
+    LEMath::IntSize mSize;
 };
 }

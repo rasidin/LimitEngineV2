@@ -2,9 +2,9 @@
   "configurations": [
     {
       "name": "x64-Debug-DX12",
-      "generator": "Visual Studio 16 2019",
+      "generator": "Visual Studio 16 2019 Win64",
       "configurationType": "Debug",
-      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "inheritEnvironments": [ "msvc_x64" ],
       "buildRoot": "${projectDir}\\build\\${name}",
       "installRoot": "${projectDir}\\install\\${name}",
       "cmakeCommandArgs": "-DMAKE_TEST=ON -DRAYTRACING=ON",

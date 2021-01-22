@@ -1,20 +1,34 @@
-/***********************************************************
- LIMITEngine Header File
- Copyright (C), LIMITGAME, 2012
- -----------------------------------------------------------
- @file  LE_VectorArray.h
- @brief VectorArray Class (such as std::vector)
- @author minseob (leeminseob@outlook.com)
- -----------------------------------------------------------
- History:
- - 2012/6/13 Created by minseob
- ***********************************************************/
+/*******************************************************************
+Copyright (c) 2020 LIMITGAME
 
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify,
+merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+--------------------------------------------------------------------
+@file  VectorArray.h
+@brief Vector array
+@author minseob (leeminseob@outlook.com)
+********************************************************************/
 #ifndef _LE_VECTORARRAY_H_
 #define _LE_VECTORARRAY_H_
 
 #include <functional>
-#include <iterator>
 #include <memory.h>
 #include "Core/Object.h"
 #include "Core/Common.h"
@@ -22,74 +36,54 @@
 
 namespace LimitEngine
 {
-template <typename T> class VectorArray;
-template <typename T> class VectorArrayIterator : public std::iterator<std::forward_iterator_tag, T>
+template <typename ArrayT, typename T> class VectorArrayIterator
 {
-	friend VectorArray<T>;
-
 public:
-    static constexpr uint32 EndIndex = 0xffffffffu;
-
-public:
-	VectorArrayIterator(const VectorArrayIterator &iterator)
-		: mOwnerArray(iterator.mOwnerArray)
-		, mCurrentIndex(iterator.mCurrentIndex)
-	{}
-    VectorArrayIterator(VectorArray<T>& owner)
-    {
-        VectorArrayIterator(&owner, 0);
-    }
+    VectorArrayIterator(ArrayT& owner, uint32 index = 0u)
+        : mOwnerArray(owner)
+        , mCurrentIndex(index)
+    {}
 
 	VectorArrayIterator& operator++()
 	{
 		mCurrentIndex++;
-		// Mark end
-		if (mCurrentIndex >= mOwnerArray->GetSize()) {
-			mOwnerArray = NULL;
-			mCurrentIndex = EndIndex;
-		}
 		return *this;
 	}
 	VectorArrayIterator operator++(int)
 	{
-		VectorArrayInterator result = this;
-		mCurrentIndex++;
-		// Mark end
-		if (mCurrentIndex >= mOwnerArray->GetSize()) {
-			mOwnerArray = NULL;
-			mCurrentIndex = EndIndex;
-		}
+        VectorArrayInterator result(*this);
+		++mCurrentIndex;
 		return result;
 	}
+    VectorArrayIterator operator--()
+    {
+        mCurrentIndex--;
+        return *this;
+    }
+    VectorArrayIterator operator--(int)
+    {
+        VectorArrayIterator result(*this);
+        --mCurrentIndex;
+        return result;
+    }
 
-	T& operator*() { static T DummyObject = T(); return (!IsValid()) ? (*mOwnerArray)[mCurrentIndex] : DummyObject; }
-    T* operator->() const { return IsValid() ? &(*mOwnerArray)[mCurrentIndex] : nullptr; }
+    T& operator*() const  { return  mOwnerArray[mCurrentIndex]; }
+    T* operator->() const { return &mOwnerArray[mCurrentIndex]; }
 
-	bool operator==(const VectorArrayIterator &iterator) const { return mOwnerArray == iterator.mOwnerArray && mCurrentIndex == iterator.mCurrentIndex; }
-	bool operator!=(const VectorArrayIterator &iterator) const { return mOwnerArray != iterator.mOwnerArray || mCurrentIndex != iterator.mCurrentIndex; }
+    operator bool() const { return mOwnerArray.Count() > mCurrentIndex; }
 
-    bool operator bool() const { return IsValid(); }
-
-	inline bool IsValid() const { return mCurrentIndex == 0xffffffffu || mOwnerArray == NULL || mOwnerArray->GetSize() <= mCurrentIndex; }
-private: // Non-creatable by user
-	VectorArrayIterator()
-		: mOwnerArray(NULL)
-		, mCurrentIndex(0xffffffffu)
-	{}
-	VectorArrayIterator(VectorArray<T> *owner, uint32 index)
-		: mOwnerArray(owner)
-		, mCurrentIndex(index)
-	{}
+	bool operator==(const VectorArrayIterator &iterator) const { return &mOwnerArray == &iterator.mOwnerArray && mCurrentIndex == iterator.mCurrentIndex; }
+	bool operator!=(const VectorArrayIterator &iterator) const { return &mOwnerArray != &iterator.mOwnerArray || mCurrentIndex != iterator.mCurrentIndex; }
 
 private:
-	VectorArray<T> *mOwnerArray; // Onwer VectorArray
-	uint32 mCurrentIndex;		 // Index of VectorArray
+    ArrayT& mOwnerArray;            // Onwer VectorArray
+	uint32  mCurrentIndex;		    // Index of VectorArray
 };
 template <typename T> class VectorArray : public Object<LimitEngineMemoryCategory::Common>, public SerializableResource
 {
-#define VECTORARRAY_INIT          _size(0)\
-                                , _data(0)\
-                                , _reserved(0)
+#define VECTORARRAY_INIT          mSize(0)\
+                                , mData(0)\
+                                , mReserved(0)
 public:
     VectorArray() : VECTORARRAY_INIT                {}
     VectorArray(uint32 s) : VECTORARRAY_INIT        {}
@@ -97,124 +91,124 @@ public:
     {   // Copy
         Resize(v.size());
         for(uint32 dtidx=0;dtidx<v.size();dtidx++)
-            _data[dtidx] = v[dtidx];
+            mData[dtidx] = v[dtidx];
     }
     ~VectorArray()
     {
-        if (_data) 
+        if (mData) 
         {
-            for (uint32 i=0;i<_size;i++) _data[i].~T();
-            free(_data);
+            for (uint32 i=0;i< mSize;i++) mData[i].~T();
+            free(mData);
         }
-        _size = 0;
-        _data = NULL;
+        mSize = 0;
+        mData = NULL;
     }
 
-    inline uint32 GetSize()    const                { return _size; }
-    inline T& GetStart()                            { return *(_data); }
-    inline T& GetLast()                             { return *(_data + _size - 1); }
+    inline uint32 GetSize()    const                { return mSize; }
+    inline T& GetStart()                            { return *(mData); }
+    inline T& GetLast()                             { return *(mData + mSize - 1); }
     
     inline void Reserve(uint32 n)
     {
-        if (_size >= n)
+        if (mSize >= n)
         {
-            _reserved = n;
+            mReserved = n;
         }
         else
         {
             T *newData = (T*)malloc(sizeof(T) * n);
             memset(newData, 0, sizeof(T) * n);
-            if (_size > 0)
-                memcpy(newData, _data, sizeof(T) * _size);
-            free(_data);
-            _data = newData;
-            _reserved = n;
+            if (mSize > 0)
+                memcpy(newData, mData, sizeof(T) * mSize);
+            free(mData);
+            mData = newData;
+            mReserved = n;
         }
     }
 
     inline void Resize(uint32 n)
     {
-        if (n <= _reserved)
+        if (n <= mReserved)
         {
-            _size = n;
+            mSize = n;
             return;
         }
 
         T *newData = (T*)malloc(sizeof(T) * n);
         memset(newData, 0, sizeof(T) * n);
-        if (n <= _size)
-            memcpy(newData, _data, sizeof(T) * n);
+        if (n <= mSize)
+            memcpy(newData, mData, sizeof(T) * n);
         else
-            memcpy(newData, _data, sizeof(T) * _size);
-        _size = n;
-        _reserved = _size;
-        if (_data) free(_data);
-        _data = newData;
+            memcpy(newData, mData, sizeof(T) * mSize);
+        mSize = n;
+        mReserved = mSize;
+        if (mData) free(mData);
+        mData = newData;
     }
 
     inline T& Add() {
         Resize(GetSize()+1);
-        return _data[GetSize()-1];
+        return mData[GetSize()-1];
     }
 
     inline void Add(const T& d)
     {
         Resize(GetSize()+1);
-        LEASSERT(_data);
-        _data[GetSize()-1] = d;
+        LEASSERT(mData);
+        mData[GetSize()-1] = d;
     }
 
     inline void Delete(uint32 n)
     {
-        LEASSERT(_size);
-        if (!_size) return;
-        _data[n].~T();
-        --_size;
-        if (_reserved < _size)
+        LEASSERT(mSize);
+        if (!mSize) return;
+        mData[n].~T();
+        --mSize;
+        if (mReserved < mSize)
         {
-            _reserved = _size;
+            mReserved = mSize;
         }
-        for(uint32 i=n;i<_size;i++)
+        for(uint32 i=n;i<mSize;i++)
         {
-            memcpy(&_data[i], &_data[i+1], sizeof(T));
+            memcpy(&mData[i], &mData[i+1], sizeof(T));
         }
     }
 
     int32 IndexOf(const T &t)
     {
-        for (int32 i = 0; i < static_cast<int32>(_size); i++) {
-            if (_data[i] == t)
+        for (int32 i = 0; i < static_cast<int32>(mSize); i++) {
+            if (mData[i] == t)
                 return i;
         }
         return -1;
     }
 
-    inline T* GetData() const { return _data; }
+    inline T* GetData() const { return mData; }
 
     inline void Sort(std::function<bool(const T &t1, const T &t2)> func)
     {
-        if(_data == NULL || _size == 0) return;
+        if(mData == NULL || mSize == 0) return;
 
-        T *newData = (T*)malloc(sizeof(T) * _size);
-        ::memset(newData, 0, sizeof(T) * _size);
-        newData[0] = _data[0];
+        T *newData = (T*)malloc(sizeof(T) * mSize);
+        ::memset(newData, 0, sizeof(T) * mSize);
+        newData[0] = mData[0];
         uint32 newDataSize = 1;
         T *prevData = &newData[0];
-        for(uint32 idx=1;idx<_size;idx++, newDataSize++) {
+        for(uint32 idx=1;idx< mSize;idx++, newDataSize++) {
             uint32 nidx=0;
             for(;nidx<newDataSize;nidx++) {
-                if(func(newData[nidx], _data[idx]) == false) {
+                if(func(newData[nidx], mData[idx]) == false) {
                     for(uint32 nnidx=newDataSize;nnidx>nidx;nnidx--) {
                         newData[nnidx] = newData[nnidx-1];
                     }
                     break;
                 }
             }
-            newData[nidx] = _data[idx];
+            newData[nidx] = mData[idx];
         }
-        for (uint32 i=0;i<_size;i++) _data[i].~T();
-        free(_data);
-        _data = newData;
+        for (uint32 i=0;i< mSize;i++) mData[i].~T();
+        free(mData);
+        mData = newData;
     }
 
     virtual bool Serialize(Archive &OutArchive) override
@@ -223,60 +217,60 @@ public:
             uint32 size;
             OutArchive << size;
             Resize(size);
-            void* archiveData = OutArchive.GetData(_size * sizeof(T));
-            memcpy(_data, archiveData, _size * sizeof(T));
+            void* archiveData = OutArchive.GetData(mSize * sizeof(T));
+            memcpy(mData, archiveData, mSize * sizeof(T));
         }
         else {
-            OutArchive << _size;
-            void* archiveData = OutArchive.AddSize(_size * sizeof(T));
-            memcpy(archiveData, _data, _size * sizeof(T));
+            OutArchive << mSize;
+            void* archiveData = OutArchive.AddSize(mSize * sizeof(T));
+            memcpy(archiveData, mData, mSize * sizeof(T));
         }
         return true;
     }
 
     // For STL
     inline void push_back(const T& d)       { Add(d); }
-    inline uint32 count() const             { return _size; }
-    inline uint32 size() const              { return _size; }
+    inline uint32 count() const             { return mSize; }
+    inline uint32 size() const              { return mSize; }
     inline void erase(uint32 n)             { Delete(n); }
     
     void Clear(bool FreeReservedData = true)
     {
-        if (_data)
+        if (mData)
         {
-            for(uint32 i=0;i<_size;i++) _data[i].T::~T();
-            memset(_data, 0, sizeof(T) * _reserved);
+            for(uint32 i=0;i<mSize;i++) mData[i].T::~T();
+            memset(mData, 0, sizeof(T) * mReserved);
         }
-        _size = 0;
+        mSize = 0;
         if (FreeReservedData) {
-            free(_data);
-            _data = nullptr;
-            _reserved = 0;
+            free(mData);
+            mData = nullptr;
+            mReserved = 0;
         }
     }
-    T& First() { return _data[0]; }
-    const T& First() const { return _data[0]; }
-    T& Last() { return _data[_size - 1]; }
-    const T& Last() const { return _data[_size - 1]; }
+    T& First()              { return mData[0]; }
+    const T& First() const  { return mData[0]; }
+    T& Last()               { return mData[mSize - 1]; }
+    const T& Last() const   { return mData[mSize - 1]; }
 
-    T& operator [] (uint32 n)                { LEASSERT(n < _size); return *(_data + n); }
-    const T& operator [] (uint32 n) const   { LEASSERT(n < _size); return *(_data + n); }
+    T& operator [] (uint32 n)               { LEASSERT(n < mSize); return *(mData + n); }
+    const T& operator [] (uint32 n) const   { LEASSERT(n < mSize); return *(mData + n); }
     void operator=(const VectorArray<T> &t)
     {
         Resize(t.size());
-        for(uint32 i=0;i<_size;i++)
+        for(uint32 i=0;i< mSize;i++)
         {
-            _data[i] = t[i];
+            mData[i] = t[i];
         }
     }
 
-	typedef VectorArrayIterator<T> Iterator;
-	Iterator begin() { return _size > 0 ? Iterator(this, 0) : Iterator(); }
-	Iterator end() { return Iterator(); }
+	typedef VectorArrayIterator<VectorArray<T>, T> Iterator;
+	Iterator begin() { return Iterator(*this); }
+	Iterator end() { return Iterator(*this, mSize); }
 private:
-    uint32    _size;
-    uint32  _reserved;
-    T*        _data;
+    uint32  mSize;
+    uint32  mReserved;
+    T*      mData;
 };
 }
 

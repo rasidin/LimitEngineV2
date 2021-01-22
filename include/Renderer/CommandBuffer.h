@@ -20,7 +20,12 @@ Copyright (C), LIMITGAME, 2020
 #include "Core/ReferenceCountedPointer.h"
 
 #include "Managers/RenderTargetPoolManager.h"
+#include "Renderer/VertexBuffer.h"
+#include "Renderer/IndexBuffer.h"
+#include "Renderer/ConstantBuffer.h"
 #include "Renderer/SamplerState.h"
+#include "Renderer/PipelineState.h"
+#include "Renderer/Texture.h"
 
 namespace LimitEngine {
 class CommandImpl : public Object<LimitEngineMemoryCategory::Graphics>
@@ -39,25 +44,23 @@ public:
 
     virtual void BeginScene() = 0;
     virtual void EndScene() = 0;
+    virtual void SetViewport(const LEMath::IntRect &rect) = 0;
+    virtual void SetScissorRect(const LEMath::IntRect& rect) = 0;
     virtual bool PrepareForDrawing() = 0;
     virtual bool PrepareForDrawingModel() = 0;
     virtual void ClearScreen(const LEMath::FloatColorRGBA &Color) = 0;
-    virtual void BindVertexBuffer(void *Handle, void *Buffer, uint32 Offset, uint32 Size, uint32 Stride) = 0;
-    virtual void BindIndexBuffer(void *Handle, uint32 Size) = 0;
-    virtual void BindConstantBuffer(ConstantBuffer *cb) = 0;
+    virtual void BindVertexBuffer(VertexBufferGeneric *vb) = 0;
+    virtual void BindIndexBuffer(IndexBuffer *ib) = 0;
+    virtual void SetConstantBuffer(ConstantBuffer *cb) = 0;
+    virtual void SetPipelineState(PipelineState *pso) = 0;
+    virtual void UpdateConstantBuffer(ConstantBuffer *cb, void *data, size_t size) = 0;
     virtual void BindTargetTexture(uint32 Index, Texture *Tex) = 0;
     virtual void BindSampler(uint32 Index, SamplerState *Sampler) = 0;
-    virtual void BindTexture(uint32 Index, Texture *Tex) = 0;
+    virtual void BindTexture(uint32 Index, TextureInterface *Tex) = 0;
     virtual void Dispatch(int X, int Y, int Z) = 0;
     virtual void DrawPrimitive(uint32 Primitive, uint32 Offset, uint32 Count) = 0;
     virtual void DrawIndexedPrimitive(uint32 Primitive, uint32 VertexCount, uint32 Count) = 0;
-    virtual void SetFVF(uint32 FVF) = 0;
-    virtual void SetCulling(uint32 Culling) = 0;
-    virtual void SetBlendFunc(uint32 rt, RendererFlag::BlendFlags Func) = 0;
-    virtual void SetDepthFunc(uint32 Func) = 0;
-    virtual void SetEnabled(uint32 Flag) = 0;
-    virtual void SetDisable(uint32 Flag) = 0;
-    virtual void SetRenderTarget(uint32 Index, Texture *Color, Texture *Depth, uint32 SurfaceIndex) = 0;
+    virtual void SetRenderTarget(uint32 Index, const TextureRendererAccessor &Color, const TextureRendererAccessor &Depth, uint32 SurfaceIndex) = 0;
     virtual void CopyResource(void* Dst, uint32 DstOffset, void* Org, uint32 OrgOffset, uint32 Size) = 0;
     virtual void ResourceBarrier(void* Resource, const ResourceState& Before, const ResourceState& After) = 0;
     virtual void SetMarker(const char *InMarkerName) = 0;
@@ -84,9 +87,9 @@ private:            // Private Structure
             cPresent,
             cBeginDrawing,
             cEndDrawing,
+            cSetViewport,
+            cSetScissorRect,
             cClearScreen,
-            cBindShader,
-            cBindConstantBuffer,
             cBindSampler,
             cBindTexture,
             cBindTargetTexture,
@@ -97,14 +100,9 @@ private:            // Private Structure
             cDispatch,
             cDrawPrimitive,
             cDrawIndexedPrimitive,
+            cSetPipelineState,
             cUpdateConstantBuffer,
             cSetConstantBuffer,
-            cSetFVF,
-            cSetCulling,
-            cSetEnable,
-            cSetDisable,
-            cSetDepthFunc,
-            cSetBlendFunc,
             cSetRenderTarget,
             cCopyBuffer,
             cResourceBarrier,
@@ -126,7 +124,7 @@ private:            // Private Structure
     // Empty command
     typedef struct _COMMAND : public _COMMAND_COMMON
     {
-        char                data[48];        //!<Data of command                    [ 60 ]
+        char                data[60];        //!<Data of command                    [ 60 ]
     } COMMAND;    // [ 64 | 64 ]
     // Begin scene
     typedef struct _COMMAND_BEGINSCENE : public _COMMAND_COMMON
@@ -148,6 +146,16 @@ private:            // Private Structure
     {
         _COMMAND_ENDDRAWING() : _COMMAND_COMMON(cEndDrawing) {}
     } COMMAND_ENDDRAWING;
+    typedef struct _COMMAND_SETVIEWPORT : public _COMMAND_COMMON
+    {
+        _COMMAND_SETVIEWPORT(const LEMath::IntRect& rect) : _COMMAND_COMMON(cSetViewport), vprect(rect) {}
+        LEMath::IntRect vprect;
+    } COMMAND_SETVIEWPORT;
+    typedef struct _COMMAND_SETSCISSORRECT : public _COMMAND_COMMON
+    {
+        _COMMAND_SETSCISSORRECT(const LEMath::IntRect& rect) : _COMMAND_COMMON(cSetScissorRect), screct(rect) {}
+        LEMath::IntRect screct;
+    } COMMAND_SETSCISSORRECT;
     // Clear screen
     typedef struct _COMMAND_CLEARSCREEN : public _COMMAND_COMMON
     {
@@ -161,32 +169,24 @@ private:            // Private Structure
     // Bind vertex buffer before drawing model
     typedef struct _COMMAND_BINDVERTEXBUFFER : public _COMMAND_COMMON
     {
-        _COMMAND_BINDVERTEXBUFFER(void *hd, void *bf, uint32 of, uint32 sz, uint32 st)
+        _COMMAND_BINDVERTEXBUFFER(VertexBufferGeneric* vb)
             : _COMMAND_COMMON(cBindVertexBuffer)
-            , handle(hd)
-            , buffer(bf)
-            , offset(of)
-            , size(sz)
-            , stride(st)
+            , vertexbuffer(vb)
         {
+            vb->AddReferenceCounter();
         }
-        void *handle;
-        void *buffer;
-        uint32 offset;
-        uint32 size;
-        uint32 stride;
+        VertexBufferGeneric* vertexbuffer;
     } COMMAND_BINDVERTEXBUFFER;
     // Bind index buffer before drawing model
     typedef struct _COMMAND_BINDINDEXBUFFER : public _COMMAND_COMMON
     {
-        _COMMAND_BINDINDEXBUFFER(void *hd, uint32 InSize)
+        _COMMAND_BINDINDEXBUFFER(IndexBuffer *ib)
             : _COMMAND_COMMON(cBindIndexBuffer)
-            , handle(hd)
-            , size(InSize)
+            , indexbuffer(ib)
         {
+            ib->AddReferenceCounter();
         }
-        void *handle;
-        uint32 size;
+        IndexBuffer* indexbuffer;
     } COMMAND_BINDINDEXBUFFER;
     // Bind target(RW) texture
     typedef struct _COMMAND_BINDTARGETTEXTURE : public _COMMAND_COMMON
@@ -206,21 +206,24 @@ private:            // Private Structure
             : _COMMAND_COMMON(cBindSampler)
             , index(n)
             , sampler(s)
-        {}
+        {
+            sampler->AddReferenceCounter();
+        }
         uint32              index;
-        SamplerStateRefPtr  sampler;
+        SamplerState       *sampler;
     } COMMAND_BINDSAMPLER;
     // Bind texture before drawing model
     typedef struct _COMMAND_BINDTEXTURE : public _COMMAND_COMMON
     {
-        _COMMAND_BINDTEXTURE(uint32 i, Texture *t)
+        _COMMAND_BINDTEXTURE(uint32 i, TextureInterface *t)
             : _COMMAND_COMMON(cBindTexture)
             , index(i)
             , texture(t)
         {
+            t->AddReferenceCounter();
         }
-        uint32           index;
-        TextureRefPtr    texture;
+        uint32               index;
+        TextureInterface    *texture;
     } COMMAND_BINDTEXTURE;
     typedef struct _COMMAND_BINDPOOLEDRENDERTARGET : public _COMMAND_COMMON
     {
@@ -242,6 +245,17 @@ private:            // Private Structure
         uint32             index;
         PooledDepthStencil texture;
     } COMMAND_BINDPOOLEDDEPTHSTENCIL;
+    // Set pipelinestate
+    typedef struct _COMMAND_SETPIPELINESTATE : public _COMMAND_COMMON
+    {
+        _COMMAND_SETPIPELINESTATE(PipelineState *p)
+            : _COMMAND_COMMON(cSetPipelineState)
+            , pipelinestate(p)
+        {
+            p->AddReferenceCounter();
+        }
+        PipelineState *pipelinestate;
+    } COMMAND_SETPIPELINESTATE;
     // Upload constant buffer using local cpu memory
     typedef struct _COMMAND_UPDATECONSTANTBUFFER : public _COMMAND_COMMON
     {
@@ -250,7 +264,9 @@ private:            // Private Structure
             , buffer(cb)
             , data(dt)
             , size(sz)
-        {}
+        {
+            cb->AddReferenceCounter();
+        }
         ConstantBuffer* buffer;
         void* data;
         size_t size;
@@ -261,7 +277,10 @@ private:            // Private Structure
         _COMMAND_SETCONSTANTBUFFER(uint32 idx, ConstantBuffer* cb)
             : _COMMAND_COMMON(cSetConstantBuffer)
             , index(idx)
-        {}
+            , buffer(cb)
+        {
+            cb->AddReferenceCounter();
+        }
         uint32 index;
         ConstantBuffer* buffer;
     } COMMAND_SETCONSTANTBUFFER;
@@ -286,8 +305,7 @@ private:            // Private Structure
             , primitive(static_cast<uint32>(t))
             , offset(o)
             , count(c)
-        {
-        }
+        {}
         uint32              primitive;
         uint32              offset;
         uint32              count;
@@ -300,107 +318,28 @@ private:            // Private Structure
             , primitive(static_cast<uint32>(t))
             , vtxcount(v)
             , count(c)
-        {
-        }
+        {}
         uint32                 primitive;
         uint32               vtxcount;
         uint32                 count;
     } COMMAND_DRAWINDEXEDPRIMITIVE;
-    // Set FVF    
-    typedef struct _COMMAND_SETFVF : public _COMMAND_COMMON
-    {
-        _COMMAND_SETFVF(uint32 f)
-            : _COMMAND_COMMON(cSetFVF)
-            , fvf(f)
-        {
-        }
-        uint32                fvf;
-    } COMMAND_SETFVF;
-    // Set culling
-    typedef struct _COMMAND_SETCULLING : public _COMMAND_COMMON
-    {
-        _COMMAND_SETCULLING(uint32 cull)
-            : _COMMAND_COMMON(cSetCulling)
-            , culling(cull)
-        {
-        }
-        uint32                culling;
-    } COMMAND_SETCULLING;
-    // Set enable render options
-    typedef struct _COMMAND_SETENABLE : public _COMMAND_COMMON
-    {
-        _COMMAND_SETENABLE(uint32 f)
-            : _COMMAND_COMMON(cSetEnable)
-            , flags(f)
-        {
-        }
-        uint32              flags;
-    } COMMAND_SETENABLE;
-    // Set disable render options
-    typedef struct _COMMAND_SETDISABLE : public _COMMAND_COMMON
-    {
-        _COMMAND_SETDISABLE(uint32 f)
-            : _COMMAND_COMMON(cSetDisable)
-            , flags(f)
-        {
-        }
-        uint32              flags;
-    } COMMAND_SETDISABLE;
-    // Set blend function
-    typedef struct _COMMAND_SETBLENDFUNC : public _COMMAND_COMMON
-    {
-        _COMMAND_SETBLENDFUNC(uint32 rtnum, RendererFlag::BlendFlags f)
-            : _COMMAND_COMMON(cSetBlendFunc)
-            , rt(rtnum)
-            , func(static_cast<uint32>(f))
-        {
-        }
-        uint32              rt;
-        uint32              func;
-    } COMMAND_SETBLENDFUNC;
-    // Set depth function
-    typedef struct _COMMAND_SETDEPTHFUNC : public _COMMAND_COMMON
-    {
-        _COMMAND_SETDEPTHFUNC(RendererFlag::TestFlags f)
-            : _COMMAND_COMMON(cSetDepthFunc)
-            , flags(static_cast<uint32>(f))
-        {
-        }
-        uint32              flags;
-    } COMMAND_SETDEPTHFUNC;
-    // Bind shader before drawing model
-    typedef struct _COMMAND_BINDSHADER : public _COMMAND_COMMON
-    {
-        _COMMAND_BINDSHADER(Shader *sh)
-            : _COMMAND_COMMON(cBindShader)
-            , shader(sh)
-        {
-        }
-        Shader                *shader;
-    } COMMAND_BINDSHADER;
-    typedef struct _COMMAND_BINDCONSTANTBUFFER : public _COMMAND_COMMON
-    {
-        _COMMAND_BINDCONSTANTBUFFER(ConstantBuffer *cb)
-            : _COMMAND_COMMON(cBindConstantBuffer)
-            , constantBuffer(cb)
-        {}
-        ConstantBuffer      *constantBuffer;
-    } COMMAND_BINDCONSTANTBUFFER;
     // Set render target for drawing
     typedef struct _COMMAND_SETRENDERTARGET : public _COMMAND_COMMON
     {
-        _COMMAND_SETRENDERTARGET(uint32 idx, Texture *c, Texture *d, uint32 suridx)
+        _COMMAND_SETRENDERTARGET(uint32 idx, TextureInterface *c, TextureInterface *d, uint32 suridx)
             : _COMMAND_COMMON(cSetRenderTarget)
             , index(idx)
             , surfaceIndex(suridx)
             , color(c)
             , depthstencil(d)
         {
+            if (c) c->AddReferenceCounter();
+            if (d) d->AddReferenceCounter();
         }
-        uint32               index;
-        uint32               surfaceIndex;
-        Texture             *color;
-        Texture             *depthstencil;
+        uint32                  index;
+        uint32                  surfaceIndex;
+        TextureRendererAccessor  color;
+        TextureRendererAccessor  depthstencil;
     } COMMAND_SETRENDERTARGET;
     typedef struct _COMMAND_COPYBUFFER : public _COMMAND_COMMON
     {
@@ -420,26 +359,32 @@ private:            // Private Structure
     } COMMAND_COPYBUFFER;
     typedef struct _COMMAND_RESOURCEBARRIER : public _COMMAND_COMMON
     {
-        _COMMAND_RESOURCEBARRIER(Texture* InTexture, const ResourceState& InState)
+        _COMMAND_RESOURCEBARRIER(TextureInterface* InTexture, const ResourceState& InState)
             : _COMMAND_COMMON(cResourceBarrier)
             , texture(InTexture)
             , type(Type::Texture)
             , state(InState)
-        {}
+        {
+            InTexture->AddReferenceCounter();
+        }
         _COMMAND_RESOURCEBARRIER(IndexBuffer* InIndexBuffer, const ResourceState& InState)
             : _COMMAND_COMMON(cResourceBarrier)
             , indexBuffer(InIndexBuffer)
             , type(Type::IndexBuffer)
             , state(InState)
-        {}
+        {
+            InIndexBuffer->AddReferenceCounter();
+        }
         _COMMAND_RESOURCEBARRIER(VertexBufferGeneric* InVertexBuffer, const ResourceState& InState)
             : _COMMAND_COMMON(cResourceBarrier)
             , vertexBuffer(InVertexBuffer)
             , type(Type::VertexBuffer)
             , state(InState)
-        {}
+        {
+            InVertexBuffer->AddReferenceCounter();
+        }
         union {
-            Texture                 *texture;
+            TextureInterface        *texture;
             IndexBuffer             *indexBuffer;
             VertexBufferGeneric     *vertexBuffer;
         };
@@ -472,6 +417,12 @@ private:            // Private Structure
             : _COMMAND_COMMON(cEndEvent)
         {}
     } COMMAND_ENDEVENT;
+    typedef struct _COMMAND_PRESENT : public _COMMAND_COMMON
+    {
+        _COMMAND_PRESENT()
+            : _COMMAND_COMMON(cPresent)
+        {}
+    } COMMAND_PRESENT;
 public:
     // Ctor & Dtor
     CommandBuffer(size_t bufferSize = CommandReservedMemorySize);
@@ -479,6 +430,7 @@ public:
 
     void Init(void *Parameter) { if (mImpl) mImpl->Init(Parameter); }
     void Term() { if (mImpl) mImpl->Term(); }
+    void ReleaseRendererResources();
 
     void* GetCommandListHandle() const { return mImpl->GetCommandListHandle(); }
     void ReadyToExecute() const { mImpl->ReadyToExecute(); }
@@ -508,6 +460,31 @@ private:
     void                    *mCommandBuffer;
     void                    *mPushCommandBufferPointer;
     void                    *mPullCommandBufferPointer;
+
+    struct {
+        void Clear() {
+            Textures.Clear();
+            IndexBuffers.Clear();
+            VertexBuffers.Clear();
+            ConstantBuffers.Clear();
+            SamplerStates.Clear();
+            PipelineStates.Clear();
+        }
+
+        VectorArray<TextureInterface*>      Textures;
+        VectorArray<IndexBuffer*>           IndexBuffers;
+        VectorArray<VertexBufferGeneric*>   VertexBuffers;
+        VectorArray<ConstantBuffer*>        ConstantBuffers;
+        VectorArray<SamplerState*>          SamplerStates;
+        VectorArray<PipelineState*>         PipelineStates;
+
+        void Add(TextureInterface* t)       { if (Textures.IndexOf(t) < 0) Textures.Add(t); }
+        void Add(IndexBuffer* i)            { if (IndexBuffers.IndexOf(i) < 0) IndexBuffers.Add(i); }
+        void Add(VertexBufferGeneric* v)    { if (VertexBuffers.IndexOf(v) < 0) VertexBuffers.Add(v); }
+        void Add(ConstantBuffer* c)         { if (ConstantBuffers.IndexOf(c) < 0) ConstantBuffers.Add(c); }
+        void Add(SamplerState* s)           { if (SamplerStates.IndexOf(s) < 0) SamplerStates.Add(s); }
+        void Add(PipelineState *p)          { if (PipelineStates.IndexOf(p) < 0) PipelineStates.Add(p); }
+    } ReservedRendererResources;
 
     Mutex                    mMutex;
 };

@@ -139,14 +139,9 @@ namespace LimitEngine {
 
         void ReadyToRender() override {}
 
-        LEMath::IntSize GetScreenSize() override
+        virtual LEMath::IntSize GetScreenSize() override
         {
-            if (!mD3DDevice) return LEMath::IntSize();
-            DXGI_SWAP_CHAIN_DESC swapChainDesc;
-            if (mDXGISwapChain && mDXGISwapChain->GetDesc(&swapChainDesc) == S_OK) {
-                return LEMath::IntSize(swapChainDesc.BufferDesc.Width, swapChainDesc.BufferDesc.Height);
-            }
-            return LEMath::IntSize();
+            return mDisplayBufferSize;
         }
 
         void PreRenderFinished() override {}
@@ -160,6 +155,9 @@ namespace LimitEngine {
             }
             else {
                 debugInterface->EnableDebugLayer();
+                ID3D12Debug1 *debugcontroller1 = nullptr;
+                debugInterface->QueryInterface(IID_PPV_ARGS(&debugcontroller1));
+                debugcontroller1->SetEnableGPUBasedValidation(true);
             }
 #endif
             Microsoft::WRL::ComPtr<IDXGIFactory4> dxgiFactory;
@@ -208,6 +206,7 @@ namespace LimitEngine {
             swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
             swapChainDesc.BufferCount = SWAP_CHAIN_BUFFER_COUNT;
             swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+            swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
             if (FAILED(dxgiFactory->CreateSwapChainForHwnd(
                 mCommandQueue[static_cast<uint32>(CommandQueueType::Graphics)], 
                 handle,
@@ -219,7 +218,13 @@ namespace LimitEngine {
                 Debug::Error("Failed to create swap chain");
                 return;
             }
+            IDXGISwapChain2* swapchain2 = nullptr;
+            if (SUCCEEDED(mDXGISwapChain->QueryInterface(&swapchain2))) {
+                mFrameLatencyWaitableObject = swapchain2->GetFrameLatencyWaitableObject();
+            }
 
+            mDisplayBufferSize = { Options.Resolution.Width(), Options.Resolution.Height() };
+            mDisplayBufferFormat = RendererFlag::BufferFormat::R8G8B8A8_UNorm;
             for (uint32 BufIndex = 0; BufIndex < SWAP_CHAIN_BUFFER_COUNT; BufIndex++) {
                 if (FAILED(mDXGISwapChain->GetBuffer(BufIndex, IID_PPV_ARGS(&mDisplayBuffers[BufIndex])))) {
                     Debug::Error("Failed to create swap chain buffer");
@@ -227,10 +232,18 @@ namespace LimitEngine {
                 }
                 mDisplayRenderTargetViews[BufIndex] = mDescriptorAllocator[D3D12_DESCRIPTOR_HEAP_TYPE_RTV].Allocate();
                 mD3DDevice->CreateRenderTargetView(mDisplayBuffers[BufIndex], nullptr, mDisplayRenderTargetViews[BufIndex]);
+                mDisplayBufferResourceStates[BufIndex] = ResourceState::Present;
             }
         }
 
         void ResizeScreen(const LEMath::IntSize& size) override { /* Unimplemented */ }
+
+        void ProcessBeforeFlushingCommands() override
+        {
+            if (mFrameLatencyWaitableObject) {
+                WaitForSingleObjectEx(mFrameLatencyWaitableObject, 1000, true);
+            }
+        }
 
         void Finish(CommandBuffer* commandBuffer) override
         {
@@ -282,6 +295,10 @@ namespace LimitEngine {
             mD3DDevice->Release();
         }
 
+        uint32 GetCurrentFrameBufferIndex() const { return mCurrentFrameBufferIndex; }
+        const RendererFlag::BufferFormat& GetCurrentFrameBufferFormat() const override { return mDisplayBufferFormat; }
+        const ResourceState GetCurrentFrameBufferResourceState() const override { return mDisplayBufferResourceStates[mCurrentFrameBufferIndex]; }
+        void SetCurrentFrameBufferResourceState(ResourceState state) { mDisplayBufferResourceStates[mCurrentFrameBufferIndex] = state; }
         void* GetCurrentFrameBuffer() const override { return mDisplayBuffers[mCurrentFrameBufferIndex]; }
         void* GetCurrentFrameBufferView() const override { return (void*)&mDisplayRenderTargetViews[mCurrentFrameBufferIndex]; }
         void* GetDeviceHandle() const override { return mD3DDevice; }
@@ -295,8 +312,12 @@ namespace LimitEngine {
         ID3D12Fence                         *mCommandQueueFence[CommandQueueTypeNum];
         uint64                               mCommandQueueFenceValue[CommandQueueTypeNum];
         IDXGISwapChain1                     *mDXGISwapChain = nullptr;
+        HANDLE                               mFrameLatencyWaitableObject = nullptr;
+        LEMath::IntSize                      mDisplayBufferSize;
+        RendererFlag::BufferFormat           mDisplayBufferFormat = RendererFlag::BufferFormat::Unknown;
         ID3D12Resource                      *mDisplayBuffers[SWAP_CHAIN_BUFFER_COUNT];
         D3D12_CPU_DESCRIPTOR_HANDLE          mDisplayRenderTargetViews[SWAP_CHAIN_BUFFER_COUNT];
+        ResourceState                        mDisplayBufferResourceStates[SWAP_CHAIN_BUFFER_COUNT];
 
         DescriptorAllocator                  mDescriptorAllocator[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES] = {
             D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,

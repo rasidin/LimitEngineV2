@@ -27,7 +27,7 @@ namespace LimitEngine {
         void Init();
         void Term();
         
-        template<typename T> ReferenceCountedPointer<T> GetShader() { return ReferenceCountedPointer<T>(static_cast<T*>(findshader(T::GetHash()))); }
+        template<typename T> ShaderRefPtr GetShader() { return ShaderRefPtr(findshader(T::GetHash())); }
 
         void LoadShaderSet(const char *filename);
         void AddShader(Shader *shader);

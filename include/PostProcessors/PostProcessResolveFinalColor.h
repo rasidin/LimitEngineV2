@@ -25,13 +25,16 @@ OTHER DEALINGS IN THE SOFTWARE.
 @brief Post processor for Resolving final color (to screen, last frame buffer)
 @author minseob
 **********************************************************************/
-#pragma once
+#ifndef LIMITENGINEV2_POSTPROCESS_POSTPROCESSRESOLVEFINALCOLOR_H_
+#define LIMITENGINEV2_POSTPROCESS_POSTPROCESSRESOLVEFINALCOLOR_H_
 
 #include <LERenderer>
 #include "PostProcessor.h"
 
+#include "Core/ReferenceCountedPointer.h"
 #include "Containers/VectorArray.h"
 #include "Renderer/Shader.h"
+#include "Renderer/PipelineState.h"
 
 namespace LimitEngine {
 class PostProcessResolveFinalColor : public PostProcessor
@@ -56,6 +59,8 @@ private:
     ColorSpace mColorSpace;
 
     ShaderRefPtr mResolveShader;
-    VectorArray<ConstantBufferRefPtr> mConstantBuffers;
+    ConstantBufferRefPtr mConstantBuffer = nullptr;
+    PipelineStateRefPtr mPipelineState = nullptr;
 };
 } // LimitEngine
+#endif // LIMITENGINEV2_POSTPROCESS_POSTPROCESSRESOLVEFINALCOLOR_H_

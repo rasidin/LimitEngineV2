@@ -30,6 +30,9 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 #include <LERenderer>
 
+#include "Core/Object.h"
+#include "Core/ReferenceCountedObject.h"
+
 namespace LimitEngine {
 class ConstantBufferImpl : public Object<LimitEngineMemoryCategory::Graphics>
 {
@@ -39,7 +42,7 @@ public:
 
     virtual void PrepareForDrawing() = 0;
 
-    virtual void Set(uint32 ShaderType, uint32 BufferIndex, uint32 Offset, const void *Data, size_t Size) = 0;
+    //virtual void Set(uint32 ShaderType, uint32 BufferIndex, uint32 Offset, const void *Data, size_t Size) = 0;
 };
 class ConstantBuffer : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>
 {

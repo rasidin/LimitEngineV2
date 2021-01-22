@@ -27,44 +27,9 @@ OTHER DEALINGS IN THE SOFTWARE.
 *******************************************************************/
 #include <d3d12.h>
 
-namespace LimitEngine {
-    DXGI_FORMAT ConvertTextureFormat(const TEXTURE_COLOR_FORMAT &format)
-    {
-        switch (format)
-        {
-        case TEXTURE_COLOR_FORMAT_R8G8B8:
-            return DXGI_FORMAT_R8G8B8A8_UNORM;
-        case TEXTURE_COLOR_FORMAT_A8R8G8B8:
-            return DXGI_FORMAT_R8G8B8A8_UNORM;
-        case TEXTURE_COLOR_FORMAT_R16F:
-            return DXGI_FORMAT_R16_FLOAT;
-        case TEXTURE_COLOR_FORMAT_G16R16F:
-            return DXGI_FORMAT_R16G16_FLOAT;
-        case TEXTURE_COLOR_FORMAT_A16B16G16R16F:
-            return DXGI_FORMAT_R16G16B16A16_FLOAT;
-        case TEXTURE_COLOR_FORMAT_R32F:
-            return DXGI_FORMAT_R32_FLOAT;
-        case TEXTURE_COLOR_FORMAT_G32R32F:
-            return DXGI_FORMAT_R32G32_FLOAT;
-        case TEXTURE_COLOR_FORMAT_A32B32G32R32F:
-            return DXGI_FORMAT_R32G32B32A32_FLOAT;
-        default:
-            return DXGI_FORMAT_UNKNOWN;
-        }
-    }
-    DXGI_FORMAT ConvertDepthFormat(const TEXTURE_DEPTH_FORMAT& format)
-    {
-        switch (format)
-        {
-        case TEXTURE_DEPTH_FORMAT_D32F:
-            return DXGI_FORMAT_D32_FLOAT;
-        case TEXTURE_DEPTH_FORMAT_D24S8:
-            return DXGI_FORMAT_D24_UNORM_S8_UINT;
-        default:
-            return DXGI_FORMAT_UNKNOWN;
-        }
-    }
+#include "PrivateDefinitions_DirectX12.h"
 
+namespace LimitEngine {
     class TextureImpl_DirectX12 : public TextureImpl
     {
     public:
@@ -73,8 +38,8 @@ namespace LimitEngine {
         {}
         virtual ~TextureImpl_DirectX12()
         {}
-        LEMath::IntSize GetSize() const override { return mSize; }
-        TEXTURE_COLOR_FORMAT GetFormat() const override { return mFormat; }
+        const LEMath::IntSize& GetSize() const override { return mSize; }
+        const RendererFlag::BufferFormat& GetFormat() const override { return mFormat; }
         void* GetHandle() const override { return nullptr; }
         void* GetDepthSurfaceHandle() const override { return nullptr; }
 
@@ -83,9 +48,9 @@ namespace LimitEngine {
         {
             UNIMPLEMENTED_ERROR
         }
-        bool Create(const LEMath::IntSize &size, TEXTURE_COLOR_FORMAT format, uint32 usage, uint32 mipLevels, void *initData, size_t initDataSize) override
+        bool Create(const LEMath::IntSize &size, const RendererFlag::BufferFormat &format, uint32 usage, uint32 mipLevels, void *initData, size_t initDataSize) override
         {
-            ID3D12Device* device = (ID3D12Device*)sDrawManager->GetDeviceHandle();
+            ID3D12Device* device = (ID3D12Device*)LE_DrawManagerRendererAccessor.GetDeviceHandle();
             if (device == nullptr) return false;
 
             D3D12_HEAP_PROPERTIES heapProps = {};
@@ -101,14 +66,14 @@ namespace LimitEngine {
             resourceDesc.Height = size.Height();
             resourceDesc.DepthOrArraySize = 1;
             resourceDesc.MipLevels = 1;
-            resourceDesc.Format = ConvertTextureFormat(format);
+            resourceDesc.Format = ConvertBufferFormatToDXGIFormat(format);
             resourceDesc.SampleDesc.Count = 1;
             resourceDesc.SampleDesc.Quality = 0;
             resourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
             resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
             resourceDesc.Alignment = 0;
 
-            mOwner->SetResourceState(ResourceState::GenericRead);
+            TextureRendererAccessor(mOwner).SetResourceState(ResourceState::GenericRead);
 
             HRESULT hr = device->CreateCommittedResource(
                 &heapProps,
@@ -127,9 +92,9 @@ namespace LimitEngine {
             }
             return true;
         }
-        bool Create3D(const LEMath::IntSize3& size, TEXTURE_COLOR_FORMAT format, uint32 usage, uint32 mipLevels, void* initData, size_t initDataSize) override
+        bool Create3D(const LEMath::IntSize3& size, const RendererFlag::BufferFormat &format, uint32 usage, uint32 mipLevels, void* initData, size_t initDataSize) override
         {
-            ID3D12Device* device = (ID3D12Device*)sDrawManager->GetDeviceHandle();
+            ID3D12Device* device = (ID3D12Device*)LE_DrawManagerRendererAccessor.GetDeviceHandle();
             if (device == nullptr) return false;
 
             D3D12_HEAP_PROPERTIES heapProps = {};
@@ -145,14 +110,14 @@ namespace LimitEngine {
             resourceDesc.Height = size.Height();
             resourceDesc.DepthOrArraySize = size.Depth();
             resourceDesc.MipLevels = 1;
-            resourceDesc.Format = ConvertTextureFormat(format);
+            resourceDesc.Format = ConvertBufferFormatToDXGIFormat(format);
             resourceDesc.SampleDesc.Count = 1;
             resourceDesc.SampleDesc.Quality = 0;
             resourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
             resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
             resourceDesc.Alignment = 0;
 
-            mOwner->SetResourceState(ResourceState::GenericRead);
+            TextureRendererAccessor(mOwner).SetResourceState(ResourceState::GenericRead);
 
             HRESULT hr = device->CreateCommittedResource(
                 &heapProps,
@@ -177,7 +142,7 @@ namespace LimitEngine {
         }
         void CreateColor(const LEMath::IntSize& size, const ByteColorRGBA& color) override
         {
-            ID3D12Device* device = (ID3D12Device*)sDrawManager->GetDeviceHandle();
+            ID3D12Device* device = (ID3D12Device*)LE_DrawManagerRendererAccessor.GetDeviceHandle();
             if (device == nullptr) return;
 
             D3D12_HEAP_PROPERTIES heapProps = {};
@@ -193,14 +158,14 @@ namespace LimitEngine {
             resourceDesc.Height = size.Height();
             resourceDesc.DepthOrArraySize = 1;
             resourceDesc.MipLevels = 1;
-            resourceDesc.Format = ConvertTextureFormat(TEXTURE_COLOR_FORMAT_A8R8G8B8);
+            resourceDesc.Format = ConvertBufferFormatToDXGIFormat(RendererFlag::BufferFormat::R8G8B8A8_SInt);
             resourceDesc.SampleDesc.Count = 1;
             resourceDesc.SampleDesc.Quality = 0;
             resourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
             resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
             resourceDesc.Alignment = 0;
 
-            mOwner->SetResourceState(ResourceState::Common);
+            TextureRendererAccessor(mOwner).SetResourceState(ResourceState::Common);
 
             HRESULT hr = device->CreateCommittedResource(
                 &heapProps,
@@ -224,9 +189,9 @@ namespace LimitEngine {
                 DrawCommand::ResourceBarrier(mOwner, ResourceState::GenericRead);
             }
         }
-        void CreateDepthStencil(const LEMath::IntSize& size, TEXTURE_DEPTH_FORMAT format) override
+        void CreateDepthStencil(const LEMath::IntSize& size, const RendererFlag::BufferFormat &format) override
         {
-            ID3D12Device* device = (ID3D12Device*)sDrawManager->GetDeviceHandle();
+            ID3D12Device* device = (ID3D12Device*)LE_DrawManagerRendererAccessor.GetDeviceHandle();
             if (device == nullptr) return;
 
             D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
@@ -254,13 +219,13 @@ namespace LimitEngine {
             resourceDesc.Height = size.Height();
             resourceDesc.DepthOrArraySize = 1;
             resourceDesc.MipLevels = 1;
-            resourceDesc.Format = ConvertDepthFormat(format);
+            resourceDesc.Format = ConvertBufferFormatToDXGIFormat(format);
             resourceDesc.SampleDesc.Count = 1;
             resourceDesc.SampleDesc.Quality = 0;
             resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
             resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 
-            mOwner->SetResourceState(ResourceState::DepthWrite);
+            TextureRendererAccessor(mOwner).SetResourceState(ResourceState::DepthWrite);
 
             hr = device->CreateCommittedResource(
                 &heapProps,
@@ -273,9 +238,8 @@ namespace LimitEngine {
                 LEASSERT(0);
             }
 
-
             D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc = {};
-            DSVDesc.Format = ConvertDepthFormat(format);
+            DSVDesc.Format = ConvertBufferFormatToDXGIFormat(format);
             DSVDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
             DSVDesc.Texture2D.MipSlice = 0;
 
@@ -283,9 +247,9 @@ namespace LimitEngine {
 
             device->CreateDepthStencilView(mResource, &DSVDesc, mDepthStencilView);
         }
-        void CreateRenderTarget(const LEMath::IntSize& size, TEXTURE_COLOR_FORMAT format, uint32 usage) override
+        void CreateRenderTarget(const LEMath::IntSize& size, const RendererFlag::BufferFormat& format, uint32 usage) override
         {
-            ID3D12Device* device = (ID3D12Device*)sDrawManager->GetDeviceHandle();
+            ID3D12Device* device = (ID3D12Device*)LE_DrawManagerRendererAccessor.GetDeviceHandle();
             if (device == nullptr) return;
 
             D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
@@ -313,13 +277,13 @@ namespace LimitEngine {
             resourceDesc.Height = size.Height();
             resourceDesc.DepthOrArraySize = 1;
             resourceDesc.MipLevels = 1;
-            resourceDesc.Format = ConvertTextureFormat(format);
+            resourceDesc.Format = ConvertBufferFormatToDXGIFormat(format);
             resourceDesc.SampleDesc.Count = 1;
             resourceDesc.SampleDesc.Quality = 0;
             resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
             resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 
-            mOwner->SetResourceState(ResourceState::RenderTarget);
+            TextureRendererAccessor(mOwner).SetResourceState(ResourceState::RenderTarget);
 
             hr = device->CreateCommittedResource(
                 &heapProps,
@@ -333,7 +297,7 @@ namespace LimitEngine {
             }
 
             D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = {};
-            RTVDesc.Format = ConvertTextureFormat(format);
+            RTVDesc.Format = ConvertBufferFormatToDXGIFormat(format);
             RTVDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
             RTVDesc.Texture2D.MipSlice = 0;
             RTVDesc.Texture2D.PlaneSlice = 0;
@@ -383,7 +347,7 @@ namespace LimitEngine {
         ID3D12Resource* mResource;
 
         LEMath::IntSize mSize = LEMath::IntSize::Zero;
-        TEXTURE_COLOR_FORMAT mFormat = TEXTURE_COLOR_FORMAT_UNKNOWN;
+        RendererFlag::BufferFormat mFormat = RendererFlag::BufferFormat::Unknown;
 
         D3D12_CPU_DESCRIPTOR_HANDLE mRenderTargetView;
         D3D12_CPU_DESCRIPTOR_HANDLE mDepthStencilView;

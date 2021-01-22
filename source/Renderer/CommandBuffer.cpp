@@ -32,6 +32,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "Core/Debug.h"
 #include "Core/Util.h"
 #include "Renderer/DrawCommand.h"
+#include "Renderer/PipelineStateDescriptor.h"
 #include "Renderer/IndexBuffer.h"
 #include "Renderer/RenderContext.h"
 #include "Renderer/VertexBuffer.h"
@@ -73,6 +74,28 @@ CommandBuffer::~CommandBuffer()
         free(mCommandBuffer);
         mCommandBuffer = NULL;
     }
+}
+
+void CommandBuffer::ReleaseRendererResources()
+{
+    if (ReservedRendererResources.Textures.count())
+    for (TextureInterface* texture : ReservedRendererResources.Textures)
+        delete texture;
+    if (ReservedRendererResources.IndexBuffers.count())
+    for (IndexBuffer* indexbuffer : ReservedRendererResources.IndexBuffers)
+        delete indexbuffer;
+    if (ReservedRendererResources.VertexBuffers.count())
+    for (VertexBufferGeneric* vertexbuffer : ReservedRendererResources.VertexBuffers)
+        delete vertexbuffer;
+    if (ReservedRendererResources.ConstantBuffers.count())
+    for (ConstantBuffer* buffer : ReservedRendererResources.ConstantBuffers)
+        delete buffer;
+    if (ReservedRendererResources.SamplerStates.count())
+    for (SamplerState* samplerstate : ReservedRendererResources.SamplerStates)
+        delete samplerstate;
+    if (ReservedRendererResources.PipelineStates.count())
+    for (PipelineState* pipelinestate : ReservedRendererResources.PipelineStates)
+        delete pipelinestate;
 }
 
 CommandBuffer::COMMAND* CommandBuffer::popPushCommandBuffer()
@@ -190,8 +213,6 @@ void CommandBuffer::Flush(RenderState *rs)
     mMutex.Unlock();
 
     uint32 cmdCount = 0u;
-	void *bindedVertexBufferHandle = NULL;
-	void *bindedIndexBufferHandle = NULL;
 	Texture *nullTexture = RenderContext::GetSingleton().GetDefaultTexture(RenderContext::DefaultTextureTypeWhite);
     //gDebug.Print(">> Run command : %x to %x (%d)\n", (uintptr_t)mPullCommandBufferPointer, (uintptr_t)flushCommandBufferPointer, ((intptr_t)flushCommandBufferPointer - (intptr_t)mPullCommandBufferPointer) / sizeof(COMMAND));
     while (flushCommandBufferPointer != mPullCommandBufferPointer)
@@ -205,7 +226,6 @@ void CommandBuffer::Flush(RenderState *rs)
         {
             case COMMAND::cBeginScene:
             {
-                LE_DrawManager.PrepareForDrawingScene();
                 mImpl->BeginScene();
                 rs->SetSceneBegan(true);
             } break;
@@ -223,6 +243,16 @@ void CommandBuffer::Flush(RenderState *rs)
             {
                 rs->SetModelDrawingBegan(false);
             } break;
+            case COMMAND::cSetViewport:
+            {
+                COMMAND_SETVIEWPORT* command = reinterpret_cast<COMMAND_SETVIEWPORT*>(currentCommand);
+                mImpl->SetViewport(command->vprect);
+            } break;
+            case COMMAND::cSetScissorRect:
+            {
+                COMMAND_SETSCISSORRECT* command = reinterpret_cast<COMMAND_SETSCISSORRECT*>(currentCommand);
+                mImpl->SetScissorRect(command->screct);
+            } break;
             case COMMAND::cClearScreen:
             {
                 COMMAND_CLEARSCREEN *command = reinterpret_cast<COMMAND_CLEARSCREEN*>(currentCommand);
@@ -232,14 +262,16 @@ void CommandBuffer::Flush(RenderState *rs)
             case COMMAND::cBindVertexBuffer:
             {
                 COMMAND_BINDVERTEXBUFFER *command = reinterpret_cast<COMMAND_BINDVERTEXBUFFER*>(currentCommand);
-                mImpl->BindVertexBuffer(command->handle, command->buffer, command->offset, command->size, command->stride);
-				bindedVertexBufferHandle = command->handle;
+                mImpl->BindVertexBuffer(command->vertexbuffer);
+                if (command->vertexbuffer->SubReferenceCounter() == 0)
+                    ReservedRendererResources.Add(command->vertexbuffer);
             } break;
             case COMMAND::cBindIndexBuffer:
             {
                 COMMAND_BINDINDEXBUFFER *command = reinterpret_cast<COMMAND_BINDINDEXBUFFER*>(currentCommand);
-                mImpl->BindIndexBuffer(command->handle, command->size);
-				bindedIndexBufferHandle = command->handle;
+                mImpl->BindIndexBuffer(command->indexbuffer);
+                if (command->indexbuffer->SubReferenceCounter() == 0)
+                    ReservedRendererResources.Add(command->indexbuffer);
 			} break;
 			case COMMAND::cDispatch:
 			{
@@ -249,85 +281,43 @@ void CommandBuffer::Flush(RenderState *rs)
             case COMMAND::cDrawPrimitive:
             {
                 COMMAND_DRAWPRIMITIVE *command = reinterpret_cast<COMMAND_DRAWPRIMITIVE*>(currentCommand);
-				if (bindedVertexBufferHandle == NULL)
-					break;
                 mImpl->PrepareForDrawing();
                 mImpl->DrawPrimitive(command->primitive, command->offset, command->count);
             } break;
             case COMMAND::cDrawIndexedPrimitive:
             {
                 COMMAND_DRAWINDEXEDPRIMITIVE *command = reinterpret_cast<COMMAND_DRAWINDEXEDPRIMITIVE*>(currentCommand);
-				if (bindedVertexBufferHandle == NULL || bindedIndexBufferHandle == NULL)
-					break;
 				if (mImpl->PrepareForDrawing())
                     mImpl->DrawIndexedPrimitive(command->primitive, command->vtxcount, command->count);
-            } break;
-            case COMMAND::cSetFVF:
-            {
-                COMMAND_SETFVF *command = reinterpret_cast<COMMAND_SETFVF*>(currentCommand);
-                uint32 fvf = command->fvf;
-                mImpl->SetFVF(fvf);
-            } break;
-            case COMMAND::cSetCulling:
-            {
-                COMMAND_SETCULLING *command = reinterpret_cast<COMMAND_SETCULLING*>(currentCommand);
-                uint32 cull = command->culling;
-                mImpl->SetCulling(cull);
-            } break;
-            case COMMAND::cSetDepthFunc:
-            {
-                COMMAND_SETDEPTHFUNC *command = reinterpret_cast<COMMAND_SETDEPTHFUNC*>(currentCommand);
-                RendererFlag::TestFlags flag = (RendererFlag::TestFlags)command->flags;
-                mImpl->SetDepthFunc(static_cast<uint32>(flag));
-            } break;
-            case COMMAND::cSetEnable:
-            {
-                COMMAND_SETENABLE *command = reinterpret_cast<COMMAND_SETENABLE*>(currentCommand);
-                uint32 flag = command->flags;
-                mImpl->SetEnabled(flag);
-            } break;
-            case COMMAND::cSetDisable:
-            {
-                COMMAND_SETDISABLE *command = reinterpret_cast<COMMAND_SETDISABLE*>(currentCommand);
-                uint32 flag = command->flags;
-                mImpl->SetDisable(flag);
-            } break;
-            case COMMAND::cSetBlendFunc:
-            {
-                COMMAND_SETBLENDFUNC *command = reinterpret_cast<COMMAND_SETBLENDFUNC*>(currentCommand);
-                uint32 rt = command->rt;
-                RendererFlag::BlendFlags func = static_cast<RendererFlag::BlendFlags>(command->func);
-                mImpl->SetBlendFunc(rt, func);
             } break;
             case COMMAND::cSetRenderTarget:
             {
                 COMMAND_SETRENDERTARGET *command = reinterpret_cast<COMMAND_SETRENDERTARGET*>(currentCommand);
                 mImpl->SetRenderTarget(command->index, command->color, command->depthstencil, command->surfaceIndex);
             } break;
-            case COMMAND::cBindConstantBuffer:
-            {
-                COMMAND_BINDCONSTANTBUFFER *command = reinterpret_cast<COMMAND_BINDCONSTANTBUFFER*>(currentCommand);
-                mImpl->BindConstantBuffer(command->constantBuffer);
-            } break;
 			case COMMAND::cBindTargetTexture:
 			{
 				COMMAND_BINDTARGETTEXTURE *command = reinterpret_cast<COMMAND_BINDTARGETTEXTURE*>(currentCommand);
                 mImpl->BindTargetTexture(command->index, command->texture);
+                if (command->texture->SubReferenceCounter() == 0)
+                    ReservedRendererResources.Add(command->texture);
 			} break;
             case COMMAND::cBindSampler:
             {
                 COMMAND_BINDSAMPLER *command = reinterpret_cast<COMMAND_BINDSAMPLER*>(currentCommand);
-                if (command->sampler.IsValid()) {
-                    mImpl->BindSampler(command->index, command->sampler.Get());
-                    command->sampler.Release();
+                if (command->sampler) {
+                    mImpl->BindSampler(command->index, command->sampler);
+                    if (command->sampler->SubReferenceCounter() == 0)
+                        ReservedRendererResources.Add(command->sampler);
                 }
             } break;
             case COMMAND::cBindTexture:
             {
                 COMMAND_BINDTEXTURE *command = reinterpret_cast<COMMAND_BINDTEXTURE*>(currentCommand);
-                if (command->texture.IsValid()) {
-                    mImpl->BindTexture(command->index, command->texture.Get());
-                    command->texture.Release();
+                if (command->texture) {
+                    mImpl->BindTexture(command->index, command->texture);
+                    if (command->texture->SubReferenceCounter() == 0)
+                        ReservedRendererResources.Add(command->texture);
                 } 
                 else
                     mImpl->BindTexture(command->index, nullTexture);
@@ -348,17 +338,30 @@ void CommandBuffer::Flush(RenderState *rs)
                     command->texture.Release();
                 }
             } break;
+            case COMMAND::cSetPipelineState:
+            {
+                COMMAND_SETPIPELINESTATE* command = reinterpret_cast<COMMAND_SETPIPELINESTATE*>(currentCommand);
+                if (command->pipelinestate) {
+                    mImpl->SetPipelineState(command->pipelinestate);
+                    if (command->pipelinestate->SubReferenceCounter() == 0)
+                        ReservedRendererResources.Add(command->pipelinestate);
+                }
+            } break;
             case COMMAND::cUpdateConstantBuffer:
             {
                 COMMAND_UPDATECONSTANTBUFFER* command = reinterpret_cast<COMMAND_UPDATECONSTANTBUFFER*>(currentCommand);
                 if (command->buffer) {
-                    mImpl->UploadConstantBuffer(command->buffer, command->data, command->size);
+                    mImpl->UpdateConstantBuffer(command->buffer, command->data, command->size);
+                    if (command->buffer->SubReferenceCounter() == 0)
+                        ReservedRendererResources.Add(command->buffer);
                 }
             } break;
             case COMMAND::cSetConstantBuffer:
             {
                 COMMAND_SETCONSTANTBUFFER* command = reinterpret_cast<COMMAND_SETCONSTANTBUFFER*>(currentCommand);
-                mImpl->BindConstantBuffer(command->buffer);
+                mImpl->SetConstantBuffer(command->buffer);
+                if (command->buffer->SubReferenceCounter() == 0)
+                    ReservedRendererResources.Add(command->buffer);
             } break;
             case COMMAND::cCopyBuffer:
             {
@@ -372,29 +375,38 @@ void CommandBuffer::Flush(RenderState *rs)
                 ResourceState beforeState = ResourceState::Common;
                 switch (command->type) {
                 case COMMAND_RESOURCEBARRIER::Type::Texture:
-                    resource = command->texture->GetResource();
-                    beforeState = command->texture->GetResourceState();
+                    resource = TextureRendererAccessor(command->texture).GetResource();
+                    beforeState = TextureRendererAccessor(command->texture).GetResourceState();
                     break;
                 case COMMAND_RESOURCEBARRIER::Type::IndexBuffer:
-                    resource = command->indexBuffer->GetResource();
-                    beforeState = command->indexBuffer->GetResourceState();
+                    resource = IndexBufferRendererAccessor(command->indexBuffer).GetResource();
+                    beforeState = IndexBufferRendererAccessor(command->indexBuffer).GetResourceState();
                     break;
                 case COMMAND_RESOURCEBARRIER::Type::VertexBuffer:
-                    resource = command->vertexBuffer->GetResource();
-                    beforeState = command->vertexBuffer->GetResourceState();
+                    resource = VertexBufferRendererAccessor(command->vertexBuffer).GetResource();
+                    beforeState = VertexBufferRendererAccessor(command->vertexBuffer).GetResourceState();
                     break;
                 }
                 if (resource && beforeState != command->state)
                     mImpl->ResourceBarrier(resource, beforeState, command->state);
                 switch (command->type) {
                 case COMMAND_RESOURCEBARRIER::Type::Texture:
-                    command->texture->SetResourceState(command->state);
+                    TextureRendererAccessor(command->texture).SetResourceState(command->state);
+                    if (command->texture->SubReferenceCounter() == 0) {
+                        ReservedRendererResources.Add(command->texture);
+                    }
                     break;
                 case COMMAND_RESOURCEBARRIER::Type::IndexBuffer:
-                    command->indexBuffer->SetResourceState(command->state);
+                    IndexBufferRendererAccessor(command->indexBuffer).SetResourceState(command->state);
+                    if (command->indexBuffer->SubReferenceCounter() == 0) {
+                        ReservedRendererResources.Add(command->indexBuffer);
+                    }
                     break;
                 case COMMAND_RESOURCEBARRIER::Type::VertexBuffer:
-                    command->vertexBuffer->SetResourceState(command->state);
+                    VertexBufferRendererAccessor(command->vertexBuffer).SetResourceState(command->state);
+                    if (command->vertexBuffer->SubReferenceCounter() == 0) {
+                        ReservedRendererResources.Add(command->vertexBuffer);
+                    }
                     break;
                 }
             } break;
@@ -416,6 +428,12 @@ void CommandBuffer::Flush(RenderState *rs)
             {
                 mImpl->EndEvent();
             } break;
+            case COMMAND::cPresent:
+            {
+                LE_DrawManagerRendererAccessor.Finish(this);
+                LE_DrawManagerRendererAccessor.Present();
+                mImpl->ProcessAfterPresent();
+            } break;
             default:
                 DEBUG_MESSAGE("[DrawManager] Unknown Command : %d\n", currentCommand->commandType);
                 break;
@@ -425,7 +443,7 @@ void CommandBuffer::Flush(RenderState *rs)
 
 // =============================================
 // Command interface in DrawManager
-#define COMMANDBUFFER_NEW new(LE_DrawManager.getCommandBuffer()->popPushCommandBuffer())
+#define COMMANDBUFFER_NEW new(LE_DrawManagerRendererAccessor.GetCommandBuffer()->popPushCommandBuffer())
 
 void DrawCommand::ClearScreen(const LEMath::FloatColorRGBA &color)
 {
@@ -446,20 +464,30 @@ void DrawCommand::BeginDrawing()
 {
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_BEGINDRAWING();
 }
+
 void DrawCommand::EndDrawing()
 {
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_ENDDRAWING();
 }
 
+void DrawCommand::SetViewport(const LEMath::IntRect& rect)
+{
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETVIEWPORT(rect);
+}
+
+void DrawCommand::SetScissorRect(const LEMath::IntRect& rect)
+{
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETSCISSORRECT(rect);
+}
+
 void DrawCommand::BindVertexBuffer(VertexBufferGeneric *VertexBuffer)
 {
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETFVF(VertexBuffer->GetFVF());
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDVERTEXBUFFER(VertexBuffer->GetHandle(), VertexBuffer->GetBuffer(), 0, VertexBuffer->GetBufferSize(), VertexBuffer->GetStride());
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDVERTEXBUFFER(VertexBuffer);
 }
 
 void DrawCommand::BindIndexBuffer(IndexBuffer *InIndexBuffer)
 {
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDINDEXBUFFER(InIndexBuffer->GetHandle(), InIndexBuffer->GetSize());
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDINDEXBUFFER(InIndexBuffer);
 }
 
 void DrawCommand::Dispatch(int x, int y, int z)
@@ -477,47 +505,33 @@ void DrawCommand::DrawIndexedPrimitive(RendererFlag::PrimitiveTypes type, uint32
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_DRAWINDEXEDPRIMITIVE(type, vtxcount, count);
 }
 
-void DrawCommand::SetFVF(uint32 fvf)
+void DrawCommand::SetPipelineState(PipelineState *pso)
 {
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETFVF(fvf);
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETPIPELINESTATE(pso);
 }
 
-void DrawCommand::SetCulling(uint32 cull)
+void DrawCommand::UpdateConstantBuffer(ConstantBuffer* buffer, void* data, size_t size)
 {
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETCULLING(cull);
+    CommandBuffer::COMMAND_UPDATECONSTANTBUFFER* currentCommand = COMMANDBUFFER_NEW CommandBuffer::COMMAND_UPDATECONSTANTBUFFER(buffer, LE_DrawManagerRendererAccessor.GetCommandBuffer()->duplicateBuffer(data, size), size);
+    currentCommand->nextOffset = LE_DrawManagerRendererAccessor.GetCommandBuffer()->CalculateCommandOffset((CommandBuffer::COMMAND*)currentCommand);
 }
 
-void DrawCommand::SetEnable(uint32 f)
+void DrawCommand::SetConstantBuffer(uint32 idx, ConstantBuffer* buffer)
 {
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETENABLE(f);
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETCONSTANTBUFFER(idx, buffer);
 }
 
-void DrawCommand::SetDisable(uint32 f)
-{
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETDISABLE(f);
-}
-
-void DrawCommand::SetBlendFunc(uint32 rt, RendererFlag::BlendFlags func)
-{
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETBLENDFUNC(rt, func);
-}
-
-void DrawCommand::SetDepthFunc(RendererFlag::TestFlags f)
-{
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETDEPTHFUNC(f);
-}
-
-void DrawCommand::SetRenderTarget(uint32 index, Texture *color, Texture *depth, uint32 surfaceIndex)
+void DrawCommand::SetRenderTarget(uint32 index, TextureInterface* color, TextureInterface* depth, uint32 surfaceIndex)
 {
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETRENDERTARGET(index, color, depth, surfaceIndex);
 }
 
 void DrawCommand::CopyBuffer(void* Dst, uint32 DstOffset, void* Org, uint32 OrgOffset, uint32 Size)
 {
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_COPYBUFFER(Dst, DstOffset, LE_DrawManager.getCommandBuffer()->copyDataToGPUBuffer(Org, Size), OrgOffset, Size);
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_COPYBUFFER(Dst, DstOffset, LE_DrawManagerRendererAccessor.GetCommandBuffer()->copyDataToGPUBuffer(Org, Size), OrgOffset, Size);
 }
 
-void DrawCommand::ResourceBarrier(Texture *InTexture, const ResourceState &InResourceState)
+void DrawCommand::ResourceBarrier(TextureInterface *InTexture, const ResourceState &InResourceState)
 {
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_RESOURCEBARRIER(InTexture, InResourceState);
 }
@@ -530,22 +544,6 @@ void DrawCommand::ResourceBarrier(IndexBuffer* InIndexBuffer, const ResourceStat
 void DrawCommand::ResourceBarrier(VertexBufferGeneric* InVertexBuffer, const ResourceState& InResourceState)
 {
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_RESOURCEBARRIER(InVertexBuffer, InResourceState);
-}
-
-void DrawCommand::BindConstantBuffer(ConstantBuffer *cb)
-{
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_BINDCONSTANTBUFFER(cb);
-}
-
-void DrawCommand::UploadConstantBuffer(ConstantBuffer* buffer, void* data, size_t size)
-{
-    CommandBuffer::COMMAND_UPLOADCONSTANTBUFFER* currentcommand = COMMANDBUFFER_NEW CommandBuffer::COMMAND_UPLOADCONSTANTBUFFER(buffer, data, size);
-}
-
-void DrawCommand::SetConstantBufferMatrix4(Shader* shader, ConstantBuffer* buffer, int location, int size, float* pointer)
-{
-    CommandBuffer::COMMAND_SETSHADERUNIFORMMATRIX4* currentCommand = COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETCONSTANTBUFFERMATRIX4(buffer, location, size, LE_DrawManager.getCommandBuffer()->copyMatrixToBuffer(pointer));
-    currentCommand->nextOffset = LE_DrawManager.getCommandBuffer()->CalculateCommandOffset((CommandBuffer::COMMAND*)currentCommand);
 }
 
 void DrawCommand::BindTargetTexture(uint32 index, Texture *texture)
@@ -575,18 +573,23 @@ void DrawCommand::BindTexture(uint32 index, const PooledDepthStencil &texture)
 
 void DrawCommand::SetMarker(const char *InMarkerName)
 {
-    CommandBuffer::COMMAND_SETMARKER *currentCommand = COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETMARKER(LE_DrawManager.getCommandBuffer()->duplicateString(InMarkerName));
-    currentCommand->nextOffset = LE_DrawManager.getCommandBuffer()->CalculateCommandOffset((CommandBuffer::COMMAND*)currentCommand);
+    CommandBuffer::COMMAND_SETMARKER *currentCommand = COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETMARKER(LE_DrawManagerRendererAccessor.GetCommandBuffer()->duplicateString(InMarkerName));
+    currentCommand->nextOffset = LE_DrawManagerRendererAccessor.GetCommandBuffer()->CalculateCommandOffset((CommandBuffer::COMMAND*)currentCommand);
 }
 
 void DrawCommand::BeginEvent(const char *InEventName)
 {
-    CommandBuffer::COMMAND_BEGINEVENT *currentCommand = COMMANDBUFFER_NEW CommandBuffer::COMMAND_BEGINEVENT(LE_DrawManager.getCommandBuffer()->duplicateString(InEventName));
-    currentCommand->nextOffset = LE_DrawManager.getCommandBuffer()->CalculateCommandOffset((CommandBuffer::COMMAND*)currentCommand);
+    CommandBuffer::COMMAND_BEGINEVENT *currentCommand = COMMANDBUFFER_NEW CommandBuffer::COMMAND_BEGINEVENT(LE_DrawManagerRendererAccessor.GetCommandBuffer()->duplicateString(InEventName));
+    currentCommand->nextOffset = LE_DrawManagerRendererAccessor.GetCommandBuffer()->CalculateCommandOffset((CommandBuffer::COMMAND*)currentCommand);
 }
 
 void DrawCommand::EndEvent()
 {
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_ENDEVENT();
+}
+
+void DrawCommand::Present()
+{
+    COMMANDBUFFER_NEW CommandBuffer::COMMAND_PRESENT();
 }
 }

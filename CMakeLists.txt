@@ -12,22 +12,17 @@ if (MAKE_TEST)
 endif()
 
 option(RAYTRACING "Rendering using raytracing" OFF)
+if (RAYTRACING)
+	add_definitions(-DRAYTRACING)
+endif()
+
 if (WIN32)
-	if (RAYTRACING)
-		add_definitions(-DWINDOWS -DUSE_DX12 -DRAYTRACING)
-		file(GLOB_RECURSE FILES_PLATFORM
-			"source/Platform/DirectX12/*.inl"
-			"source/Platform/DirectX12/*.h"
-		)
-		source_group("DirectX12"	FILES ${FILES_PLATFORM})
-	else()
-		add_definitions(-DWINDOWS -DUSE_DX11)
-		file(GLOB_RECURSE FILES_DIRECTX11
-			"source/Platform/DirectX11/*.inl"
-			"source/Platform/DirectX11/*.h"
-		)
-		source_group("DirectX11"	FILES ${FILES_PLATFORM})
-	endif()
+	add_definitions(-DWINDOWS -DUSE_DX12)
+	file(GLOB_RECURSE FILES_PLATFORM
+		"source/Platform/DirectX12/*.inl"
+		"source/Platform/DirectX12/*.h"
+	)
+	source_group("DirectX12"	FILES ${FILES_PLATFORM})
 endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -58,9 +53,10 @@ file(GLOB_RECURSE FILES_RENDERER
 )
 source_group("Renderer"	FILES ${FILES_RENDERER})
 file(GLOB_RECURSE FILES_SHADERS
-	"source/Shaders/*.h"
-	"source/Shaders/*.cpp"
+	"generated/Shaders/*.h"
+	"generated/Shaders/*.cpp"
 )
+source_group("GeneratedShaders"	FILES ${FILES_SHADERS})
 file(GLOB_RECURSE FILES_SHADERCODES
 	"shader/*.vs"
 	"shader/*.ps"
@@ -68,8 +64,6 @@ file(GLOB_RECURSE FILES_SHADERCODES
 file(GLOB_RECURSE FILES_VERTEXSHADERS
 	"shader/*.vs"
 )
-add_custom_target(PIXELSHADERS ALL
-  DEPENDS ${FILES_VERTEXSHADERS})
 file(GLOB_RECURSE FILES_PIXELSHADERS
 	"shader/*.ps"
 )
@@ -78,11 +72,11 @@ set(FILES_GENERATEDVSHEADERS)
 foreach(shaderfile ${FILES_VERTEXSHADERS})
   string(REPLACE ".vs" "" shaderfilename "${shaderfile}")
   get_filename_component(shadername ${shaderfilename} NAME_WE)
-  set(outshaderpath "include/Shaders/${shadername}")
+  set(outshaderpath "generated/Shaders/${shadername}")
   list(APPEND FILES_GENERATEDVSHEADERS "${outshaderpath}.vs.h")
   message("cmd ${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe -D -O0 -E=vs_main -T=VS_5_0 -N=${shadername}_VS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.vs")
   add_custom_command(
-    OUTPUT "${PROJECT_SOURCE_DIR}/{outshaderpath}.vs.h"
+    OUTPUT "${PROJECT_SOURCE_DIR}/${outshaderpath}.vs.h"
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/bin/LEShaderConverter.exe ${PROJECT_SOURCE_DIR}/tools
 	COMMAND ${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe -D -O0 -E=vs_main -T=VS_5_0 -N=${shadername}_VS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.vs
 	DEPENDS ${shaderfile} ${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe
@@ -95,7 +89,7 @@ set(FILES_GENERATEDPSHEADERS)
 foreach(shaderfile ${FILES_PIXELSHADERS})
   string(REPLACE ".ps" "" shaderfilename "${shaderfile}")
   get_filename_component(shadername ${shaderfilename} NAME_WE)
-  set(outshaderpath "include/Shaders/${shadername}")
+  set(outshaderpath "generated/Shaders/${shadername}")
   list(APPEND FILES_GENERATEDPSHEADERS "${outshaderpath}.ps.h")
   message("cmd ${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe -D -O0 -E=ps_main -T=PS_5_0 -N=${shadername}_PS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.ps")
   add_custom_command(
@@ -122,7 +116,7 @@ add_library(LimitEngine
 )
 add_dependencies(LimitEngine generatedheaders)
 
-target_include_directories(LimitEngine PUBLIC ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/externals ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(LimitEngine PUBLIC ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/externals ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/generated)
 
 install(TARGETS LimitEngine
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib

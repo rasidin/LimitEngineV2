@@ -74,6 +74,7 @@ private: // Private members
     TaskManager::TaskID              mTaskID_PostProcess;               //!< Task for post process
     TaskManager::TaskID              mTaskID_DrawManager_Run;            //!< Task for running drawmanager
     TaskManager::TaskID              mTaskID_DrawDebugUI;               //!< Task for drawing debug UI
+    TaskManager::TaskID              mTaskID_DrawEnd;
 
     FontRefPtr                       mSystemFont;
     TextureRefPtr                    mBlueNoiseTexture; 

@@ -112,12 +112,6 @@ namespace LimitEngine {
         }
         void Finish() override
         {
-            if (mCurrentFrameBufferResourceState != ResourceState::Present) {
-                ID3D12Resource* colorFrameBuffer = (ID3D12Resource*)LE_DrawManager.GetCurrentFrameBuffer();
-                ResourceBarrier(colorFrameBuffer, mCurrentFrameBufferResourceState, ResourceState::Present);
-
-                mCurrentFrameBufferResourceState = ResourceState::Present;
-            }
         }
         void ProcessAfterPresent() override
         {
@@ -140,7 +134,16 @@ namespace LimitEngine {
 
         void BeginScene() override {}
         void EndScene() override {}
-
+        void SetViewport(const LEMath::IntRect& rect) override 
+        {  
+            D3D12_VIEWPORT viewport{(FLOAT)rect.X(), (FLOAT)rect.Y(), (FLOAT)rect.Width(), (FLOAT)rect.Height(), 0.0f, 1.0f};
+            mD3DGraphicsCommandList->RSSetViewports(1, &viewport);
+        }
+        void SetScissorRect(const LEMath::IntRect& rect) override
+        {
+            D3D12_RECT screct{rect.X(), rect.Y(), rect.X() + rect.Width(), rect.Y() + rect.Height()};
+            mD3DGraphicsCommandList->RSSetScissorRects(1, &screct);
+        }
         bool PrepareForDrawing() override
         {
             if (!mCache.CurrentShader) return false;
@@ -162,42 +165,59 @@ namespace LimitEngine {
                 mD3DGraphicsCommandList->ClearDepthStencilView(mCurrentDepthStencilView, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
             }
         }
-        void BindVertexBuffer(void *Handle, void *Buffer, uint32 Offset, uint32 Size, uint32 Stride) override
+        void BindVertexBuffer(VertexBufferGeneric *vb) override
         {
-            if (!Handle) return;
+            if (!vb) return;
 
             if (mD3DGraphicsCommandList) {
-                ID3D12Resource* VertexBufferHandle = (ID3D12Resource*)Handle;
-                if (Buffer) {
-                    D3D12_RANGE WriteRange = {0, 0};
-                    void* pMappedVertexBuffer = nullptr;
-                    if (SUCCEEDED(VertexBufferHandle->Map(0, &WriteRange, &pMappedVertexBuffer))) {
-                        memcpy(pMappedVertexBuffer, Buffer, Size);
-                        VertexBufferHandle->Unmap(0, &WriteRange);
-                    }
-                }
+                VertexBufferRendererAccessor vbra(vb);
+                ID3D12Resource* VertexBufferHandle = (ID3D12Resource*)vbra.GetHandle();
+                if (VertexBufferHandle == nullptr) return;
+                //if (Buffer) {
+                //    D3D12_RANGE WriteRange = {0, 0};
+                //    void* pMappedVertexBuffer = nullptr;
+                //    if (SUCCEEDED(VertexBufferHandle->Map(0, &WriteRange, &pMappedVertexBuffer))) {
+                //        memcpy(pMappedVertexBuffer, Buffer, Size);
+                //        VertexBufferHandle->Unmap(0, &WriteRange);
+                //    }
+                //}
                 D3D12_VERTEX_BUFFER_VIEW VertexBufferView;
                 VertexBufferView.BufferLocation = VertexBufferHandle->GetGPUVirtualAddress();
-                VertexBufferView.StrideInBytes = Stride;
-                VertexBufferView.SizeInBytes = Size;
+                VertexBufferView.StrideInBytes = vbra.GetStride();
+                VertexBufferView.SizeInBytes = vbra.GetBufferSize();
                 mD3DGraphicsCommandList->IASetVertexBuffers(0, 1, &VertexBufferView);
             }
         }
-        void BindIndexBuffer(void* Handle, uint32 Size) override
+        void BindIndexBuffer(IndexBuffer *ib) override
         {
-            if (!Handle) return;
+            if (!ib) return;
 
             if (mD3DGraphicsCommandList) {
-                ID3D12Resource* IndexResource = (ID3D12Resource*)Handle;
+                IndexBufferRendererAccessor ibra(ib);
+
+                ID3D12Resource* IndexResource = (ID3D12Resource*)ibra.GetHandle();
                 D3D12_INDEX_BUFFER_VIEW IndexBufferView;
                 IndexBufferView.BufferLocation = IndexResource->GetGPUVirtualAddress();
                 IndexBufferView.Format = DXGI_FORMAT_R32_UINT;
-                IndexBufferView.SizeInBytes = Size;
+                IndexBufferView.SizeInBytes = ibra.GetSize();
             }
         }
-        void BindConstantBuffer(ConstantBuffer *InConstantBuffer) override
+        void SetConstantBuffer(ConstantBuffer *InConstantBuffer) override
         {
-            mCache.CurrentConstantBuffer = InConstantBuffer;
+        }
+        void SetPipelineState(PipelineState *pso) override
+        {
+            if (pso->IsValid()) {
+                if (ID3D12RootSignature* handle = static_cast<ID3D12RootSignature*>(PipelineStateRendererAccessor(pso).GetRootSignatureHandle())) {
+                    mD3DGraphicsCommandList->SetGraphicsRootSignature(handle);
+                }
+                if (ID3D12PipelineState* handle = static_cast<ID3D12PipelineState*>(PipelineStateRendererAccessor(pso).GetHandle())) {
+                    mD3DGraphicsCommandList->SetPipelineState(handle);
+                }
+            }
+        }
+        void UpdateConstantBuffer(ConstantBuffer* cb, void* data, size_t size) override
+        {
         }
         void BindTargetTexture(uint32 Index, Texture* InTexture) override
         {
@@ -219,7 +239,7 @@ namespace LimitEngine {
         {
             mCache.CurrentSamplers[Index] = Sampler;
         }
-        void BindTexture(uint32 Index, Texture *InTexture) override
+        void BindTexture(uint32 Index, TextureInterface *InTexture) override
         {
             if (Index == 0xffffffff) return;
         }
@@ -228,38 +248,29 @@ namespace LimitEngine {
         }
         void DrawPrimitive(uint32 Primitive, uint32 Offset, uint32 Count) override
         {
+            float blendfactor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+            mD3DGraphicsCommandList->OMSetBlendFactor(blendfactor);
+
+            mD3DGraphicsCommandList->IASetPrimitiveTopology(PrimitiveTopologyTypeToD3DPrimitiveTopology[Primitive]);
+            mD3DGraphicsCommandList->DrawInstanced(Count, 1, Offset, 0);
         }
         void DrawIndexedPrimitive(uint32 Primitive, uint32 VertexCount, uint32 Count) override
-        {}
-        void SetFVF(uint32 FVF) override
-        {}
-        void SetCulling(uint32 Culling) override
-        {}
-        void SetBlendFunc(uint32 rt, RendererFlag::BlendFlags Func) override
-        {}
-        void SetDepthFunc(uint32 Func) override
-        {}
-        void SetEnabled(uint32 Flag) override
-        {}
-        void SetDisable(uint32 Flag) override
-        {}
-        void SetRenderTarget(uint32 Index, Texture *Color, Texture *Depth, uint32 SurfaceIndex) override
         {
+            float blendfactor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+            mD3DGraphicsCommandList->OMSetBlendFactor(blendfactor);
+
+            mD3DGraphicsCommandList->IASetPrimitiveTopology(PrimitiveTopologyTypeToD3DPrimitiveTopology[Primitive]);
+            mD3DGraphicsCommandList->DrawIndexedInstanced(Count, 1, 0, 0, 0);
+        }
+        void SetRenderTarget(uint32 Index, const TextureRendererAccessor& Color, const TextureRendererAccessor& Depth, uint32 SurfaceIndex) override
+        {
+            LEASSERT(Color.IsValid());
             if (mD3DDevice) {
-                if (!Color) {
-                    if (mCurrentFrameBufferResourceState != ResourceState::RenderTarget) {
-                        ID3D12Resource* colorFrameBuffer = (ID3D12Resource*)LE_DrawManager.GetCurrentFrameBuffer();
-                        ResourceBarrier(colorFrameBuffer, mCurrentFrameBufferResourceState, ResourceState::RenderTarget);
-
-                        mCurrentFrameBufferResourceState = ResourceState::RenderTarget;
-                    }
-                }
-
                 mD3DGraphicsCommandList->OMSetRenderTargets(
                     1, 
-                    Color?(D3D12_CPU_DESCRIPTOR_HANDLE*)Color->GetRenderTargetView():(D3D12_CPU_DESCRIPTOR_HANDLE*)LE_DrawManager.GetCurrentFrameBufferView(), 
+                    (D3D12_CPU_DESCRIPTOR_HANDLE*)Color.GetRenderTargetView(),
                     false, 
-                    Depth?(D3D12_CPU_DESCRIPTOR_HANDLE*)Depth->GetDepthStencilView():nullptr);
+                    (D3D12_CPU_DESCRIPTOR_HANDLE*)Depth.GetDepthStencilView());
             }
         }
         void CopyResource(void* Dst, uint32 DstOffset, void* Org, uint32 OrgOffset, uint32 Size) override
@@ -279,7 +290,7 @@ namespace LimitEngine {
                     D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
                     0
                 };
-                ID3D12Device* device = (ID3D12Device*)LE_DrawManager.GetDeviceHandle();
+                ID3D12Device* device = (ID3D12Device*)LE_DrawManagerRendererAccessor.GetDeviceHandle();
                 D3D12_PLACED_SUBRESOURCE_FOOTPRINT Footprint;
                 device->GetCopyableFootprints(&DstResource->GetDesc(), 0, 1, 0, &Footprint, nullptr, nullptr, nullptr);
                 D3D12_TEXTURE_COPY_LOCATION SrcLocation = {
@@ -322,7 +333,7 @@ namespace LimitEngine {
         }
         void* AllocateGPUBuffer(size_t size) override
         {
-            ID3D12Device* device = (ID3D12Device*)LE_DrawManager.GetDeviceHandle();
+            ID3D12Device* device = (ID3D12Device*)LE_DrawManagerRendererAccessor.GetDeviceHandle();
             LEASSERT(device);
 
             D3D12_RESOURCE_DESC desc = {};

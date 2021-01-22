@@ -108,11 +108,11 @@ SceneManager::~SceneManager()
 
 void SceneManager::Init(const InitializeOptions &InitOptions)
 {
-    TEXTURE_COLOR_FORMAT SceneColorFormat = (InitOptions.SceneColorSpace == InitializeOptions::ColorSpace::Linear) ? TEXTURE_COLOR_FORMAT_A16B16G16R16F : TEXTURE_COLOR_FORMAT_A8R8G8B8;
-    TEXTURE_COLOR_FORMAT SceneNormalFormat = TEXTURE_COLOR_FORMAT_A16B16G16R16F;
+    RendererFlag::BufferFormat SceneColorFormat = (InitOptions.SceneColorSpace == InitializeOptions::ColorSpace::Linear) ? RendererFlag::BufferFormat::R16G16B16A16_Float : RendererFlag::BufferFormat::R8G8B8A8_UNorm;
+    RendererFlag::BufferFormat SceneNormalFormat = RendererFlag::BufferFormat::R16G16B16A16_Float;
     mSceneColor = LE_RenderTargetPoolManager.GetRenderTarget(InitOptions.Resolution, 1, SceneColorFormat);
     mSceneNormal = LE_RenderTargetPoolManager.GetRenderTarget(InitOptions.Resolution, 1, SceneNormalFormat);
-    mSceneDepth = LE_RenderTargetPoolManager.GetDepthStencil(InitOptions.Resolution, TEXTURE_DEPTH_FORMAT_D32F);
+    mSceneDepth = LE_RenderTargetPoolManager.GetDepthStencil(InitOptions.Resolution, RendererFlag::BufferFormat::D32_Float);
 }
 
 void SceneManager::PostInit(const InitializeOptions &InitOptions)
@@ -240,8 +240,8 @@ void SceneManager::drawBackground()
 {
     DrawCommand::BeginEvent("DrawBackground");
     DrawCommand::SetRenderTarget(0, mSceneColor.Get(), mSceneDepth.Get());
-    DrawCommand::SetEnable((uint32)RendererFlag::EnabledFlags::DEPTH_WRITE);
-    DrawCommand::SetDepthFunc(RendererFlag::TestFlags::ALWAYS);
+    //DrawCommand::SetEnable((uint32)RendererFlag::EnabledFlags::DEPTH_WRITE);
+    //DrawCommand::SetDepthFunc(RendererFlag::TestFlags::Always);
 
     switch (mBackgroundType) {
     case BackgroundImageType::None:
@@ -314,8 +314,8 @@ void SceneManager::drawPrePass()
     RenderState PrePassRenderState = LE_DrawManager.GetRenderState();
     PrePassRenderState.SetRenderPass(RenderPass::PrePass);
     DrawCommand::SetRenderTarget(0, mSceneNormal.Get(), mSceneDepth.Get());
-    DrawCommand::SetEnable((uint32)RendererFlag::EnabledFlags::DEPTH_WRITE);
-    DrawCommand::SetDepthFunc(RendererFlag::TestFlags::LEQUAL);
+    //DrawCommand::SetEnable((uint32)RendererFlag::EnabledFlags::DEPTH_WRITE);
+    //DrawCommand::SetDepthFunc(RendererFlag::TestFlags::LEQUAL);
     for (uint32 mdlidx = 0; mdlidx < mModels.count(); mdlidx++) {
         mModels[mdlidx]->Draw(PrePassRenderState);
     }
@@ -349,9 +349,9 @@ void SceneManager::drawBasePass()
     RenderState BasePassRenderState = LE_DrawManager.GetRenderState();
     BasePassRenderState.SetRenderPass(RenderPass::BasePass);
     DrawCommand::SetRenderTarget(0, mSceneColor.Get(), mSceneDepth.Get());
-    DrawCommand::SetDisable((uint32)RendererFlag::EnabledFlags::DEPTH_WRITE);
-    DrawCommand::SetDepthFunc(RendererFlag::TestFlags::EQUAL);
-    DrawCommand::SetBlendFunc(0, RendererFlag::BlendFlags::ALPHABLEND);
+    //DrawCommand::SetDisable((uint32)RendererFlag::EnabledFlags::DEPTH_WRITE);
+    //DrawCommand::SetDepthFunc(RendererFlag::TestFlags::EQUAL);
+    //DrawCommand::SetBlendFunc(0, RendererFlag::BlendFlags::ALPHABLEND);
     for (uint32 mdlidx = 0; mdlidx < mModels.count(); mdlidx++) {
         mModels[mdlidx]->Draw(BasePassRenderState);
     }
@@ -364,9 +364,9 @@ void SceneManager::drawTranslucencyPass()
     RenderState TranslucencyRenderState = LE_DrawManager.GetRenderState();
     TranslucencyRenderState.SetRenderPass(RenderPass::TranslucencyPass);
     DrawCommand::SetRenderTarget(0, mSceneColor.Get(), mSceneDepth.Get());
-    DrawCommand::SetEnable((uint32)RendererFlag::EnabledFlags::DEPTH_WRITE);
-    DrawCommand::SetDepthFunc(RendererFlag::TestFlags::LEQUAL);
-    DrawCommand::SetBlendFunc(0, RendererFlag::BlendFlags::ALPHABLEND);
+    //DrawCommand::SetEnable((uint32)RendererFlag::EnabledFlags::DEPTH_WRITE);
+    //DrawCommand::SetDepthFunc(RendererFlag::TestFlags::LEQUAL);
+    //DrawCommand::SetBlendFunc(0, RendererFlag::BlendFlags::ALPHABLEND);
     for (uint32 mdlidx = 0; mdlidx < mModels.count(); mdlidx++) {
         mModels[mdlidx]->Draw(TranslucencyRenderState);
     }
@@ -400,7 +400,7 @@ void SceneManager::Draw()
         }
     }
     LEASSERT(PendingDeleteRenderTargetSlot != 0xffff);
-
+/*
     DrawCommand::BeginEvent("Scene");
     DrawCommand::BeginScene();
     DrawCommand::ResourceBarrier(mSceneNormal.Get(), ResourceState::RenderTarget);
@@ -418,18 +418,20 @@ void SceneManager::Draw()
     DrawCommand::ResourceBarrier(mSceneNormal.Get(), ResourceState::GenericRead);
     DrawCommand::ResourceBarrier(mSceneColor.Get(), ResourceState::GenericRead);
     DrawCommand::ResourceBarrier(mSceneDepth.Get(), ResourceState::DepthRead);
-    DrawCommand::SetRenderTarget(0, nullptr, nullptr);
+    DrawCommand::SetRenderTarget(0, static_cast<TextureInterface*>(LE_DrawManager.GetFrameBufferTexture().Get()), nullptr);
     DrawCommand::EndEvent();
+*/
 }
 
 void SceneManager::DrawDebugUI(Font *SystemFont)
 {
-    return;
+/*
     char InfoText[0xff];
     sprintf_s<0xff>(InfoText, "Pos : %0.02f %0.02f %0.02f", mCamera->GetPosition().X(), mCamera->GetPosition().Y(), mCamera->GetPosition().Z());
     SystemFont->Draw(LEMath::IntPoint(10, 100), InfoText);
 
     sprintf_s<0xff>(InfoText, "Backgound : %0.02f %0.02f %0.02f %0.02f", mBackgroundColorCovertParameter.X(), mBackgroundColorCovertParameter.Y(), mBackgroundColorCovertParameter.Z(), mBackgroundColorCovertParameter.W());
     SystemFont->Draw(LEMath::IntPoint(10, 120), InfoText);
+*/
 }
 }

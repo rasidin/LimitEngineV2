@@ -49,30 +49,15 @@ namespace LimitEngine {
 	    : mImpl(nullptr)
         , mId(0)
     {
-#if   defined(USE_OPENGLES)
-        mImpl = new ShaderImpl_OpenGLES();
-#elif defined(USE_DX11)
+#if defined(USE_DX11)
         mImpl = new ShaderImpl_DirectX11();
 #elif defined(USE_DX12)
         mImpl = new ShaderImpl_DirectX12();
-#elif defined(USE_DX9)
-        mImpl = new ShaderImpl_DirectX9();
 #endif
     }
-	Shader::Shader(const char *name)
-		: SHADER_INIT
-        , _name(name)
-	{
-		init();
-	}
     Shader::~Shader()
     {
         if (mImpl) delete mImpl;
 		mImpl = nullptr;
-
-		for(uint32 sdidx=0;sdidx<mDrivers.count();sdidx++) {
-			delete mDrivers[sdidx];
-		}
-		mDrivers.Clear();
     }
 }

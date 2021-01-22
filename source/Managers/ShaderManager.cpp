@@ -30,128 +30,9 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 #include "Managers/DrawManager.h"
 
-//#include "Shaders/Shader_Draw2D.vs.h"
+#include "Shaders/Draw2D.vs.h"
+#include "Shaders/Draw2D.ps.h"
 #include "Shaders/ResolveSceneColorSRGB.ps.h"
-
-#if 0
-#ifdef USE_DX9
-static const unsigned char Shader_Draw2D_VS[] = {
-#include "shader/DirectX9/bin/Draw2D.vs.txt"
-};
-static const unsigned char Shader_Draw2D_PS[] = {
-#include "shader/DirectX9/bin/Draw2D.ps.txt"
-};
-static const unsigned char Shader_DrawIBL_PS[] = {
-#include "Shader/DirectX9/bin/DrawIBL.ps.txt"
-};
-static const unsigned char Shader_MakeIBLSpecularMipmap_PS[] = {
-#include "Shader/DirectX9/bin/MakeIBLSpecularMipmap.ps.txt"
-};
-static const unsigned char Shader_GenerateBakedBRDF_CS[] = {
-#include "Shader/DirectX9/bin/GenerateBakedBRDF.cs.txt"
-};
-#elif defined(USE_DX11)
-static const unsigned char Shader_Draw2D_VS[] = {
-#include "shader/DirectX11/bin/Draw2D.vs.txt"
-};
-static const unsigned char Shader_Draw2D_PS[] = {
-#include "shader/DirectX11/bin/Draw2D.ps.txt"
-};
-static const unsigned char Shader_DrawFullscreen_PS[] = {
-#include "shader/DirectX11/bin/DrawFullscreen.ps.txt"
-};
-static const unsigned char Shader_ResolveSceneColorSRGB_PS[] = {
-#include "shader/DirectX11/bin/ResolveSceneColorSRGB.ps.txt"
-};
-static const unsigned char Shader_TemporalAA_PS[] = {
-#include "shader/DirectX11/bin/TemporalAA.ps.txt"
-};
-static const unsigned char Shader_AmbientOcclusion_PS[] = {
-#include "shader/DirectX11/bin/AmbientOcclusion.ps.txt"
-};
-static const unsigned char Shader_AmbientOcclusionBlur_PS[] = {
-#include "shader/DirectX11/bin/AmbientOcclusionBlur.ps.txt"
-};
-static const unsigned char Shader_DrawFont_PS[] = {
-#include "shader/DirectX11/bin/DrawFont.ps.txt"
-};
-static const unsigned char Shader_Standard_VS[] = {
-#include "shader/DirectX11/bin/Standard.vs.txt"
-};
-static const unsigned char Shader_Standard_PrePass_PS[] = {
-#include "shader/DirectX11/bin/Standard.PrePass.ps.txt"
-};
-static const unsigned char Shader_Standard_BasePass_PS[] = {
-#include "shader/DirectX11/bin/Standard.BasePass.ps.txt"
-};
-static const unsigned char Shader_Standard_TranslucencyPass_PS[] = {
-#include "shader/DirectX11/bin/Standard.TranslucencyPass.ps.txt"
-};
-static const unsigned char Shader_StandardParamOnly_BasePass_PS[] = {
-#include "shader/DirectX11/bin/StandardParamOnly.BasePass.ps.txt"
-};
-static const unsigned char Shader_StandardParamOnly_TranslucencyPass_PS[] = {
-#include "shader/DirectX11/bin/StandardParamOnly.TranslucencyPass.ps.txt"
-};
-static const unsigned char Shader_OcclusionOnly_PrePass_PS[] = {
-#include "shader/DirectX11/bin/OcclusionOnly.PrePass.ps.txt"
-};
-static const unsigned char Shader_OcclusionOnly_BasePass_PS[] = {
-#include "shader/DirectX11/bin/OcclusionOnly.BasePass.ps.txt"
-};
-#elif defined(USE_DX12)
-static const unsigned char Shader_Draw2D_VS[] = {
-#include "shader/DirectX11/bin/Draw2D.vs.txt"
-};
-static const unsigned char Shader_Draw2D_PS[] = {
-#include "shader/DirectX11/bin/Draw2D.ps.txt"
-};
-static const unsigned char Shader_DrawFullscreen_PS[] = {
-#include "shader/DirectX11/bin/DrawFullscreen.ps.txt"
-};
-static const unsigned char Shader_ResolveSceneColorSRGB_PS[] = {
-#include "shader/DirectX11/bin/ResolveSceneColorSRGB.ps.txt"
-};
-static const unsigned char Shader_TemporalAA_PS[] = {
-#include "shader/DirectX11/bin/TemporalAA.ps.txt"
-};
-static const unsigned char Shader_AmbientOcclusion_PS[] = {
-#include "shader/DirectX11/bin/AmbientOcclusion.ps.txt"
-};
-static const unsigned char Shader_AmbientOcclusionBlur_PS[] = {
-#include "shader/DirectX11/bin/AmbientOcclusionBlur.ps.txt"
-};
-static const unsigned char Shader_DrawFont_PS[] = {
-#include "shader/DirectX11/bin/DrawFont.ps.txt"
-};
-static const unsigned char Shader_Standard_VS[] = {
-#include "shader/DirectX11/bin/Standard.vs.txt"
-};
-static const unsigned char Shader_Standard_PrePass_PS[] = {
-#include "shader/DirectX11/bin/Standard.PrePass.ps.txt"
-};
-static const unsigned char Shader_Standard_BasePass_PS[] = {
-#include "shader/DirectX11/bin/Standard.BasePass.ps.txt"
-};
-static const unsigned char Shader_Standard_TranslucencyPass_PS[] = {
-#include "shader/DirectX11/bin/Standard.TranslucencyPass.ps.txt"
-};
-static const unsigned char Shader_StandardParamOnly_BasePass_PS[] = {
-#include "shader/DirectX11/bin/StandardParamOnly.BasePass.ps.txt"
-};
-static const unsigned char Shader_StandardParamOnly_TranslucencyPass_PS[] = {
-#include "shader/DirectX11/bin/StandardParamOnly.TranslucencyPass.ps.txt"
-};
-static const unsigned char Shader_OcclusionOnly_PrePass_PS[] = {
-#include "shader/DirectX11/bin/OcclusionOnly.PrePass.ps.txt"
-};
-static const unsigned char Shader_OcclusionOnly_BasePass_PS[] = {
-#include "shader/DirectX11/bin/OcclusionOnly.BasePass.ps.txt"
-};
-#else
-#error No implementation for shaders
-#endif
-#endif
 
 namespace LimitEngine {
 #ifdef WINDOWS
@@ -168,7 +49,11 @@ namespace LimitEngine {
     }
     void ShaderManager::Init()
     {
-        Shader *shader;
+        mShaders.Add(new Draw2D_VS());
+        mShaders.Add(new Draw2D_PS());
+        mShaders.Add(new ResolveSceneColorSRGB_PS());
+
+        //Shader *shader;
 /*
         // Set Standard shader (PrePass)
         {

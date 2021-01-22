@@ -148,6 +148,7 @@ namespace LimitEngine
             return;
 
         LEASSERT(mImpl);
+
         // Initialize before rendering...(once)
         if (!mReadyToRender)
         {
@@ -159,20 +160,17 @@ namespace LimitEngine
         // Wait for frame
         WaitForFlushing();
 
-        mCommandBuffer->Finish();
-
-        // Finish drawing
-        mImpl->Finish(mCommandBuffer);
-
-        // Present screen
-        mImpl->Present();
-
-        // Finish command buffer
-        mCommandBuffer->ProcessAfterPresent();
-
         runRendererTasks();
+
         // Run drawing commands
         FlushCommand();
+    }
+
+    void DrawManager::DrawEnd()
+    {
+        mLastFrameBufferTexture = LE_DrawManager.GetFrameBufferTexture();
+        DrawCommand::ResourceBarrier(mLastFrameBufferTexture.Get(), ResourceState::Present);
+        DrawCommand::Present();
     }
 
     void DrawManager::ResizeScreen(const LEMath::IntSize &size)
@@ -227,6 +225,8 @@ namespace LimitEngine
             }
         }
         mRendererTasks.Clear();
+
+        mCommandBuffer->ReleaseRendererResources();
     }
     // Run all of drawing commands
     void DrawManager::FlushCommand()
@@ -242,6 +242,9 @@ namespace LimitEngine
     void DrawManager::WaitForFlushing()
     {
         Mutex::ScopedLock scopedLock(mCommandFlushMutex);
+        if (mImpl) {
+            mImpl->ProcessBeforeFlushingCommands();
+        }
     }
     LEMath::FloatPoint DrawManager::getJitterPosition(uint32 Index, uint32 NumOfSamples)
     {
@@ -317,15 +320,6 @@ namespace LimitEngine
         //
         //PostFilterManager::GetSingleton().Init();
         mReadyToRender = true;
-    }
-    // Prepare for drawing scene
-    void DrawManager::PrepareForDrawingScene()
-    {
-        //if(LightIBL *ibl = LE_LightManager.GetStandardIBLLight()) {
-        //    mRenderState->SetBRDFLUT(ibl->GetBRDFLUTTexture());
-        //    mRenderState->SetIBLDiffuseTexture(ibl->GetIBLDiffuseTexture());
-        //    mRenderState->SetIBLSpecularTexture(ibl->GetIBLSpecularTexture());
-        //}
     }
     // Prepare for drawing model
     void DrawManager::prepareForDrawingModel()

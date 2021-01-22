@@ -41,7 +41,7 @@ struct RenderTargetDesc
 {
     LEMath::IntSize Size;
     uint32 Depth;
-    TEXTURE_COLOR_FORMAT Format;
+    RendererFlag::BufferFormat Format;
 
     RenderTargetDesc()
         : Size(0, 0)
@@ -53,7 +53,7 @@ struct RenderTargetDesc
         Depth = In.Depth;
         Format = In.Format;
     }
-    RenderTargetDesc(const LEMath::IntSize &InSize, uint32 InDepth, TEXTURE_COLOR_FORMAT InFormat)
+    RenderTargetDesc(const LEMath::IntSize &InSize, uint32 InDepth, RendererFlag::BufferFormat InFormat)
         : Size(InSize), Depth(InDepth), Format(InFormat)
     {}
 
@@ -66,7 +66,7 @@ struct RenderTargetDesc
 struct DepthStencilDesc
 {
     LEMath::IntSize Size;
-    TEXTURE_DEPTH_FORMAT Format;
+    RendererFlag::BufferFormat Format;
 
     DepthStencilDesc()
         : Size(0, 0)
@@ -76,7 +76,7 @@ struct DepthStencilDesc
         Size = In.Size;
         Format = In.Format;
     }
-    DepthStencilDesc(const LEMath::IntSize &InSize, TEXTURE_DEPTH_FORMAT InFormat)
+    DepthStencilDesc(const LEMath::IntSize &InSize, const RendererFlag::BufferFormat& InFormat)
         : Size(InSize), Format(InFormat)
     {}
 
@@ -156,10 +156,10 @@ public:
     virtual ~RenderTargetPoolManager();
 
     PooledRenderTarget GetRenderTarget(const RenderTargetDesc &InDesc, const char *InDebugName = nullptr);
-    PooledRenderTarget GetRenderTarget(const LEMath::IntSize Size, uint32 Depth, TEXTURE_COLOR_FORMAT Format, const char *InDebugName = nullptr);
+    PooledRenderTarget GetRenderTarget(const LEMath::IntSize &Size, uint32 Depth, const RendererFlag::BufferFormat &Format, const char *InDebugName = nullptr);
     void ReleaseRenderTarget(PooledRenderTarget &RenderTarget);
 
-    PooledDepthStencil GetDepthStencil(const LEMath::IntSize Size, TEXTURE_DEPTH_FORMAT Format, const char *InDebugName = nullptr);
+    PooledDepthStencil GetDepthStencil(const LEMath::IntSize &Size, const RendererFlag::BufferFormat &Format, const char *InDebugName = nullptr);
     void ReleaseDepthStencil(PooledDepthStencil &DepthStencil);
 
 private:

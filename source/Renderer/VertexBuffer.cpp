@@ -7,6 +7,7 @@
  @author minseob (leeminseob@outlook.com)
  ***********************************************************/
 
+#include "Renderer/Vertex.h"
 #include "Renderer/VertexBuffer.h"
 #include "Renderer/DrawCommand.h"
 #include "Renderer/Shader.h"
@@ -25,19 +26,45 @@
 #endif
 
 namespace LimitEngine {
-VertexBufferImpl* CreateImplementation() 
+const char* FVF_NAMES[FVF_INDEX_MAX] = {
+    "NONE",
+    "POSITION",
+    "NORMAL",
+    "COLOR",
+    "TEXCOORD",
+    "WEIGHT",
+    "TANGENT",
+    "BINORMAL"
+};
+const RendererFlag::BufferFormat FVF_FORMATS[FVF_INDEX_MAX] = {
+    RendererFlag::BufferFormat::Unknown,
+    RendererFlag::BufferFormat::R32G32B32_Float,
+    RendererFlag::BufferFormat::R32G32B32_Float,
+    RendererFlag::BufferFormat::R8G8B8A8_UNorm,
+    RendererFlag::BufferFormat::R32G32_Float,
+    RendererFlag::BufferFormat::R32_Float,
+    RendererFlag::BufferFormat::R32G32B32_Float,
+    RendererFlag::BufferFormat::R32G32B32_Float,
+};
+VertexBufferGeneric::VertexBufferGeneric()
 {
 #ifdef USE_OPENGLES
-    return new VertexBufferImpl_OpenGLES();
+    mImpl = new VertexBufferImpl_OpenGLES();
 #elif defined(USE_DX9)
-    return new VertexBufferImpl_DirectX9();
+    mImpl = new VertexBufferImpl_DirectX9();
 #elif defined(USE_DX11)
-    return new VertexBufferImpl_DirectX11();
+    mImpl = new VertexBufferImpl_DirectX11();
 #elif defined(USE_DX12)
-    return new VertexBufferImpl_DirectX12();
+    mImpl = new VertexBufferImpl_DirectX12();
 #else
 #error No implementation for VertexBuffer New
 #endif
 }
-
+VertexBufferGeneric::~VertexBufferGeneric()
+{
+    if (mImpl) {
+        delete mImpl;
+        mImpl = nullptr;
+    }
+}
 }

@@ -80,27 +80,21 @@ public:
     }
     virtual uint32 GetDepth() const final override { return 1u; }
     virtual bool IsCubemap() const final override { return false; }
-    virtual TEXTURE_COLOR_FORMAT GetFormat() const final override {
+    virtual RendererFlag::BufferFormat GetFormat() const final override {
         uint8 tgaFormat = mHeader.ColorType;
         uint8 tgaDepth = mHeader.ColorDepth;
         switch ((TGAHeader::EColorType)tgaFormat)
         {
         case TGAHeader::EColorType::IndexColor:
-            if (tgaDepth == 24)
-                return TEXTURE_COLOR_FORMAT_R8G8B8;
-            else
-                return TEXTURE_COLOR_FORMAT_A8R8G8B8;
+            return RendererFlag::BufferFormat::R8G8B8A8_UNorm;
         case TGAHeader::EColorType::Grayscale:
-            return TEXTURE_COLOR_FORMAT_R8;
+            return RendererFlag::BufferFormat::R8_UNorm;
         case TGAHeader::EColorType::FullColor:
-            if (tgaDepth == 24)
-                return TEXTURE_COLOR_FORMAT_R8G8B8;
-            else
-                return TEXTURE_COLOR_FORMAT_A8R8G8B8;
+            return RendererFlag::BufferFormat::R8G8B8A8_UNorm;
         default:
             LEASSERT(0);
         }
-        return TEXTURE_COLOR_FORMAT_UNKNOWN;
+        return RendererFlag::BufferFormat::Unknown;
     }
     virtual uint32 GetRowPitch() const {
         uint8 tgaFormat = mHeader.ColorType;

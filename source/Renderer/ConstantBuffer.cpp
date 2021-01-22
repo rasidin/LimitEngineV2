@@ -46,11 +46,11 @@ ConstantBuffer::ConstantBuffer()
 ConstantBuffer::~ConstantBuffer()
 {
 }
-void ConstantBuffer::Create(Shader* InShader)
-{
-    if (mImpl)
-        mImpl->Create(InShader);
-}
+//void ConstantBuffer::Create(Shader* InShader)
+//{
+//    if (mImpl)
+//        mImpl->Create(InShader);
+//}
 void ConstantBuffer::PrepareForDrawing()
 {
     if (mImpl)

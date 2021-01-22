@@ -94,7 +94,7 @@ public:
     void AddSourceFactory(const char *Extension, ResourceSourceFactory *Factory) { mSourceFactories.Add(Extension, Factory); }
 
     ResourceFactory* GetFactory(ResourceFactory::ID ID) { return findFactory(ID); }
-    ResourceSourceFactory* GetSourceFactory(const String &ext) { return mSourceFactories.Find(ext); }
+    ResourceSourceFactory* GetSourceFactory(const String &ext) { return mSourceFactories.FindOrCreate(ext, nullptr); }
 
 protected:
     RESOURCE* getResource(const char* Filename, bool NeedRegister, ResourceFactory *Factory);

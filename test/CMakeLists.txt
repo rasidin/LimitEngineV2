@@ -12,11 +12,7 @@ set(DEPEND_LIB_ROOT ${PROJECT_BINARY_DIR}/depends)
 link_directories(${PROJECT_BINARY_DIR}/lib)
 
 add_executable(LimitEngineTest test.cpp)
-if (RAYTRACING)
 target_link_libraries(LimitEngineTest ToolBase LimitEngine LEMath d3d12 dxgi d3dcompiler dxguid)
-else()
-target_link_libraries(LimitEngineTest ToolBase LimitEngine LEMath d3d11 d3dcompiler dxguid)
-endif()
 
 target_include_directories(LimitEngineTest PUBLIC ${PROJECT_SOURCE_DIR}/../include)
 add_dependencies(LimitEngineTest ToolBase-download)

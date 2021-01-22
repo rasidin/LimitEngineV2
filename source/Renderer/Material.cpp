@@ -187,18 +187,18 @@ namespace LimitEngine {
     }
     void Material::setupShaderParameters()
     {
-        for (uint32 renderPassIndex = 0; renderPassIndex < (uint32)RenderPass::NumOfRenderPass; renderPassIndex++) {
-            if (!mShader[renderPassIndex].IsValid())
-                continue;
+        //for (uint32 renderPassIndex = 0; renderPassIndex < (uint32)RenderPass::NumOfRenderPass; renderPassIndex++) {
+        //    if (!mShader[renderPassIndex].IsValid())
+        //        continue;
 
-            for (uint32 paramIndex = 0; paramIndex < mParameters.size(); paramIndex++) {
-                mParameters.GetAt(paramIndex).value.SetIndexOfShaderParameter(
-                    renderPassIndex, mShader[renderPassIndex]->GetUniformLocation(mParameters.GetAt(paramIndex).key));
-            }
+        //    for (uint32 paramIndex = 0; paramIndex < mParameters.size(); paramIndex++) {
+        //        mParameters.GetAt(paramIndex).value.SetIndexOfShaderParameter(
+        //            renderPassIndex, mShader[renderPassIndex]->GetUniformLocation(mParameters.GetAt(paramIndex).key));
+        //    }
 
-            mConstantBuffer[renderPassIndex] = new ConstantBuffer();
-            mConstantBuffer[renderPassIndex]->Create(mShader[renderPassIndex].Get());
-        }
+        //    mConstantBuffer[renderPassIndex] = new ConstantBuffer();
+        //    mConstantBuffer[renderPassIndex]->Create(mShader[renderPassIndex].Get());
+        //}
     }
     void Material::SetupShaderParameters()
     {

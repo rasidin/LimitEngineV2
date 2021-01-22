@@ -47,6 +47,8 @@ class DrawCommand
     static void EndScene();
     static void BeginDrawing();
     static void EndDrawing();
+    static void SetViewport(const LEMath::IntRect &vprect);
+    static void SetScissorRect(const LEMath::IntRect &screct);
     static void BindVertexBuffer(VertexBufferGeneric* VertexBuffer);
     static void BindIndexBuffer(IndexBuffer* InIndexBuffer);
 	static void BindTargetTexture(uint32 index, Texture *texture);
@@ -54,28 +56,21 @@ class DrawCommand
     static void BindTexture(uint32 index, Texture *texture);
     static void BindTexture(uint32 index, const PooledRenderTarget &texture);
     static void BindTexture(uint32 index, const PooledDepthStencil &texture);
-    static void BindShader(Shader *shader);
-    static void BindShader(const char *name);
-    static void BindConstantBuffer(ConstantBuffer *cb);
 	static void Dispatch(int x, int y, int z);
     static void DrawPrimitive(RendererFlag::PrimitiveTypes type, uint32 offset, uint32 count);
     static void DrawIndexedPrimitive(RendererFlag::PrimitiveTypes type, uint32 vtxcount, uint32 count);
-    static void SetRenderTarget(uint32 index, Texture *color, Texture *depthstencil, uint32 surfaceIndex = 0);
-    static void SetFVF(uint32 fvf);
+    static void SetRenderTarget(uint32 index, TextureInterface *color, TextureInterface *depthstencil, uint32 surfaceIndex = 0);
     static void UpdateConstantBuffer(ConstantBuffer* buffer, void* data, size_t size);
+    static void SetPipelineState(PipelineState *pso);
     static void SetConstantBuffer(uint32 index, ConstantBuffer* buffer);
-    static void SetCulling(uint32 cull);
-    static void SetEnable(uint32 f);
-    static void SetDisable(uint32 f);
-    static void SetBlendFunc(uint32 rt, RendererFlag::BlendFlags func);
-    static void SetDepthFunc(RendererFlag::TestFlags f);
     static void CopyBuffer(void *Dst, uint32 DstOffset, void *Org, uint32 OrgOffset, uint32 Size);
-    static void ResourceBarrier(class Texture *InTexture, const ResourceState& InResourceState);
+    static void ResourceBarrier(class TextureInterface *InTexture, const ResourceState& InResourceState);
     static void ResourceBarrier(class VertexBufferGeneric* InVertexBuffer, const ResourceState& InResourceState);
     static void ResourceBarrier(class IndexBuffer *InIndexBuffer, const ResourceState &InResourceState);
     static void SetMarker(const char *InMarkerName);
     static void BeginEvent(const char *InEventName);
     static void EndEvent();
+    static void Present();
 }; // DrawCommand
 }
 #endif // LIMITENGINEV2_RENDERER_DRAWCOMMAND_H_

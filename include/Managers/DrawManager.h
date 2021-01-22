@@ -52,14 +52,19 @@ public:
     
     virtual void Init(WINDOW_HANDLE handle, const InitializeOptions &Options) = 0;
     virtual void ResizeScreen(const LEMath::IntSize &size) = 0;
+    virtual void ProcessBeforeFlushingCommands() = 0;
     virtual void Finish(CommandBuffer* commandBuffer) = 0;
     virtual void Present() = 0;
     virtual void Term() = 0;
     
     virtual void* GetDeviceHandle() const = 0;
     virtual void* GetDeviceContext() const = 0;
+    virtual uint32 GetCurrentFrameBufferIndex() const = 0;
+    virtual const RendererFlag::BufferFormat& GetCurrentFrameBufferFormat() const = 0;
     virtual void* GetCurrentFrameBuffer() const = 0;
     virtual void* GetCurrentFrameBufferView() const = 0;
+    virtual const ResourceState GetCurrentFrameBufferResourceState() const = 0;
+    virtual void SetCurrentFrameBufferResourceState(ResourceState state) = 0;
 };
 
 class RendererTask : public Object<LimitEngineMemoryCategory::Graphics>
@@ -90,6 +95,7 @@ typedef Singleton<DrawManager, LimitEngineMemoryCategory::Graphics> SingletonDra
 class DrawManager : public SingletonDrawManager
 {
     friend DrawCommand;
+    friend class DrawManagerRendererAccessor;
 public:             // Public Definition
     // Screen orientation type
     enum ScreenOrientation
@@ -110,19 +116,13 @@ public:             // Public Definition
     
 public:                    // Interfaces
     void Init(WINDOW_HANDLE handle, const InitializeOptions &Options);
+    
+    // Interface for task
     void Run();
+    void DrawEnd();
 
-    // Device
-    void* GetDeviceHandle() const { return mImpl ? mImpl->GetDeviceHandle():NULL; }
-
-    // Get device context
-    void* GetDeviceContext() const { return mImpl ? mImpl->GetDeviceContext() : nullptr; }
-
-    // Get frame buffer
-    void* GetCurrentFrameBuffer() const { return mImpl ? mImpl->GetCurrentFrameBuffer() : nullptr; }
-
-    // Get frame buffer view
-    void* GetCurrentFrameBufferView() const { return mImpl ? mImpl->GetCurrentFrameBufferView() : nullptr; }
+    // Get frame buffer texture
+    FrameBufferTextureRefPtr GetFrameBufferTexture() const { return new FrameBufferTexture(GetRealScreenSize()); }
 
     // Is ready to rendering?
     bool IsReadyToRender() { return mReadyToRender; }
@@ -132,9 +132,6 @@ public:                    // Interfaces
 
     template<typename L>
     void AddRendererTaskLambda(L &&Lambda) { Mutex::ScopedLock lock(mRendererTaskMutex); mRendererTasks.Add(new RendererTaskLambda<L>(Forward<L>(Lambda))); }
-
-    // Prepare for drawing scene
-    void PrepareForDrawingScene();
 
     void PreRenderFinished()
     { /*if (mInstance && mInstance->mImpl) mInstance->mImpl->preRenderFinished();*/ }
@@ -149,7 +146,7 @@ public:                    // Interfaces
     // Screen size
     void SetScreenOrientation(uint32 o);
     const LEMath::IntSize& GetVirtualScreenSize() { return mScreenSize; }
-    LEMath::IntSize GetRealScreenSize() { if (mImpl) return mImpl->GetScreenSize(); return LEMath::IntSize(0, 0); }
+    LEMath::IntSize GetRealScreenSize() const { if (mImpl) return mImpl->GetScreenSize(); return LEMath::IntSize(0, 0); }
 
     // Set/Get matrices
     void                          SetViewMatrix(const LEMath::FloatMatrix4x4 &view)                     { mRenderState->SetViewMatrix(view); }
@@ -192,9 +189,6 @@ private:            // Private members
     // Run tasks before flushing commands
     void runRendererTasks();
 
-    // Get command buffer
-    CommandBuffer* getCommandBuffer() { return mCommandBuffer; }
-
     // Calculation for getting jitter position using sample count (from msdn document for msaa)
     // https://docs.microsoft.com/ja-jp/windows/win32/api/d3d11/ne-d3d11-d3d11_standard_multisample_quality_levels?redirectedfrom=MSDN
     LEMath::FloatPoint getJitterPosition(uint32 Index, uint32 NumOfSamples);
@@ -227,7 +221,41 @@ private:            // Private Properties
     LEMath::IntSize                      mRealScreenSize;                   //!< Current real screen size
                                          
     uint32                               mTemporalAASamples;                //!< Number of samples for TemporalAA
+
+    FrameBufferTextureRefPtr             mLastFrameBufferTexture;           //!< Last frame buffer texture (for deferred release)
 };    // DrawManager
+
+class DrawManagerRendererAccessor
+{
+public:
+    const explicit DrawManagerRendererAccessor(class DrawManager* manager)
+        : mImpl(manager->mImpl)
+        , mCommandBuffer(manager->mCommandBuffer)
+    {}
+
+    void* GetDeviceHandle() const { return mImpl ? mImpl->GetDeviceHandle() : nullptr; }
+    void* GetDeviceContext() const { return mImpl ? mImpl->GetDeviceContext() : nullptr; }
+    CommandBuffer* GetCommandBuffer() const { return mCommandBuffer; }
+
+    uint32 GetCurrentFrameBufferIndex() const { return mImpl ? mImpl->GetCurrentFrameBufferIndex() : 0u; }
+    RendererFlag::BufferFormat GetCurrentFrameBufferFormat() const { return mImpl ? mImpl->GetCurrentFrameBufferFormat() : RendererFlag::BufferFormat::Unknown; }
+    void* GetCurrentFrameBuffer() const { return mImpl ? mImpl->GetCurrentFrameBuffer() : nullptr; }
+    void* GetCurrentFrameBufferView() const { return mImpl ? mImpl->GetCurrentFrameBufferView() : nullptr; }
+    ResourceState GetCurrentFrameBufferResourceState() const { return mImpl ? mImpl->GetCurrentFrameBufferResourceState() : ResourceState::Common; }
+    void SetCurrentFrameBufferResourceState(const ResourceState& state) { if (mImpl) mImpl->SetCurrentFrameBufferResourceState(state); }
+
+    // FinishDrawing (executed by drawcommand)
+    void Finish(CommandBuffer* cmd) { if (mImpl) mImpl->Finish(cmd); }
+
+    // Present (executed by drawcommand)
+    void Present() { if (mImpl) mImpl->Present(); }
+
+private:
+    DrawManagerImpl* mImpl = nullptr;
+    CommandBuffer* mCommandBuffer = nullptr;
+};
+
 #define sDrawManager LimitEngine::DrawManager::GetSingletonPtr()
 #define LE_DrawManager LimitEngine::DrawManager::GetSingleton()
+#define LE_DrawManagerRendererAccessor DrawManagerRendererAccessor(LimitEngine::DrawManager::GetSingletonPtr())
 }

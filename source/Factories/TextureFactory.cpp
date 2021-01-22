@@ -46,51 +46,48 @@ IReferenceCountedObject* TextureFactory::Create(const ResourceSourceFactory *Sou
                     }
                     if (TextParser::NODE *formatnode = datanode->FindChild("FORMAT")) {
                         if (formatnode->values[0] == "A8R8G8B8") {
-                            SourceImage->mFormat = static_cast<uint32>(TEXTURE_COLOR_FORMAT_A8R8G8B8);
+                            SourceImage->mFormat = static_cast<uint32>(RendererFlag::BufferFormat::R8G8B8A8_UInt);
                         }
                         else if (formatnode->values[0] == "R8G8B8") {
-                            SourceImage->mFormat = static_cast<uint32>(TEXTURE_COLOR_FORMAT_R8G8B8);
+                            LEASSERT(false);
                         }
                         else if (formatnode->values[0] == "R8") {
-                            SourceImage->mFormat = static_cast<uint32>(TEXTURE_COLOR_FORMAT_R8);
+                            SourceImage->mFormat = static_cast<uint32>(RendererFlag::BufferFormat::R8_UInt);
                         }
                         else if (formatnode->values[0] == "R16F") {
-                            SourceImage->mFormat = static_cast<uint32>(TEXTURE_COLOR_FORMAT_R16F);
+                            SourceImage->mFormat = static_cast<uint32>(RendererFlag::BufferFormat::R16_Float);
                         }
                         else if (formatnode->values[0] == "R32F") {
-                            SourceImage->mFormat = static_cast<uint32>(TEXTURE_COLOR_FORMAT_R32F);
+                            SourceImage->mFormat = static_cast<uint32>(RendererFlag::BufferFormat::R32_Float);
                         }
                         else if (formatnode->values[0] == "A16B16G16R16F") {
-                            SourceImage->mFormat = static_cast<uint32>(TEXTURE_COLOR_FORMAT_A16B16G16R16F);
+                            SourceImage->mFormat = static_cast<uint32>(RendererFlag::BufferFormat::R16G16B16A16_Float);
                         }
                         else if (formatnode->values[0] == "A32B32G32R32F") {
-                            SourceImage->mFormat = static_cast<uint32>(TEXTURE_COLOR_FORMAT_A32B32G32R32F);
+                            SourceImage->mFormat = static_cast<uint32>(RendererFlag::BufferFormat::R32G32B32A32_Float);
                         }
                     }
-                    switch (static_cast<TEXTURE_COLOR_FORMAT>(SourceImage->mFormat))
+                    switch (static_cast<RendererFlag::BufferFormat>(SourceImage->mFormat))
                     {
-                    case TEXTURE_COLOR_FORMAT_R8G8B8:
-                        SourceImage->mRowPitch = 3 * SourceImage->GetSize().X();
-                        break;
-                    case TEXTURE_COLOR_FORMAT_A8R8G8B8:
+                    case RendererFlag::BufferFormat::R8G8B8A8_UInt:
                         SourceImage->mRowPitch = 4 * SourceImage->GetSize().X();
                         break;
-                    case TEXTURE_COLOR_FORMAT_R8:
+                    case RendererFlag::BufferFormat::R8_UInt:
                         SourceImage->mRowPitch = 1 * SourceImage->GetSize().X();
                         break;
-                    case TEXTURE_COLOR_FORMAT_R16F:
+                    case RendererFlag::BufferFormat::R16_Float:
                         SourceImage->mRowPitch = 2 * SourceImage->GetSize().X();
                         break;
-                    case TEXTURE_COLOR_FORMAT_G16R16F:
+                    case RendererFlag::BufferFormat::R16G16_Float:
                         SourceImage->mRowPitch = 4 * SourceImage->GetSize().X();
                         break;
-                    case TEXTURE_COLOR_FORMAT_R32F:
+                    case RendererFlag::BufferFormat::R32_Float:
                         SourceImage->mRowPitch = 4 * SourceImage->GetSize().X();
                         break;
-                    case TEXTURE_COLOR_FORMAT_A16B16G16R16F:
+                    case RendererFlag::BufferFormat::R16G16B16A16_UInt:
                         SourceImage->mRowPitch = 8 * SourceImage->GetSize().X();
                         break;
-                    case TEXTURE_COLOR_FORMAT_A32B32G32R32F:
+                    case RendererFlag::BufferFormat::R32G32B32A32_Float:
                         SourceImage->mRowPitch = 16 * SourceImage->GetSize().X();
                         break;
                     default:
@@ -112,7 +109,7 @@ IReferenceCountedObject* TextureFactory::Create(const ResourceSourceFactory *Sou
                                     if (AutoPointer<ResourceManager::RESOURCE> Resource = LE_ResourceManager.GetResourceWithoutRegister(filepath.GetCharPtr(), TextureFactory::ID)) {
                                         TextureRefPtr LoadedTexture = static_cast<Texture*>(Resource->data);
                                         SerializedTextureSource *TextureSource = LoadedTexture->GetSourceImage();
-                                        if (SourceImage->GetSize() == TextureSource->GetSize() && TextureSource->GetFormat() == SourceImage->mFormat) {
+                                        if (SourceImage->GetSize() == TextureSource->GetSize() && TextureSource->GetFormat() == static_cast<RendererFlag::BufferFormat>(SourceImage->mFormat)) {
                                             ::memcpy(SourceImage->mColorData.GetData() + ImageSliceSize * fileindex, TextureSource->GetColorData(), ImageSliceSize);
                                         }
                                     }
@@ -163,27 +160,27 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
         LEMath::FloatColorRGBA OutColor = LEMath::FloatColorRGBA::Zero;
         switch (SourceImage->GetFormat())
         {
-        case TEXTURE_COLOR_FORMAT_G16R16F: {
+        case RendererFlag::BufferFormat::R16G16_Float: {
             uint8* ColorDataPtr = (uint8*)OrgData + SourceImage->GetRowPitch() * pixelPos.Y() + pixelPos.X() * sizeof(LEMath::half) * 2;
             LEMath::half *ColorDataHalfPtr = (LEMath::half*)ColorDataPtr;
             OutColor = (LEMath::FloatColorRGBA)LEMath::HalfVector4(ColorDataHalfPtr[0], ColorDataHalfPtr[1], 0, 0);
         } break;
-        case TEXTURE_COLOR_FORMAT_G32R32F: {
+        case RendererFlag::BufferFormat::R32G32_Float: {
             uint8* ColorDataPtr = (uint8*)OrgData + SourceImage->GetRowPitch() * pixelPos.Y() + pixelPos.X() * sizeof(float) * 2;
             float *ColorDataFloatPtr = (float*)ColorDataPtr;
             OutColor = LEMath::FloatColorRGBA(ColorDataFloatPtr[0], ColorDataFloatPtr[1], 0.0f, 0.0f);
         }
-        case TEXTURE_COLOR_FORMAT_A16B16G16R16F: {
+        case RendererFlag::BufferFormat::R16G16B16A16_Float: {
             uint8* ColorDataPtr = (uint8*)OrgData + SourceImage->GetRowPitch() * pixelPos.Y() + pixelPos.X() * sizeof(LEMath::half) * 4;
             LEMath::half *ColorDataHalfPtr = (LEMath::half*)ColorDataPtr;
             OutColor = (LEMath::FloatColorRGBA)LEMath::HalfVector4(ColorDataHalfPtr[0], ColorDataHalfPtr[1], ColorDataHalfPtr[2], ColorDataHalfPtr[3]);
         } break;
-        case TEXTURE_COLOR_FORMAT_A32B32G32R32F: {
+        case RendererFlag::BufferFormat::R32G32B32A32_Float: {
             uint8* ColorDataPtr = (uint8*)OrgData + SourceImage->GetRowPitch() * pixelPos.Y() + pixelPos.X() * sizeof(float) * 4;
             float *ColorDataFloatPtr = (float*)ColorDataPtr;
             OutColor = LEMath::FloatColorRGBA(ColorDataFloatPtr[0], ColorDataFloatPtr[1], ColorDataFloatPtr[2], ColorDataFloatPtr[3]);
         } break;
-        case TEXTURE_COLOR_FORMAT_A8R8G8B8: {
+        case RendererFlag::BufferFormat::R8G8B8A8_UInt: {
             uint8* ColorDataPtr = (uint8*)OrgData + SourceImage->GetRowPitch() * pixelPos.Y() + pixelPos.X() * sizeof(uint8) * 4;
             OutColor = LEMath::FloatColorRGBA(ColorDataPtr[0] / 255.0f, ColorDataPtr[1] / 255.0f, ColorDataPtr[2] / 255.0f, 1.0f);
         }
@@ -197,38 +194,29 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
         uint32 sliceStride = filteredSourceImage->GetRowPitch() * filteredSourceImage->GetSize().Y();
         switch (filteredSourceImage->GetFormat())
         {
-        case TEXTURE_COLOR_FORMAT_G16R16F: {
+        case RendererFlag::BufferFormat::R16G16_Float: {
             uint32 colorDataOffset = sliceStride * pos.Z() + filteredSourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(LEMath::half) * 2;
             LEASSERT(colorDataOffset < filteredSourceImage->GetColorDataSize());
             uint8* ColorDataPtr = (uint8*)filteredSourceImage->GetColorData() + colorDataOffset;
             *(LEMath::HalfVector2*)ColorDataPtr = (LEMath::HalfVector2)color;
         } break;
-        case TEXTURE_COLOR_FORMAT_G32R32F: {
+        case RendererFlag::BufferFormat::R32G32_Float: {
             uint32 colorDataOffset = sliceStride * pos.Z() + filteredSourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(float) * 2;
             LEASSERT(colorDataOffset < filteredSourceImage->GetColorDataSize());
             uint8* ColorDataPtr = (uint8*)filteredSourceImage->GetColorData() + colorDataOffset;
             *(LEMath::FloatVector2*)ColorDataPtr = LEMath::FloatVector2(color.X(), color.Y());
         } break;
-        case TEXTURE_COLOR_FORMAT_A16B16G16R16F: {
+        case RendererFlag::BufferFormat::R16G16B16A16_Float: {
             uint32 colorDataOffset = sliceStride * pos.Z() + filteredSourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(LEMath::half) * 4;
             LEASSERT(colorDataOffset < filteredSourceImage->GetColorDataSize());
             uint8* ColorDataPtr = (uint8*)filteredSourceImage->GetColorData() + colorDataOffset;
             *(LEMath::HalfVector4*)ColorDataPtr = (LEMath::HalfVector4)color;
         } break;
-        case TEXTURE_COLOR_FORMAT_A32B32G32R32F: {
+        case RendererFlag::BufferFormat::R32G32B32A32_Float: {
             uint32 colorDataOffset = sliceStride * pos.Z() + filteredSourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(float) * 4;
             LEASSERT(colorDataOffset < filteredSourceImage->GetColorDataSize());
             uint8* ColorDataPtr = (uint8*)filteredSourceImage->GetColorData() + colorDataOffset;
             *(LEMath::FloatColorRGBA*)ColorDataPtr = color;
-        } break;
-        case TEXTURE_COLOR_FORMAT_A8R8G8B8: {
-            uint32 colorDataOffset = sliceStride * pos.Z() + filteredSourceImage->GetRowPitch() * pos.Y() + pos.X() * sizeof(uint8) * 4;
-            LEASSERT(colorDataOffset < filteredSourceImage->GetColorDataSize());
-            uint8* ColorDataPtr = (uint8*)filteredSourceImage->GetColorData() + colorDataOffset;
-            ColorDataPtr[0] = (uint8)(color.X() * 255);
-            ColorDataPtr[1] = (uint8)(color.Y() * 255);
-            ColorDataPtr[2] = (uint8)(color.Z() * 255);
-            ColorDataPtr[3] = (uint8)(color.W() * 255);
         } break;
         default:
             break;
@@ -239,28 +227,25 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
     filteredSourceImage->mSize = LEMath::IntVector3(imageSize.X(), imageSize.Y(), (mImportFilter==TextureImportFilter::Reflection)?5:1);
     filteredSourceImage->mMipCount = 1;
     filteredSourceImage->mIsCubemap = false;
-    filteredSourceImage->mFormat = (mImportFilter == TextureImportFilter::EnvironmentBRDF)?TEXTURE_COLOR_FORMAT_G32R32F:SourceImage->GetFormat();
+    filteredSourceImage->mFormat = static_cast<uint32>((mImportFilter == TextureImportFilter::EnvironmentBRDF) ? RendererFlag::BufferFormat::R32G32_Float : SourceImage->GetFormat());
     switch (filteredSourceImage->GetFormat())
     {
-    case TEXTURE_COLOR_FORMAT_R8:
+    case RendererFlag::BufferFormat::R8_UInt:
         filteredSourceImage->mRowPitch = filteredSourceImage->mSize.X() * 1;
         break;
-    case TEXTURE_COLOR_FORMAT_R16F:
+    case RendererFlag::BufferFormat::R16_Float:
         filteredSourceImage->mRowPitch = filteredSourceImage->mSize.X() * 2;
         break;
-    case TEXTURE_COLOR_FORMAT_R8G8B8:
-        filteredSourceImage->mRowPitch = filteredSourceImage->mSize.X() * 3;
-        break;
-    case TEXTURE_COLOR_FORMAT_R32F:
-    case TEXTURE_COLOR_FORMAT_G16R16F:
-    case TEXTURE_COLOR_FORMAT_A8R8G8B8:
+    case RendererFlag::BufferFormat::R32_Float:
+    case RendererFlag::BufferFormat::R16G16_Float:
+    case RendererFlag::BufferFormat::R8G8B8A8_UNorm:
         filteredSourceImage->mRowPitch = filteredSourceImage->mSize.X() * 4;
         break;
-    case TEXTURE_COLOR_FORMAT_G32R32F:
-    case TEXTURE_COLOR_FORMAT_A16B16G16R16F:
+    case RendererFlag::BufferFormat::R32G32_Float:
+    case RendererFlag::BufferFormat::R16G16B16A16_Float:
         filteredSourceImage->mRowPitch = filteredSourceImage->mSize.X() * 8;
         break;
-    case TEXTURE_COLOR_FORMAT_A32B32G32R32F:
+    case RendererFlag::BufferFormat::R32G32B32A32_Float:
         filteredSourceImage->mRowPitch = filteredSourceImage->mSize.X() * 16;
         break;
     default:

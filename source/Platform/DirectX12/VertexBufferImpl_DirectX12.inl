@@ -37,7 +37,7 @@ namespace LimitEngine {
 
         void Create(uint32 fvf, size_t stride, size_t size, uint32 flag, void* buffer) override
         {
-            ID3D12Device* device = (ID3D12Device*)LE_DrawManager.GetDeviceHandle();
+            ID3D12Device* device = (ID3D12Device*)LE_DrawManagerRendererAccessor.GetDeviceHandle();
             LEASSERT(device);
 
             D3D12_RESOURCE_DESC resourceDesc;
@@ -76,22 +76,15 @@ namespace LimitEngine {
         }
         void Dispose() override
         {
-            UNIMPLEMENTED_ERROR
-        }
-        void Bind(Shader* shader) override
-        {
-            UNIMPLEMENTED_ERROR
+            if (mResource)
+                mResource->Release();
+            mResource = nullptr;
         }
         void* GetHandle() override
         {
-            UNIMPLEMENTED_ERROR
-            return nullptr;
+            return mResource;
         }
         void* GetResource() const override { return (void*)mResource; }
-        void DrawPrimitive(uint32 type, size_t count) override
-        {
-            UNIMPLEMENTED_ERROR
-        }
     private:
         ID3D12Resource      *mResource = nullptr;
     };

@@ -26,6 +26,7 @@ class Model;
 class ModelInstance;
 class Mesh;
 class PipelineState;
+class PipelineStateDescriptor;
 class PointLight;
 class PostProcessManager;
 class PostProcessor;
@@ -34,22 +35,27 @@ class ShaderDriver;
 class SpotLight;
 class Sprite;
 class SamplerState;
+class FrameBufferTexture;
 class Texture;
 class RenderState;
 class RenderContext;
 class RenderTargetPoolManager;
 class VertexBufferGeneric;
 
-#define CameraRefPtr			ReferenceCountedPointer<Camera> 
-#define FontRefPtr				ReferenceCountedPointer<Font>   
-#define LightRefPtr				ReferenceCountedPointer<Light>  
-#define ModelRefPtr				ReferenceCountedPointer<Model>  
-#define ModelInstRefPtr			ReferenceCountedPointer<ModelInstance>
-#define SamplerStateRefPtr		ReferenceCountedPointer<SamplerState>
-#define TextureRefPtr			ReferenceCountedPointer<Texture>
-#define ShaderRefPtr			ReferenceCountedPointer<Shader> 
-#define ConstantBufferRefPtr	ReferenceCountedPointer<ConstantBuffer>
-#define PipelineStateRefPtr		ReferenceCountedPointer<PipelineState>
+#define CameraRefPtr				ReferenceCountedPointer<Camera> 
+#define FontRefPtr					ReferenceCountedPointer<Font>   
+#define LightRefPtr					ReferenceCountedPointer<Light>  
+#define ModelRefPtr					ReferenceCountedPointer<Model>  
+#define ModelInstRefPtr				ReferenceCountedPointer<ModelInstance>
+#define SamplerStateRefPtr			ReferenceCountedPointer<SamplerState>
+#define FrameBufferTextureRefPtr	ReferenceCountedPointer<FrameBufferTexture>
+#define VertexBufferRefPtr			ReferenceCountedPointer<VertexBufferGeneric>
+#define IndexBufferRefPtr			ReferenceCountedPointer<IndexBuffer>
+#define TextureRefPtr				ReferenceCountedPointer<Texture>
+#define TextureInterfaceRefPtr		ReferenceCountedPointer<TextureInterface>
+#define ShaderRefPtr				ReferenceCountedPointer<Shader> 
+#define ConstantBufferRefPtr		ReferenceCountedPointer<ConstantBuffer>
+#define PipelineStateRefPtr			ReferenceCountedPointer<PipelineState>
 
 #define InstanceIDNone 0xffffffff
 

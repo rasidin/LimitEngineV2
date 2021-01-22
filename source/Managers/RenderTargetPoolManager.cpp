@@ -57,7 +57,7 @@ PooledRenderTarget RenderTargetPoolManager::GetRenderTarget(const RenderTargetDe
 {
     return GetRenderTarget(InDesc.Size, InDesc.Depth, InDesc.Format);
 }
-PooledRenderTarget RenderTargetPoolManager::GetRenderTarget(const LEMath::IntSize Size, uint32 Depth, TEXTURE_COLOR_FORMAT Format, const char *InDebugName/* = nullptr*/)
+PooledRenderTarget RenderTargetPoolManager::GetRenderTarget(const LEMath::IntSize &Size, uint32 Depth, const RendererFlag::BufferFormat &Format, const char *InDebugName/* = nullptr*/)
 {
     Mutex::ScopedLock lock(mBucketMutex);
 
@@ -90,7 +90,7 @@ void RenderTargetPoolManager::ReleaseRenderTarget(PooledRenderTarget &RenderTarg
     if (RenderTarget.mTexture)
         mRTBuckets.Add(RTBucketType(RenderTarget.mDesc, RenderTarget.mTexture));
 }
-PooledDepthStencil RenderTargetPoolManager::GetDepthStencil(const LEMath::IntSize Size, TEXTURE_DEPTH_FORMAT Format, const char *InDebugName/* = nullptr*/)
+PooledDepthStencil RenderTargetPoolManager::GetDepthStencil(const LEMath::IntSize &Size, const RendererFlag::BufferFormat &Format, const char *InDebugName/* = nullptr*/)
 {
     DepthStencilDesc Desc(Size, Format);
     Texture *FoundDepthStencil = nullptr;

@@ -10,9 +10,11 @@
 
 #include <LERenderer>
 
-#include "Core/Object.h"
+#include "Core/Memory.h"
+#include "Core/ReferenceCountedObject.h"
 #include "Core/AutoPointer.h"
 #include "Managers/DrawManager.h"
+#include "Renderer/PipelineStateDescriptor.h"
 #include "Renderer/Vertex.h"
 
 namespace LimitEngine {
@@ -24,10 +26,8 @@ namespace LimitEngine {
         
         virtual void Create(uint32 fvf, size_t stride, size_t size, uint32 flag, void *buffer) = 0;
         virtual void Dispose() = 0;
-        virtual void Bind(Shader *shader) = 0;
         virtual void* GetHandle() = 0;
         virtual void* GetResource() const = 0;
-        virtual void DrawPrimitive(uint32 type, size_t count) = 0;
     };
 
     class RendererTask_CreateVertexBuffer : public RendererTask
@@ -67,24 +67,143 @@ namespace LimitEngine {
         void *mInitializeBuffer;
     };
 
-    class VertexBufferGeneric : public Object<LimitEngineMemoryCategory::Graphics>, public SerializableResource
+    class VertexBufferGeneric : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>, public SerializableResource
     {
     public:
-		VertexBufferGeneric(){};
-		virtual ~VertexBufferGeneric(){};
+        VertexBufferGeneric();
+        virtual ~VertexBufferGeneric();
 
+        virtual void Create(size_t size, void* initializeBuffer, uint32 flag) = 0;
+
+        virtual void GenerateInputElementDescriptors(PipelineStateDescriptor& desc) = 0;
+
+        virtual size_t GetSize() const = 0;
+
+        virtual void* GetBuffer() const = 0;
         virtual uint32 GetFVF() const = 0;
-        virtual void*  GetHandle() const = 0;
-        virtual void*  GetBuffer() const = 0;
         virtual uint32 GetBufferSize() const = 0;
         virtual uint32 GetStride() const = 0;
 
-        virtual void* GetResource() const = 0;
+    protected: // RendererAccessorOnly
         virtual ResourceState GetResourceState() const = 0;
-        virtual void SetResourceState(const ResourceState &InState) = 0;
+        virtual void SetResourceState(const ResourceState& state) = 0;
+
+    protected:
+        VertexBufferImpl* mImpl = nullptr;
+
+        friend class VertexBufferRendererAccessor;
     };
     
+    class VertexBufferRendererAccessor
+    {
+    public:
+        VertexBufferRendererAccessor(VertexBufferGeneric* vbg)
+            : mVertexBuffer(vbg)
+            , mImpl(vbg->mImpl)
+        {}
+
+        inline void* GetHandle() const { return mImpl ? mImpl->GetHandle() : nullptr; }
+        inline uint32 GetBufferSize() const { return mVertexBuffer->GetBufferSize(); }
+        inline uint32 GetStride() const { return mVertexBuffer->GetStride();; }
+
+        inline void* GetResource() const { return mImpl ? mImpl->GetResource() : nullptr; }
+        inline  ResourceState GetResourceState() const { return mVertexBuffer->GetResourceState(); }
+        inline void SetResourceState(const ResourceState& InState) { mVertexBuffer->SetResourceState(InState); }
+    private:
+        VertexBufferGeneric* mVertexBuffer = nullptr;
+        VertexBufferImpl* mImpl = nullptr;
+    };
+
     VertexBufferImpl* CreateImplementation();
+    template<uint32 tFVF> void GenerateInputElementDescriptorsUsingFVF(PipelineStateDescriptor& desc) {
+        desc.InputElementCount = 0u;
+        uint32 descriptorindex = 0u;
+        uint32 byteoffset = 0u;
+        if (tFVF & FVF_TYPE_POSITION) {
+            desc.InputElementDescriptors[descriptorindex].SemanticName = FVF_NAMES[FVF_INDEX_POSITION];
+            desc.InputElementDescriptors[descriptorindex].SemanticIndex = 0;
+            desc.InputElementDescriptors[descriptorindex].Format = FVF_FORMATS[FVF_INDEX_POSITION];
+            desc.InputElementDescriptors[descriptorindex].InputSlot = 0;
+            desc.InputElementDescriptors[descriptorindex].AlignedByteOffset = byteoffset;
+            desc.InputElementDescriptors[descriptorindex].InputSlotClass = RendererFlag::InputClassification::PerVertexData;
+            desc.InputElementDescriptors[descriptorindex].InstanceDataStepRate = 0;
+            byteoffset += FVF_SIZE_POSITION;
+            descriptorindex++;
+            desc.InputElementCount++;
+        }
+        if (tFVF & FVF_TYPE_NORMAL) {
+            desc.InputElementDescriptors[descriptorindex].SemanticName = FVF_NAMES[FVF_INDEX_NORMAL];
+            desc.InputElementDescriptors[descriptorindex].SemanticIndex = 0;
+            desc.InputElementDescriptors[descriptorindex].Format = FVF_FORMATS[FVF_INDEX_NORMAL];
+            desc.InputElementDescriptors[descriptorindex].InputSlot = 0;
+            desc.InputElementDescriptors[descriptorindex].AlignedByteOffset = byteoffset;
+            desc.InputElementDescriptors[descriptorindex].InputSlotClass = RendererFlag::InputClassification::PerVertexData;
+            desc.InputElementDescriptors[descriptorindex].InstanceDataStepRate = 0;
+            byteoffset += FVF_SIZE_NORMAL;
+            descriptorindex++;
+            desc.InputElementCount++;
+        }
+        if (tFVF & FVF_TYPE_COLOR) {
+            desc.InputElementDescriptors[descriptorindex].SemanticName = FVF_NAMES[FVF_INDEX_COLOR];
+            desc.InputElementDescriptors[descriptorindex].SemanticIndex = 0;
+            desc.InputElementDescriptors[descriptorindex].Format = FVF_FORMATS[FVF_INDEX_COLOR];
+            desc.InputElementDescriptors[descriptorindex].InputSlot = 0;
+            desc.InputElementDescriptors[descriptorindex].AlignedByteOffset = byteoffset;
+            desc.InputElementDescriptors[descriptorindex].InputSlotClass = RendererFlag::InputClassification::PerVertexData;
+            desc.InputElementDescriptors[descriptorindex].InstanceDataStepRate = 0;
+            byteoffset += FVF_SIZE_COLOR;
+            descriptorindex++;
+            desc.InputElementCount++;
+        }
+        if (tFVF & FVF_TYPE_TEXCOORD) {
+            desc.InputElementDescriptors[descriptorindex].SemanticName = FVF_NAMES[FVF_INDEX_TEXCOORD];
+            desc.InputElementDescriptors[descriptorindex].SemanticIndex = 0;
+            desc.InputElementDescriptors[descriptorindex].Format = FVF_FORMATS[FVF_INDEX_TEXCOORD];
+            desc.InputElementDescriptors[descriptorindex].InputSlot = 0;
+            desc.InputElementDescriptors[descriptorindex].AlignedByteOffset = byteoffset;
+            desc.InputElementDescriptors[descriptorindex].InputSlotClass = RendererFlag::InputClassification::PerVertexData;
+            desc.InputElementDescriptors[descriptorindex].InstanceDataStepRate = 0;
+            byteoffset += FVF_SIZE_TEXCOORD;
+            descriptorindex++;
+            desc.InputElementCount++;
+        }
+        if (tFVF & FVF_TYPE_WEIGHT) {
+            desc.InputElementDescriptors[descriptorindex].SemanticName = FVF_NAMES[FVF_INDEX_WEIGHT];
+            desc.InputElementDescriptors[descriptorindex].SemanticIndex = 0;
+            desc.InputElementDescriptors[descriptorindex].Format = FVF_FORMATS[FVF_INDEX_WEIGHT];
+            desc.InputElementDescriptors[descriptorindex].InputSlot = 0;
+            desc.InputElementDescriptors[descriptorindex].AlignedByteOffset = byteoffset;
+            desc.InputElementDescriptors[descriptorindex].InputSlotClass = RendererFlag::InputClassification::PerVertexData;
+            desc.InputElementDescriptors[descriptorindex].InstanceDataStepRate = 0;
+            byteoffset += FVF_SIZE_WEIGHT;
+            descriptorindex++;
+            desc.InputElementCount++;
+        }
+        if (tFVF & FVF_TYPE_TANGENT) {
+            desc.InputElementDescriptors[descriptorindex].SemanticName = FVF_NAMES[FVF_INDEX_TANGENT];
+            desc.InputElementDescriptors[descriptorindex].SemanticIndex = 0;
+            desc.InputElementDescriptors[descriptorindex].Format = FVF_FORMATS[FVF_INDEX_TANGENT];
+            desc.InputElementDescriptors[descriptorindex].InputSlot = 0;
+            desc.InputElementDescriptors[descriptorindex].AlignedByteOffset = byteoffset;
+            desc.InputElementDescriptors[descriptorindex].InputSlotClass = RendererFlag::InputClassification::PerVertexData;
+            desc.InputElementDescriptors[descriptorindex].InstanceDataStepRate = 0;
+            byteoffset += FVF_SIZE_TANGENT;
+            descriptorindex++;
+            desc.InputElementCount++;
+        }
+        if (tFVF & FVF_TYPE_BINORMAL) {
+            desc.InputElementDescriptors[descriptorindex].SemanticName = FVF_NAMES[FVF_INDEX_BINORMAL];
+            desc.InputElementDescriptors[descriptorindex].SemanticIndex = descriptorindex;
+            desc.InputElementDescriptors[descriptorindex].Format = FVF_FORMATS[FVF_INDEX_BINORMAL];
+            desc.InputElementDescriptors[descriptorindex].InputSlot = 0;
+            desc.InputElementDescriptors[descriptorindex].AlignedByteOffset = byteoffset;
+            desc.InputElementDescriptors[descriptorindex].InputSlotClass = RendererFlag::InputClassification::PerVertexData;
+            desc.InputElementDescriptors[descriptorindex].InstanceDataStepRate = 0;
+            byteoffset += FVF_SIZE_BINORMAL;
+            descriptorindex++;
+            desc.InputElementCount++;
+        }
+    }
 
     template <uint32 tFVF, size_t tSize>
     class VertexBuffer : public VertexBufferGeneric
@@ -93,10 +212,8 @@ namespace LimitEngine {
         VertexBuffer()
             : mVertex(0)
             , mCreationFlag(0)
-            , mImpl(0)
             , mSize(0)
         {
-            mImpl = CreateImplementation();
         }
         virtual ~VertexBuffer()
         {
@@ -131,7 +248,7 @@ namespace LimitEngine {
             return true;
         }
 
-        void Create(size_t size, void *initializeBuffer, uint32 flag)
+        virtual void Create(size_t size, void *initializeBuffer, uint32 flag) override
         {
             if (mVertex) delete[] mVertex;
             mSize = size;
@@ -141,24 +258,22 @@ namespace LimitEngine {
                 ::memcpy(mVertex, initializeBuffer, size * tSize);
             }
         }
-        void Bind(Shader *sh) { if (mImpl) mImpl->Bind(sh); }
-        void DrawPrimitive(uint32 type)         { if (mImpl) mImpl->DrawPrimitive(type, mSize); }
         
-        Vertex<tFVF, tSize>* GetVertices()      { return mVertex; }
-        size_t GetSize()                        { return mSize; }
-        size_t GetVertexSize()                  { return __size; }
+        Vertex<tFVF, tSize>* GetVertices()              { return mVertex; }
+        virtual size_t GetSize() const override         { return mSize; }
 
-        virtual void* GetHandle() const override { if (mImpl) return mImpl->GetHandle(); return nullptr; }
+        virtual void GenerateInputElementDescriptors(PipelineStateDescriptor& desc) { GenerateInputElementDescriptorsUsingFVF<tFVF>(desc); }
+
         virtual void* GetBuffer() const override { return &mVertex[0]; }
         virtual uint32 GetFVF() const override { return tFVF; }
         virtual uint32 GetBufferSize() const override { return static_cast<uint32>(mSize * tSize); }
         virtual uint32 GetStride() const override { return static_cast<uint32>(tSize); }
-        virtual void* GetResource() const override { if (mImpl) return mImpl->GetResource(); return nullptr; }
+
+    protected: // Renderer accessor only
         virtual ResourceState GetResourceState() const override { return mResourceState; }
         virtual void SetResourceState(const ResourceState& InState) override { mResourceState = InState; }
 
     private:        // Private Members
-        VertexBufferImpl            *mImpl;
         Vertex<tFVF, tSize>         *mVertex;
         size_t                       mSize;
         uint32                       mCreationFlag;

@@ -10,7 +10,7 @@ struct PS_INPUT
 {
 	float4 pos : SV_POSITION;
 	float4 color : COLOR;
-	float2 uv : TEXCOORD0;
+	float2 uv : TEXCOORD;
 };
 
 struct PS_OUTPUT
@@ -30,7 +30,7 @@ float EVOffset = 12.0;
 PS_OUTPUT ps_main(PS_INPUT In)
 {
 	PS_OUTPUT output = (PS_OUTPUT)0;
-	output.color.rgb = tex0.Sample(defaultSampler, In.uv).rgb * pow(2.0, EVOffset);
+	output.color.rgb = float3(1,0,0);//tex0.Sample(defaultSampler, In.uv).rgb * pow(2.0, EVOffset);
     output.color.a = 1.0;
 	return output;
 }

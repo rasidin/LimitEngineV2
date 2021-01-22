@@ -61,6 +61,7 @@ namespace LimitEngine {
         bool IsValid() const {
             return mData != nullptr;
         }
+        operator bool() const { return mData != nullptr; }
         ReferenceCountedPointer& operator = (const ReferenceCountedPointer &InPointer) {
             Release();
             mData = InPointer.mData;

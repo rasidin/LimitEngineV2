@@ -52,6 +52,7 @@ class Memory
 {
 protected:
 	static void* Malloc(size_t size);
+	static void* MallocAlign(size_t size, size_t align);
 	static void Free(void *data);
 }; // Memory
 } // namespace LimitEngine

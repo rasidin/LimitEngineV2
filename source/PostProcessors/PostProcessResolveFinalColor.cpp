@@ -27,11 +27,14 @@ OTHER DEALINGS IN THE SOFTWARE.
 **********************************************************************/
 #include "PostProcessors/PostProcessResolveFinalColor.h"
 
+#include "Managers/DrawManager.h"
 #include "Managers/Draw2DManager.h"
 #include "Managers/SceneManager.h"
 #include "Managers/ShaderManager.h"
 #include "Managers/RenderTargetPoolManager.h"
 #include "Renderer/DrawCommand.h"
+#include "Renderer/Shader.h"
+#include "Renderer/PipelineStateDescriptor.h"
 
 #include "Shaders/ResolveSceneColorSRGB.ps.h"
 
@@ -49,26 +52,48 @@ void PostProcessResolveFinalColor::Init(const InitializeOptions &Options)
         mColorSpace = ColorSpace::PQ;
     } break;
     }
+    mPipelineState = new PipelineState();
+    mConstantBuffer = new ConstantBuffer();
 }
 
 void PostProcessResolveFinalColor::Process(PostProcessContext &Context, VectorArray<PooledRenderTarget> &RenderTargets)
 {
     if (!mResolveShader.IsValid()) return;
 
-    DrawCommand::SetRenderTarget(0, nullptr, nullptr);
-    DrawCommand::BindTexture(0, RenderTargets[0]);
+    FrameBufferTextureRefPtr framebuffer = LE_DrawManager.GetFrameBufferTexture();
 
-    DrawCommand::SetDepthFunc(RendererFlag::TestFlags::ALWAYS);
-    DrawCommand::SetBlendFunc(0, RendererFlag::BlendFlags::SOURCE);
+    if (mPipelineState.IsValid() && mPipelineState->IsValid() == false) {
+        PipelineStateDescriptor psdesc;
+        psdesc.SetRenderTargetBlendEnabled(0, false);
+        psdesc.SetRenderTargetFormat(0, framebuffer.Get());
+        psdesc.SetDepthEnabled(false);
+        psdesc.SetDepthFunc(RendererFlag::TestFlags::Always);
+        psdesc.SetStencilEnabled(false);
+        psdesc.Shaders[static_cast<int>(Shader::Type::Pixel)] = mResolveShader;
 
-    CameraRefPtr MainCamera = LE_SceneManager.GetCamera();
-    if (MainCamera.IsValid()) {
-        int EVOffsetParam = mResolveShader->GetUniformLocation("EVOffset");
-        if (EVOffsetParam >= 0) {
-            DrawCommand::SetShaderUniformFloat1(mResolveShader.Get(), mResolveCB.Get(), EVOffsetParam, MainCamera->GetExposure());
-        }
+        LE_Draw2DManager.BuildPipelineState(psdesc);
+        psdesc.Finalize();
+
+        mPipelineState->Init(psdesc);
     }
 
-    LE_Draw2DManager.DrawScreen(mResolveShader.Get(), mResolveCB.Get());
+    DrawCommand::SetViewport(LEMath::IntRect(0, 0, framebuffer->GetSize().X(), framebuffer->GetSize().Y()));
+    DrawCommand::SetScissorRect(LEMath::IntRect(0, 0, framebuffer->GetSize().X(), framebuffer->GetSize().Y()));
+    DrawCommand::SetPipelineState(mPipelineState.Get());
+    //DrawCommand::SetConstantBuffer(0, mConstantBuffer.Get());
+
+    DrawCommand::ResourceBarrier(framebuffer.Get(), ResourceState::RenderTarget);
+    DrawCommand::SetRenderTarget(0, framebuffer.Get(), nullptr);
+    //DrawCommand::BindTexture(0, RenderTargets[0]);
+
+    //CameraRefPtr MainCamera = LE_SceneManager.GetCamera();
+    //if (MainCamera.IsValid()) {
+    //    int EVOffsetParam = mResolveShader->GetUniformLocation("EVOffset");
+    //    if (EVOffsetParam >= 0) {
+    //        DrawCommand::SetShaderUniformFloat1(mResolveShader.Get(), mResolveCB.Get(), EVOffsetParam, MainCamera->GetExposure());
+    //    }
+    //}
+
+    LE_Draw2DManager.DrawScreen();
 }
 } // LimitEngine

@@ -104,7 +104,7 @@ public:
         Vertex = 0,
         Pixel,
         Compute,
-        Mesh
+        Num
     };
 
 public:
@@ -113,6 +113,9 @@ public:
 
     ShaderImpl* GetImplementation() { return mImpl; }
     bool PrepareForDrawing() { return mImpl->PrepareForDrawing(); }
+
+    template<typename T>
+    bool TypeOf() const { return GetShaderHash() == T::GetHash(); }
 
 	void SetID(uint32 n)            { mId = n; }
     inline uint32 GetID() const     { return mId; }
@@ -125,6 +128,7 @@ public:
     virtual const uint32 GetConstantBufferCount() const = 0;
     virtual const uint32 GetBoundTextureCount() const = 0;
     virtual const uint32 GetBoundSamplerCount() const = 0;
+    virtual const uint32 GetUAVCount() const = 0;
 
 private:
     uint32						 mId;           // ID from ShaderManager

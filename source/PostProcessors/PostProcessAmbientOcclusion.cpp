@@ -40,8 +40,8 @@ void PostProcessAmbientOcclusion::Init(const InitializeOptions &Options)
     mAmbientOcclusionShader = LE_ShaderManager.GetShader("AmbientOcclusion");
     if (mAmbientOcclusionShader.IsValid())
     {
-        mAmbientOcclusionCB = new ConstantBuffer();
-        mAmbientOcclusionCB->Create(mAmbientOcclusionShader.Get());
+        //mAmbientOcclusionCB = new ConstantBuffer();
+        //mAmbientOcclusionCB->Create(mAmbientOcclusionShader.Get());
 
         //mAmbientOcclusionShader_Parameters.Position_ViewMatrix = mAmbientOcclusionShader->GetUniformLocation("ViewMatrix");
         //mAmbientOcclusionShader_Parameters.Position_ViewProjMatrix = mAmbientOcclusionShader->GetUniformLocation("ViewProjectionMatrix");
@@ -63,7 +63,7 @@ void PostProcessAmbientOcclusion::Init(const InitializeOptions &Options)
     mAmbientOcclusionBlurShader = LE_ShaderManager.GetShader("AmbientOcclusionBlur");
     if (mAmbientOcclusionBlurShader.IsValid())
     {
-        mAmbientOcclusionBlurCB = new ConstantBuffer();
+        //mAmbientOcclusionBlurCB = new ConstantBuffer();
         //mAmbientOcclusionBlurCB->Create(mAmbientOcclusionBlurShader.Get());
 
         //mAmbientOcclusionBlurShader_Parameters.Position_AmbientOcclusionTexture = mAmbientOcclusionBlurShader->GetTextureLocation("AmbientOcclusionTexture");

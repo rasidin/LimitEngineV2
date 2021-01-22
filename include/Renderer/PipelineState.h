@@ -36,18 +36,38 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 namespace LimitEngine {
 class PipelineStateImpl
+{public:
+    virtual bool  IsValid() const = 0;
+    virtual bool  Init(const PipelineStateDescriptor& desc) = 0;
+    virtual void* GetRootSignatureHandle() const = 0;
+    virtual void* GetHandle() const = 0;
+};
+
+class PipelineStateRendererAccessor
 {
-    virtual bool Init(const PipelineStateDescriptor& desc) = 0;
+public:
+    explicit PipelineStateRendererAccessor(const class PipelineState* state);
+
+    void* GetRootSignatureHandle() const { return mImpl ? mImpl->GetRootSignatureHandle() : nullptr; }
+    void* GetHandle() const { return mImpl ? mImpl->GetHandle() : nullptr; }
+
+private:
+    PipelineStateImpl* mImpl = nullptr;
 };
 
 class PipelineState : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>
 {
 public:
-    PipelineState(const PipelineStateDescriptor &desc);
+    PipelineState();
     virtual ~PipelineState() {}
+
+    bool IsValid() const { return mImpl->IsValid(); }
+    bool Init(const PipelineStateDescriptor& desc) { return mImpl->Init(desc); }
 
 private:
     PipelineStateImpl*      mImpl;
+
+    friend PipelineStateRendererAccessor;
 };
 } // namespace LimitEngine
 

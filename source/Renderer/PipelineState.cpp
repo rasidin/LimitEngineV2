@@ -28,20 +28,23 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "Renderer/PipelineState.h"
 
 #ifdef USE_DX12
-#include "Platform/DirectX12/PipelineStateImpl_DirectX12.inl"
+#include "../Platform/DirectX12/PipelineStateImpl_DirectX12.inl"
 #else
 #error No implementatios of this platform!
 #endif
 
 namespace LimitEngine {
-PipelineState::PipelineState(const PipelineStateDescriptor &desc)
+PipelineStateRendererAccessor::PipelineStateRendererAccessor(const PipelineState* state)
+    : mImpl(state->mImpl)
+{}
+
+PipelineState::PipelineState()
     : mImpl(nullptr)
 {
 #ifdef USE_DX12
     mImpl = new PipelineStateImpl_DirectX12();
 #else
-#error No implementatios of this platform!
+#error No implementation of this platform!
 #endif
-    mImpl->Init(desc);
 }
 } // namespace LimitEngine

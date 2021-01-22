@@ -59,7 +59,7 @@ SerializedTextureSource::SerializedTextureSource(const TextureSourceImage &Sourc
     mSize = LEMath::IntVector3(SourceImage.GetSize().Width(), SourceImage.GetSize().Height(), SourceImage.GetDepth());
     mRowPitch = SourceImage.GetRowPitch();
     mMipCount = SourceImage.GetMipCount();
-    mFormat = SourceImage.GetFormat();
+    mFormat = static_cast<uint32>(SourceImage.GetFormat());
     mColorData.Resize(static_cast<uint32>(SourceImage.GetColorDataSize()));
     memcpy(&mColorData.GetStart(), SourceImage.GetColorData(), SourceImage.GetColorDataSize());
     mIsCubemap = SourceImage.IsCubemap();
@@ -201,7 +201,7 @@ public:
 		}
 
 		if (mOwner) {
-			mOwner->mImpl->Create3D(LEMath::IntSize3(TextureSizeX, TextureSizeY, TextureSizeZ), TEXTURE_COLOR_FORMAT_A32B32G32R32F, 0, 1, brdfData, TextureSizeX * TextureSizeY * TextureSizeZ * sizeof(LEMath::FloatVector4));
+			mOwner->mImpl->Create3D(LEMath::IntSize3(TextureSizeX, TextureSizeY, TextureSizeZ), RendererFlag::BufferFormat::R32G32B32A32_Float, 0, 1, brdfData, TextureSizeX * TextureSizeY * TextureSizeZ * sizeof(LEMath::FloatVector4));
 		}
 	}
 private:
@@ -212,7 +212,7 @@ private:
 class RendererTask_CreateTexture : public RendererTask
 {
 public:
-    RendererTask_CreateTexture(Texture *owner, LEMath::IntSize size, TEXTURE_COLOR_FORMAT format, uint32 usage, uint32 mipLevels, void *initData, size_t initDataSize)
+    RendererTask_CreateTexture(Texture *owner, const LEMath::IntSize &size, const RendererFlag::BufferFormat &format, uint32 usage, uint32 mipLevels, void *initData, size_t initDataSize)
         : mOwner(owner)
         , mSize(size)
         , mFormat(format)
@@ -230,7 +230,7 @@ public:
 private:
     Texture *mOwner;
     LEMath::IntSize mSize;
-    TEXTURE_COLOR_FORMAT mFormat;
+    RendererFlag::BufferFormat mFormat;
     uint32 mUsage;
     uint32 mMipLevels;
 	void *initializeData;
@@ -239,7 +239,7 @@ private:
 class RendererTask_CreateTexture3D : public RendererTask
 {
 public:
-	RendererTask_CreateTexture3D(Texture *owner, LEMath::IntSize3 size, TEXTURE_COLOR_FORMAT format, uint32 usage, uint32 mipLevels, void *initData, size_t initDataSize)
+	RendererTask_CreateTexture3D(Texture *owner, const LEMath::IntSize3 &size, const RendererFlag::BufferFormat &format, uint32 usage, uint32 mipLevels, void *initData, size_t initDataSize)
 		: mOwner(owner)
 		, mSize(size)
 		, mFormat(format)
@@ -257,7 +257,7 @@ public:
 private:
 	Texture *mOwner;
 	LEMath::IntSize3 mSize;
-	TEXTURE_COLOR_FORMAT mFormat;
+	RendererFlag::BufferFormat mFormat;
 	uint32 mUsage;
 	uint32 mMipLevels;
 	void *mInitializeData;
@@ -284,7 +284,7 @@ private:
 class RendererTask_CreateDepthStencil : public RendererTask
 {
 public:
-    RendererTask_CreateDepthStencil(Texture *owner, LEMath::IntSize size, TEXTURE_DEPTH_FORMAT format)
+    RendererTask_CreateDepthStencil(Texture *owner, LEMath::IntSize size, const RendererFlag::BufferFormat &format)
         : mOwner(owner)
         , mSize(size)
         , mFormat(format)
@@ -299,7 +299,7 @@ public:
 private:
     Texture *mOwner;
     LEMath::IntSize mSize;
-    TEXTURE_DEPTH_FORMAT mFormat;
+    RendererFlag::BufferFormat mFormat;
 };
 class RendererTask_CreateColor : public RendererTask
 {
@@ -324,7 +324,7 @@ private:
 class RendererTask_CreateRenderTarget : public RendererTask
 {
 public:
-    RendererTask_CreateRenderTarget(Texture *owner, const LEMath::IntSize size, TEXTURE_COLOR_FORMAT format, uint32 usage)
+    RendererTask_CreateRenderTarget(Texture *owner, const LEMath::IntSize &size, const RendererFlag::BufferFormat &format, uint32 usage)
         : mOwner(owner)
         , mSize(size)
         , mFormat(format)
@@ -339,9 +339,10 @@ public:
 private:
     Texture *mOwner;
     LEMath::IntSize mSize;
-    TEXTURE_COLOR_FORMAT mFormat;
+    RendererFlag::BufferFormat mFormat;
     uint32 mUsage;
 };
+
 Texture* Texture::GenerateFromSourceImage(const TextureSourceImage *SourceImage)
 {
     Texture *output = new Texture();
@@ -352,7 +353,7 @@ Texture::Texture()
     : mImpl(0)
     , mSize(0)
 	, mDepth(1)
-    , mFormat(TEXTURE_COLOR_FORMAT_UNKNOWN)
+    , mFormat(RendererFlag::BufferFormat::Unknown)
     , mSource(nullptr)
 {
 #ifdef USE_DX9
@@ -379,14 +380,14 @@ void Texture::InitResource()
 {
     CreateUsingSourceData();
 }
-void Texture::Create(const LEMath::IntSize &size, TEXTURE_COLOR_FORMAT format, uint32 usage, uint32 mipLevels, void *initailizeData, size_t initDataSize)
+void Texture::Create(const LEMath::IntSize &size, const RendererFlag::BufferFormat &format, uint32 usage, uint32 mipLevels, void *initailizeData, size_t initDataSize)
 { 
     AutoPointer<RendererTask> rt_createTexture = new RendererTask_CreateTexture(this, size, format, usage, mipLevels, initailizeData, initDataSize);
     LE_DrawManager.AddRendererTask(rt_createTexture);
     mSize = size; 
     mFormat = format; 
 }
-void Texture::Create3D(const LEMath::IntSize3 &size, TEXTURE_COLOR_FORMAT format, uint32 usage, uint32 mipLevels, void *initializeData, size_t initDataSize)
+void Texture::Create3D(const LEMath::IntSize3 &size, const RendererFlag::BufferFormat &format, uint32 usage, uint32 mipLevels, void *initializeData, size_t initDataSize)
 {
 	AutoPointer <RendererTask> rt_createTexture = new RendererTask_CreateTexture3D(this, size, format, usage, mipLevels, initializeData, initDataSize);
 	LE_DrawManager.AddRendererTask(rt_createTexture);
@@ -405,13 +406,13 @@ void Texture::CreateColor(const LEMath::IntSize &size, const ByteColorRGBA &colo
     LE_DrawManager.AddRendererTask(rt_createColor);
     mSize = size;
 }
-void Texture::CreateDepthStencil(const LEMath::IntSize &size, TEXTURE_DEPTH_FORMAT format)
+void Texture::CreateDepthStencil(const LEMath::IntSize &size, const RendererFlag::BufferFormat &format)
 { 
     AutoPointer<RendererTask> rt_createDepth = new RendererTask_CreateDepthStencil(this, size, format);
     LE_DrawManager.AddRendererTask(rt_createDepth);
     mSize = size; 
 }
-void Texture::CreateRenderTarget(const LEMath::IntSize &size, TEXTURE_COLOR_FORMAT format, uint32 usage /*= 0*/)
+void Texture::CreateRenderTarget(const LEMath::IntSize &size, const RendererFlag::BufferFormat &format, uint32 usage /*= 0*/)
 {
     AutoPointer<RendererTask> rt_createRenderTarget = new RendererTask_CreateRenderTarget(this, size, format, usage);
     LE_DrawManager.AddRendererTask(rt_createRenderTarget);
@@ -451,5 +452,30 @@ void Texture::SetDebugName(const char *InDebugName)
     uint32 CopyLength = min(DebugNameLength - 1, strlen(InDebugName) + 1);
     ::memcpy(mDebugName, InDebugName, CopyLength);
     mDebugName[CopyLength - 1] = 0;
+}
+
+RendererFlag::BufferFormat FrameBufferTexture::GetFormat() const
+{
+    return LE_DrawManagerRendererAccessor.GetCurrentFrameBufferFormat();
+}
+
+void* FrameBufferTexture::GetRenderTargetView() const 
+{  
+    return LE_DrawManagerRendererAccessor.GetCurrentFrameBufferView();
+}
+
+void* FrameBufferTexture::GetResource() const
+{
+    return LE_DrawManagerRendererAccessor.GetCurrentFrameBuffer();
+}
+
+void FrameBufferTexture::SetResourceState(const ResourceState& state)
+{
+    LE_DrawManagerRendererAccessor.SetCurrentFrameBufferResourceState(state);
+}
+
+ResourceState FrameBufferTexture::GetResourceState() const
+{
+    return LE_DrawManagerRendererAccessor.GetCurrentFrameBufferResourceState();
 }
 }

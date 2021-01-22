@@ -21,23 +21,46 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
-@file PipelineStateManager.cpp
-@brief Manager for PipelineState
+@file Hash.h
+@brief Hash utils
 @author minseob
 **********************************************************************/
-#include "Managers/PipelineStateManager.h"
+#ifndef LIMITENGINEV2_CORE_HASH_H_
+#define LIMITENGINEV2_CORE_HASH_H_
+
+#ifndef USE_SSE_CRC32
+#define USE_SSE_CRC32 0
+#endif // USE_SSE_CRC32
+
+#if USE_SSE_CRC32
+#include <nmmintrin.h>
+#pragma intrinsic(_mm_crc32_u64)
+#else // Use FNV-1
+static constexpr uint64 FNV_OFFSET_BASIS_64 = 14695981039346656037U;
+static constexpr uint64 FNV_PRIME_64 = 1099511628211LLU;
+#endif
 
 namespace LimitEngine {
-PipelineState* PipelineStateManager::FindOrCreatePipelineState(const PipelineStateDescription& desc)
-{
-    // Find pipeline state from cache
-    if (PipelineStateRefPtr* Found = mPipelineMap.Find(desc)) {
-        return (*Found)->Get();
+class Hash { public:
+    static uint64 GenerateHash(const uint64* Data, size_t Size)
+    {
+        uint64 output = 0u;
+#if USE_SSE_CRC32
+        // Alignment check
+        LEASSERT(reinterpret_cast<uint64>(Data) % 8ull == 0ull && Size % 8ull == 0ull);
+        for (uint64 idx = 0; idx < Size / 8ull; idx++) {
+            output = _mm_crc32_u64(output, Data[idx]);
+        }
+#else
+        output = FNV_OFFSET_BASIS_64;
+        const uint8* data8 = reinterpret_cast<const uint8*>(Data);
+        for (size_t dtidx = 0; dtidx < Size; dtidx++, data8++) {
+            output = (FNV_PRIME_64 * output) ^ (*data8);
+        }
+#endif
+        return output;
     }
-    
-    // Create new pipeline
-    PipelineState* newpipelinestate = new PipelineState(desc);
-    mPipelines.Add(desc, newpipelinestate);
-    return newpipelinestate;
+};
 }
-} // namespace LimitEngine
+
+#endif // LIMITENGINEV2_CORE_HASH_H_

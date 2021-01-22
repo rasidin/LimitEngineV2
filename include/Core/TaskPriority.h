@@ -22,6 +22,7 @@ namespace LimitEngine {
 		TaskPriority_Renderer_DrawScene,
         TaskPriority_Renderer_PostProcess,
         TaskPriority_Renderer_DrawDebugUI,
+		TaskPriority_Renderer_DrawEnd,
         TaskPriority_Renderer_DrawManager_Run,
 	};
 }

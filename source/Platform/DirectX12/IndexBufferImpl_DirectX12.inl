@@ -45,7 +45,7 @@ public:
     {
         size_t BufferSize = Count * sizeof(uint32);
 
-        ID3D12Device* device = (ID3D12Device*)LE_DrawManager.GetDeviceHandle();
+        ID3D12Device* device = (ID3D12Device*)LE_DrawManagerRendererAccessor.GetDeviceHandle();
         LEASSERT(device != nullptr);
 
         D3D12_HEAP_PROPERTIES HeapPropertiesDefault;
@@ -74,7 +74,7 @@ public:
             return;
         }
 
-        mOwner->SetResourceState(ResourceState::GenericRead);
+        IndexBufferRendererAccessor(mOwner).SetResourceState(ResourceState::GenericRead);
 
         ID3D12Resource* indexBufferUpdate;
         D3D12_HEAP_PROPERTIES HeapPropertiesUpload;

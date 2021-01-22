@@ -499,7 +499,7 @@ namespace LimitEngine {
     }
     void Model::Draw(const RenderState &rs, const LEMath::FloatMatrix4x4 &Transform)
     {
-        DrawCommand::SetCulling(static_cast<uint32>(RendererFlag::Culling::ClockWise));
+        //DrawCommand::SetCulling(static_cast<uint32>(RendererFlag::Culling::ClockWise));
         DrawCommand::BeginDrawing();
         // Calculate Matrix
         LEMath::FloatMatrix4x4 modelTransformMatrix = Transform * getTransformMatrix();
