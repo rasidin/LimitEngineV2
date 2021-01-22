@@ -263,6 +263,7 @@ namespace LimitEngine {
             if (FAILED(hr)) {
                 LEASSERT(0);
             }
+            LEASSERT(mHeap != nullptr);
 
             D3D12_HEAP_PROPERTIES heapProps = {};
             heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;

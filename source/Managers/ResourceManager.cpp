@@ -192,8 +192,7 @@ namespace LimitEngine {
         size_t size = 0;
         if (void *data = mLoader->GetResource(convertedPath, &size)) {
             ResourceSourceFactory **sourceFactory = mSourceFactories.Find(fileFormat);
-            if (*sourceFactory)
-            if (IReferenceCountedObject *createdData = Factory->Create(*sourceFactory, ResourceFactory::FileData(Filename, data, size))) {
+            if (IReferenceCountedObject *createdData = Factory->Create(sourceFactory?(*sourceFactory):nullptr, ResourceFactory::FileData(Filename, data, size))) {
                 RESOURCE *newRes = new RESOURCE(Filename, Factory, size, createdData);
                 if (NeedRegister)
                     mResources.Add(newRes);

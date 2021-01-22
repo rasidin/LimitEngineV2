@@ -4,3 +4,6 @@
 
 /build
 /tools/DataConverter/build
+/.vs
+/.vscode
+/generated/Shaders

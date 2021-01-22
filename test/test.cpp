@@ -39,6 +39,12 @@ public:
     }
 
     void SetupScene() {
+        mBackgroundImage = Engine->LoadTexture("textures/MyCarlots.Background.lea", LimitEngine::ArchiveFactory::ID, false);
+
+        if (mBackgroundImage.IsValid()) {
+            mBackgroundImage->InitResource();
+            Engine->SetBackgroundImage(mBackgroundImage, LimitEngine::BackgroundImageType::Fullscreen);
+        }
 #if 0 // Temporaily
 #if 0 // 19F test
         const float CameraHeight = 1.2f;
@@ -58,13 +64,10 @@ public:
         {
             LimitEngine::LightIBL *DefaultIBL = new LimitEngine::LightIBL();
 
-            //if (LimitEngine::Texture *IBLReflectionTexture = Engine->LoadTexture("textures/Alexs_Apt_2k.tga", LimitEngine::TextureFactory::ID, false)) {
-            //if (LimitEngine::Texture *IBLReflectionTexture = Engine->LoadTexture("textures/19F_Reflection_2K.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
             if (LimitEngine::Texture *IBLReflectionTexture = Engine->LoadTexture("textures/19F_Reflection_2K.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
                 IBLReflectionTexture->InitResource();
                 DefaultIBL->SetIBLReflectionTexture(IBLReflectionTexture);
             }
-            //if (LimitEngine::Texture *IBLIrradianceTexture = Engine->LoadTexture("textures/19F_Irradiance.texture.lea", LimitEngine::ArchiveFactory::ID, false)) {
             if (LimitEngine::Texture *IBLIrradianceTexture = Engine->LoadTexture("textures/MyCarlots.Irradiance.lea", LimitEngine::ArchiveFactory::ID, false)) {
                 IBLIrradianceTexture->InitResource();
                 DefaultIBL->SetIBLIrradianceTexture(IBLIrradianceTexture);
@@ -548,7 +551,7 @@ int main()
 	LimitEngine::MemoryAllocator::Init();
 	LimitEngine::MemoryAllocator::InitWithMemoryPool(TotalMemory);
     LimitEngine::LimitEngine *Engine = new LimitEngine::LimitEngine();
-    Engine->SetResourceRootPath("../../resources");
+    Engine->SetResourceRootPath("../../../../resources");
 
     LimitEngine::InitializeOptions engineOptions(
         LEMath::IntSize(1920, 1080),

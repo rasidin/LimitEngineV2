@@ -243,8 +243,10 @@ public:
         }
         mSize = 0;
         if (FreeReservedData) {
-            free(mData);
-            mData = nullptr;
+            if (mData) {
+                free(mData);
+                mData = nullptr;
+            }
             mReserved = 0;
         }
     }
