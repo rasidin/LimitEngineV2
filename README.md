@@ -1,7 +1,7 @@
 # LimitEngineV2
 Realtime rendering engine for next-generation.
 
-Work in progress
+Work in progress (Test debug build only)
 
 ## What is goal
 Cinematic physically based rendering using raytracing or forward rendering or cpu pathtracing.
