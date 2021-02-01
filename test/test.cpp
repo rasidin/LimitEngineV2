@@ -39,7 +39,7 @@ public:
     }
 
     void SetupScene() {
-        mBackgroundImage = Engine->LoadTexture("textures/MyCarlots.Background.lea", LimitEngine::ArchiveFactory::ID, false);
+        mBackgroundImage = Engine->LoadTexture("textures/MyCarlots.Background.2K.lea", LimitEngine::ArchiveFactory::ID, false);
 
         if (mBackgroundImage.IsValid()) {
             mBackgroundImage->InitResource();

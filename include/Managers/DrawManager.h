@@ -53,10 +53,14 @@ public:
     virtual void Init(WINDOW_HANDLE handle, const InitializeOptions &Options) = 0;
     virtual void ResizeScreen(const LEMath::IntSize &size) = 0;
     virtual void ProcessBeforeFlushingCommands() = 0;
-    virtual void Finish(CommandBuffer* commandBuffer) = 0;
+    virtual void Finalize(CommandBuffer* commandBuffer) = 0;
     virtual void Present() = 0;
     virtual void Term() = 0;
     
+    virtual void* AllocateGPUBuffer(size_t size) = 0;
+    virtual void* GetImmediateCommandList() = 0;
+    virtual uint64 ExecuteImmediateCommandList(void* cmdlist, bool waitcompletion) = 0;
+
     virtual void* GetDeviceHandle() const = 0;
     virtual void* GetDeviceContext() const = 0;
     virtual uint32 GetCurrentFrameBufferIndex() const = 0;
@@ -65,6 +69,9 @@ public:
     virtual void* GetCurrentFrameBufferView() const = 0;
     virtual const ResourceState GetCurrentFrameBufferResourceState() const = 0;
     virtual void SetCurrentFrameBufferResourceState(ResourceState state) = 0;
+
+    // Platform depdendency (D3D12)
+    virtual void* AllocateDescriptor(uint32 type) = 0;
 };
 
 class RendererTask : public Object<LimitEngineMemoryCategory::Graphics>
@@ -237,6 +244,12 @@ public:
     void* GetDeviceContext() const { return mImpl ? mImpl->GetDeviceContext() : nullptr; }
     CommandBuffer* GetCommandBuffer() const { return mCommandBuffer; }
 
+    void* GetImmediateCommandList() { return mImpl ? mImpl->GetImmediateCommandList() : nullptr; }
+    uint64 ExecuteImmediateCommandList(void* cmdlist, bool waitcompletion) { return mImpl ? mImpl->ExecuteImmediateCommandList(cmdlist, waitcompletion) : nullptr; }
+
+    void* AllocateGPUBuffer(size_t size) { return mImpl ? mImpl->AllocateGPUBuffer(size) : nullptr; }
+    void* AllocateDescriptor(uint32 type) { return mImpl ? mImpl->AllocateDescriptor(type) : nullptr; }
+
     uint32 GetCurrentFrameBufferIndex() const { return mImpl ? mImpl->GetCurrentFrameBufferIndex() : 0u; }
     RendererFlag::BufferFormat GetCurrentFrameBufferFormat() const { return mImpl ? mImpl->GetCurrentFrameBufferFormat() : RendererFlag::BufferFormat::Unknown; }
     void* GetCurrentFrameBuffer() const { return mImpl ? mImpl->GetCurrentFrameBuffer() : nullptr; }
@@ -245,7 +258,7 @@ public:
     void SetCurrentFrameBufferResourceState(const ResourceState& state) { if (mImpl) mImpl->SetCurrentFrameBufferResourceState(state); }
 
     // FinishDrawing (executed by drawcommand)
-    void Finish(CommandBuffer* cmd) { if (mImpl) mImpl->Finish(cmd); }
+    void Finalize(CommandBuffer* cmd) { if (mImpl) mImpl->Finalize(cmd); }
 
     // Present (executed by drawcommand)
     void Present() { if (mImpl) mImpl->Present(); }

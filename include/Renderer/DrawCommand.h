@@ -63,7 +63,6 @@ class DrawCommand
     static void UpdateConstantBuffer(ConstantBuffer* buffer, void* data, size_t size);
     static void SetPipelineState(PipelineState *pso);
     static void SetConstantBuffer(uint32 index, ConstantBuffer* buffer);
-    static void CopyBuffer(void *Dst, uint32 DstOffset, void *Org, uint32 OrgOffset, uint32 Size);
     static void ResourceBarrier(class TextureInterface *InTexture, const ResourceState& InResourceState);
     static void ResourceBarrier(class VertexBufferGeneric* InVertexBuffer, const ResourceState& InResourceState);
     static void ResourceBarrier(class IndexBuffer *InIndexBuffer, const ResourceState &InResourceState);

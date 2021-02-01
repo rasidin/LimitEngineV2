@@ -43,6 +43,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "Managers/RenderTargetPoolManager.h"
 #include "Renderer/Font.h"
 #include "Renderer/SamplerState.h"
+#include "Renderer/PipelineState.h"
 
 namespace LimitEngine {
 // =============================================================

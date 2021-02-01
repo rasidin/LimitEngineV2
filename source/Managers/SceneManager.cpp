@@ -1,11 +1,30 @@
-/***********************************************************
- LIMITEngine Header File
- Copyright (C), LIMITGAME, 2020
- -----------------------------------------------------------
+/*********************************************************************
+Copyright (c) 2020 LIMITGAME
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify,
+merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+----------------------------------------------------------------------
  @file  SceneManager.cpp
  @brief SceneManager Class
  @author minseob (leeminseob@outlook.com)
- ***********************************************************/
+ *********************************************************************/
 #include "Managers/SceneManager.h"
 
 #include <LEFloatVector4.h>
@@ -26,6 +45,11 @@
 #include "Renderer/Light.h"
 #include "Renderer/LightIBL.h"
 #include "Renderer/Texture.h"
+#include "Renderer/PipelineState.h"
+#include "Renderer/SamplerState.h"
+
+#include "Shaders/Draw2D.ps.h"
+#include "Shaders/DrawFullscreen.ps.h"
 
 namespace LimitEngine {
 class SceneUpdateTask_AddModel : public SceneManager::SceneUpdateTask
@@ -110,33 +134,49 @@ void SceneManager::Init(const InitializeOptions &InitOptions)
 {
     RendererFlag::BufferFormat SceneColorFormat = (InitOptions.SceneColorSpace == InitializeOptions::ColorSpace::Linear) ? RendererFlag::BufferFormat::R16G16B16A16_Float : RendererFlag::BufferFormat::R8G8B8A8_UNorm;
     RendererFlag::BufferFormat SceneNormalFormat = RendererFlag::BufferFormat::R16G16B16A16_Float;
-    mSceneColor = LE_RenderTargetPoolManager.GetRenderTarget(InitOptions.Resolution, 1, SceneColorFormat);
-    mSceneNormal = LE_RenderTargetPoolManager.GetRenderTarget(InitOptions.Resolution, 1, SceneNormalFormat);
-    mSceneDepth = LE_RenderTargetPoolManager.GetDepthStencil(InitOptions.Resolution, RendererFlag::BufferFormat::D32_Float);
+    mSceneColor = LE_RenderTargetPoolManager.GetRenderTarget(InitOptions.Resolution, 1, SceneColorFormat, "SceneColor");
+    mSceneNormal = LE_RenderTargetPoolManager.GetRenderTarget(InitOptions.Resolution, 1, SceneNormalFormat, "SceneNormal");
+    mSceneDepth = LE_RenderTargetPoolManager.GetDepthStencil(InitOptions.Resolution, RendererFlag::BufferFormat::D32_Float, "SceneDepth");
 }
 
 void SceneManager::PostInit(const InitializeOptions &InitOptions)
 {
-/*
     mBackgroundShaders.Resize(static_cast<uint32>(BackgroundImageType::Num));
-    mBackgroundShaders[static_cast<uint32>(BackgroundImageType::Fullscreen)] = LE_ShaderManager.GetShader("DrawFullscreen");
-    mBackgroundShaders[static_cast<uint32>(BackgroundImageType::Longlat)] = LE_ShaderManager.GetShader("Draw2D");
+    mBackgroundShaders[static_cast<uint32>(BackgroundImageType::Fullscreen)] = LE_ShaderManager.GetShader<DrawFullscreen_PS>();
+    mBackgroundShaders[static_cast<uint32>(BackgroundImageType::Longlat)] = LE_ShaderManager.GetShader<Draw2D_PS>();
     
-    mBackgroundConstantBuffers.Resize(static_cast<uint32>(BackgroundImageType::Num));
-    for (uint32 cbIndex = 0, cbCount = static_cast<uint32>(BackgroundImageType::Num); cbIndex < cbCount; cbIndex++) {
-        if (mBackgroundShaders[cbIndex].IsValid()) {
-            mBackgroundConstantBuffers[cbIndex] = new ConstantBuffer();
-            mBackgroundConstantBuffers[cbIndex]->Create(mBackgroundShaders[cbIndex].Get());
-        }
+    mBackgroundPipelineStates.Resize(static_cast<uint32>(BackgroundImageType::Num));
+    for (uint32 bpsidx = 0; bpsidx < static_cast<uint32>(BackgroundImageType::Num); bpsidx++) {
+        mBackgroundPipelineStates[bpsidx] = new PipelineState();
+        
+        PipelineStateDescriptor psdesc;
+        psdesc.SetRenderTargetBlendEnabled(0, false);
+        psdesc.SetRenderTargetFormat(0, mSceneColor.Get());
+        psdesc.SetDepthEnabled(false);
+        psdesc.SetDepthFunc(RendererFlag::TestFlags::Always);
+        psdesc.SetStencilEnabled(false);
+        psdesc.Shaders[static_cast<int>(Shader::Type::Pixel)] = mBackgroundShaders[bpsidx];
+
+        LE_Draw2DManager.BuildPipelineState(psdesc);
+        psdesc.Finalize();
+
+        mBackgroundPipelineStates[bpsidx]->Init(psdesc);
     }
 
-    mBackgroundColorCovertParameterIndex = mBackgroundShaders[static_cast<uint32>(BackgroundImageType::Fullscreen)]->GetUniformLocation("ColorConvertParameters");
+    //mBackgroundConstantBuffers.Resize(static_cast<uint32>(BackgroundImageType::Num));
+    //for (uint32 cbIndex = 0, cbCount = static_cast<uint32>(BackgroundImageType::Num); cbIndex < cbCount; cbIndex++) {
+    //    if (mBackgroundShaders[cbIndex].IsValid()) {
+    //        mBackgroundConstantBuffers[cbIndex] = new ConstantBuffer();
+    //        mBackgroundConstantBuffers[cbIndex]->Create(mBackgroundShaders[cbIndex].Get());
+    //    }
+    //}
 
-    PostProcessAmbientOcclusion *CapturedAmbientOcclusion = mAmbientOcclusion;
-    LE_DrawManager.AddRendererTaskLambda([CapturedAmbientOcclusion, InitOptions]() {
-        CapturedAmbientOcclusion->Init(InitOptions);
-    });
-*/
+    //mBackgroundColorCovertParameterIndex = mBackgroundShaders[static_cast<uint32>(BackgroundImageType::Fullscreen)]->GetUniformLocation("ColorConvertParameters");
+
+    //PostProcessAmbientOcclusion *CapturedAmbientOcclusion = mAmbientOcclusion;
+    //LE_DrawManager.AddRendererTaskLambda([CapturedAmbientOcclusion, InitOptions]() {
+    //    CapturedAmbientOcclusion->Init(InitOptions);
+    //});
 }
 
 void SceneManager::SetBackgroundImage(const TextureRefPtr &BackgroundImage, BackgroundImageType Type)
@@ -213,7 +253,7 @@ void SceneManager::Update()
     updateSceneTasks();
 
     // Get new render target
-    mSceneColor = LE_RenderTargetPoolManager.GetRenderTarget(mSceneColor.GetDesc());
+    mSceneColor = LE_RenderTargetPoolManager.GetRenderTarget(mSceneColor.GetDesc(), "SceneColor");
 
     mCamera->Update();
 
@@ -240,8 +280,6 @@ void SceneManager::drawBackground()
 {
     DrawCommand::BeginEvent("DrawBackground");
     DrawCommand::SetRenderTarget(0, mSceneColor.Get(), mSceneDepth.Get());
-    //DrawCommand::SetEnable((uint32)RendererFlag::EnabledFlags::DEPTH_WRITE);
-    //DrawCommand::SetDepthFunc(RendererFlag::TestFlags::Always);
 
     switch (mBackgroundType) {
     case BackgroundImageType::None:
@@ -249,61 +287,49 @@ void SceneManager::drawBackground()
         break;
     case BackgroundImageType::Fullscreen: 
     case BackgroundImageType::Longlat:
-/*    {
-        Shader *shader = mBackgroundShaders[(uint32)mBackgroundType].Get();
-        ConstantBuffer *cb = mBackgroundConstantBuffers[(uint32)mBackgroundType].Get();
+    {
+        DrawCommand::SetViewport(LEMath::IntRect(0, 0, mSceneColor.GetDesc().Size.X(), mSceneColor.GetDesc().Size.Y()));
+        DrawCommand::SetScissorRect(LEMath::IntRect(0, 0, mSceneColor.GetDesc().Size.X(), mSceneColor.GetDesc().Size.Y()));
+        DrawCommand::SetPipelineState(mBackgroundPipelineStates[static_cast<uint32>(mBackgroundType)].Get());
+        //DrawCommand::SetConstantBuffer(0, mConstantBuffer.Get());
 
-        LEMath::IntSize ScreenSize = LE_DrawManager.GetRealScreenSize();
-        LEMath::IntSize ImageSize = mBackgroundImage->GetSize();
+        //ConstantBuffer *cb = mBackgroundConstantBuffers[(uint32)mBackgroundType].Get();
 
-        LEMath::FloatPoint ImageUVOffset;
-        LEMath::IntSize AdjustImageSize;
-        if (ScreenSize.Height() * ImageSize.Width() / ScreenSize.Width() <= ImageSize.Height()) {
-            AdjustImageSize.SetY(ScreenSize.Height() * ImageSize.Width() / ScreenSize.Width());
-            AdjustImageSize.SetX(AdjustImageSize.Height() * ScreenSize.Width() / ScreenSize.Height());
-            ImageUVOffset = LEMath::FloatPoint(0.0f, (float)(AdjustImageSize.Y() - ScreenSize.Y()) * 0.5f / ScreenSize.Y());
+        //LEMath::IntSize ScreenSize = LE_DrawManager.GetRealScreenSize();
+        //LEMath::IntSize ImageSize = mBackgroundImage->GetSize();
+
+        //LEMath::FloatPoint ImageUVOffset;
+        //LEMath::IntSize AdjustImageSize;
+        //if (ScreenSize.Height() * ImageSize.Width() / ScreenSize.Width() <= ImageSize.Height()) {
+        //    AdjustImageSize.SetY(ScreenSize.Height() * ImageSize.Width() / ScreenSize.Width());
+        //    AdjustImageSize.SetX(AdjustImageSize.Height() * ScreenSize.Width() / ScreenSize.Height());
+        //    ImageUVOffset = LEMath::FloatPoint(0.0f, (float)(AdjustImageSize.Y() - ScreenSize.Y()) * 0.5f / ScreenSize.Y());
+        //}
+        //else {
+        //    AdjustImageSize.SetX(ScreenSize.Width() * ImageSize.Height() / ScreenSize.Height());
+        //    AdjustImageSize.SetY(AdjustImageSize.Width() * ScreenSize.Height() / ScreenSize.Width());
+        //    ImageUVOffset = LEMath::FloatPoint((float)(ImageSize.X() - AdjustImageSize.X()) * 0.5f / ImageSize.X(), 0.0f);
+        //}
+
+        if (mBackgroundImage.IsValid()) {
+            DrawCommand::BindSampler(0, SamplerState::Get(SamplerStateDesc()));
+            DrawCommand::BindTexture(0, mBackgroundImage.Get());
         }
-        else {
-            AdjustImageSize.SetX(ScreenSize.Width() * ImageSize.Height() / ScreenSize.Height());
-            AdjustImageSize.SetY(AdjustImageSize.Width() * ScreenSize.Height() / ScreenSize.Width());
-            ImageUVOffset = LEMath::FloatPoint((float)(ImageSize.X() - AdjustImageSize.X()) * 0.5f / ImageSize.X(), 0.0f);
-        }
+        //DrawCommand::SetBlendFunc(0, RendererFlag::BlendFlags::SOURCE);
+        //DrawCommand::SetDepthFunc(RendererFlag::TestFlags::ALWAYS);
 
-        if (mBackgroundImage.IsValid()) DrawCommand::BindTexture(0, mBackgroundImage.Get());
-        DrawCommand::SetBlendFunc(0, RendererFlag::BlendFlags::SOURCE);
-        DrawCommand::SetDepthFunc(RendererFlag::TestFlags::ALWAYS);
+        //if (mBackgroundType == BackgroundImageType::Fullscreen && shader) {
+        //    if (mBackgroundColorCovertParameterIndex < 0) {
+        //        mBackgroundColorCovertParameterIndex = shader->GetUniformLocation("ColorConvertParameters");
+        //        cb->Create(shader);
+        //    }
+        //    if (mBackgroundColorCovertParameterIndex >= 0) {
+        //        DrawCommand::SetShaderUniformFloat4(shader, cb, mBackgroundColorCovertParameterIndex, mBackgroundColorCovertParameter);
+        //    }
+        //}
 
-        if (mBackgroundType == BackgroundImageType::Fullscreen && shader) {
-            if (mBackgroundColorCovertParameterIndex < 0) {
-                mBackgroundColorCovertParameterIndex = shader->GetUniformLocation("ColorConvertParameters");
-                cb->Create(shader);
-            }
-            if (mBackgroundColorCovertParameterIndex >= 0) {
-                DrawCommand::SetShaderUniformFloat4(shader, cb, mBackgroundColorCovertParameterIndex, mBackgroundColorCovertParameter);
-            }
-        }
-
-        Vertex2D *buffer = LE_Draw2DManager.GetVertexBuffer2D(6);
-        buffer[0].SetPosition(LEMath::FloatVector3(-ImageUVOffset.X(), -ImageUVOffset.Y(), 1.0f));
-        buffer[0].SetColor(0xffffffff);
-        buffer[0].SetTexcoord(LEMath::FloatVector2(0.0f, 0.0f));
-        buffer[1].SetPosition(LEMath::FloatVector3(-ImageUVOffset.X(), 1.0f + ImageUVOffset.Y(), 1.0f));
-        buffer[1].SetColor(0xffffffff);
-        buffer[1].SetTexcoord(LEMath::FloatVector2(0.0f, 1.0f));
-        buffer[2].SetPosition(LEMath::FloatVector3(1.0f + ImageUVOffset.X(), -ImageUVOffset.Y(), 1.0f));
-        buffer[2].SetColor(0xffffffff);
-        buffer[2].SetTexcoord(LEMath::FloatVector2(1.0f, 0.0f));
-        buffer[3].SetPosition(LEMath::FloatVector3(-ImageUVOffset.X(), 1.0f + ImageUVOffset.Y(), 1.0f));
-        buffer[3].SetColor(0xffffffff);
-        buffer[3].SetTexcoord(LEMath::FloatVector2(0.0f, 1.0f));
-        buffer[4].SetPosition(LEMath::FloatVector3(1.0f + ImageUVOffset.X(), 1.0f + ImageUVOffset.Y(), 1.0f));
-        buffer[4].SetColor(0xffffffff);
-        buffer[4].SetTexcoord(LEMath::FloatVector2(1.0f, 1.0f));
-        buffer[5].SetPosition(LEMath::FloatVector3(1.0f + ImageUVOffset.X(), -ImageUVOffset.Y(), 1.0f));
-        buffer[5].SetColor(0xffffffff);
-        buffer[5].SetTexcoord(LEMath::FloatVector2(1.0f, 0.0f));
-        LE_Draw2DManager.FlushDraw2D(RendererFlag::PrimitiveTypes::TRIANGLELIST, shader, cb);
-    }*/   break;
+        LE_Draw2DManager.DrawScreen();
+    }   break;
     }
     DrawCommand::EndEvent();
 }
@@ -400,7 +426,7 @@ void SceneManager::Draw()
         }
     }
     LEASSERT(PendingDeleteRenderTargetSlot != 0xffff);
-/*
+
     DrawCommand::BeginEvent("Scene");
     DrawCommand::BeginScene();
     DrawCommand::ResourceBarrier(mSceneNormal.Get(), ResourceState::RenderTarget);
@@ -420,7 +446,6 @@ void SceneManager::Draw()
     DrawCommand::ResourceBarrier(mSceneDepth.Get(), ResourceState::DepthRead);
     DrawCommand::SetRenderTarget(0, static_cast<TextureInterface*>(LE_DrawManager.GetFrameBufferTexture().Get()), nullptr);
     DrawCommand::EndEvent();
-*/
 }
 
 void SceneManager::DrawDebugUI(Font *SystemFont)

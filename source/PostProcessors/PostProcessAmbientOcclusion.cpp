@@ -28,6 +28,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "PostProcessors/PostProcessAmbientOcclusion.h"
 
 #include "Renderer/DrawCommand.h"
+#include "Renderer/PipelineState.h"
 #include "Renderer/SamplerState.h"
 #include "Managers/Draw2DManager.h"
 #include "Managers/SceneManager.h"

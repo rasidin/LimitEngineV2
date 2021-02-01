@@ -26,6 +26,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 @author minseob (leeminseob@outlook.com)
 **********************************************************************/
 #include "Renderer/ConstantBuffer.h"
+#include "Managers/DrawManager.h"
 
 #if defined(USE_DX12)
 #include "../Platform/DirectX12/ConstantBufferImpl_DirectX12.inl"
@@ -34,8 +35,27 @@ OTHER DEALINGS IN THE SOFTWARE.
 #endif
 
 namespace LimitEngine {
+class RendererTask_CreateConstantBuffer : public RendererTask
+{
+public:
+    RendererTask_CreateConstantBuffer(ConstantBufferImpl* owner, size_t size, void* initdata)
+        : mOwner(owner)
+        , mSize(size)
+        , mInitData(initdata)
+    {}
+    void Run() override
+    {
+        if (mOwner)
+            mOwner->Create(mSize, mInitData);
+    }
+private:
+    ConstantBufferImpl* mOwner;
+    size_t mSize;
+    void* mInitData;
+};
 ConstantBuffer::ConstantBuffer()
     : mImpl(nullptr)
+    , mSize(0u)
 {
 #if defined(USE_DX12)
     mImpl = new ConstantBufferImpl_DirectX12();
@@ -45,15 +65,15 @@ ConstantBuffer::ConstantBuffer()
 }
 ConstantBuffer::~ConstantBuffer()
 {
+    if (mImpl) {
+        delete mImpl;
+        mImpl = nullptr;
+    }
 }
-//void ConstantBuffer::Create(Shader* InShader)
-//{
-//    if (mImpl)
-//        mImpl->Create(InShader);
-//}
-void ConstantBuffer::PrepareForDrawing()
+void ConstantBuffer::Create(size_t size, void* initdata)
 {
-    if (mImpl)
-        mImpl->PrepareForDrawing();
+    mSize = size;
+    AutoPointer<RendererTask> rt_createconstantbuffer = new RendererTask_CreateConstantBuffer(mImpl, size, initdata);
+    LE_DrawManager.AddRendererTask(rt_createconstantbuffer);
 }
 } // namespace LimitEngine

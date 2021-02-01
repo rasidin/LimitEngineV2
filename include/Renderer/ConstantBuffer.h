@@ -40,9 +40,10 @@ public:
     ConstantBufferImpl() {}
     virtual ~ConstantBufferImpl() {}
 
-    virtual void PrepareForDrawing() = 0;
+    virtual void Create(size_t size, void* initdata) = 0;
 
-    //virtual void Set(uint32 ShaderType, uint32 BufferIndex, uint32 Offset, const void *Data, size_t Size) = 0;
+    virtual void* GetResource() const = 0;
+    virtual void* GetConstantBufferView() const = 0;
 };
 class ConstantBuffer : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>
 {
@@ -50,11 +51,24 @@ public:
     ConstantBuffer();
     virtual ~ConstantBuffer();
 
-    inline ConstantBufferImpl* GetImplementation() { return mImpl; }
+    void Create(size_t size, void* initdata);
 
-    void PrepareForDrawing();
 private:
-    ConstantBufferImpl *mImpl;
+    ConstantBufferImpl *mImpl = nullptr;
+    size_t mSize = 0u;
+
+    friend class ConstantBufferRendererAccessor;
+};
+class ConstantBufferRendererAccessor
+{
+public:
+    ConstantBufferRendererAccessor(ConstantBuffer* cb)
+        : mImpl(cb->mImpl)
+    {}
+    void* GetResource() const { return mImpl ? mImpl->GetResource() : nullptr; }
+    void* GetConstantBufferView() const { return mImpl ? mImpl->GetConstantBufferView() : nullptr; }
+private:
+    ConstantBufferImpl* mImpl = nullptr;
 };
 }
 

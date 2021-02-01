@@ -39,7 +39,7 @@ public:
 
     virtual void* GetCommandListHandle() = 0;
     virtual void ReadyToExecute() = 0;
-    virtual void Finish() = 0;
+    virtual void Finalize(uint64 CompletedFenceValue) = 0;
     virtual void ProcessAfterPresent() = 0;
 
     virtual void BeginScene() = 0;
@@ -48,10 +48,11 @@ public:
     virtual void SetScissorRect(const LEMath::IntRect& rect) = 0;
     virtual bool PrepareForDrawing() = 0;
     virtual bool PrepareForDrawingModel() = 0;
+    virtual void ClearCaches() = 0;
     virtual void ClearScreen(const LEMath::FloatColorRGBA &Color) = 0;
     virtual void BindVertexBuffer(VertexBufferGeneric *vb) = 0;
     virtual void BindIndexBuffer(IndexBuffer *ib) = 0;
-    virtual void SetConstantBuffer(ConstantBuffer *cb) = 0;
+    virtual void SetConstantBuffer(uint32 index, ConstantBuffer *cb) = 0;
     virtual void SetPipelineState(PipelineState *pso) = 0;
     virtual void UpdateConstantBuffer(ConstantBuffer *cb, void *data, size_t size) = 0;
     virtual void BindTargetTexture(uint32 Index, Texture *Tex) = 0;
@@ -66,15 +67,13 @@ public:
     virtual void SetMarker(const char *InMarkerName) = 0;
     virtual void BeginEvent(const char *InEventName) = 0;
     virtual void EndEvent() = 0;
-    virtual void* AllocateGPUBuffer(size_t size) = 0;
-    virtual void UploadToGPUBuffer(void* gpubuffer, void* data, size_t size) = 0;
 };
 class CommandBuffer : public Object<LimitEngineMemoryCategory::Graphics>
 {
     friend DrawManager;
     friend DrawCommand;
 private:            // Private Definitions
-    static const uint32 CommandReservedMemorySize = 1 * (1 << 20); // 10MB
+    static const uint32 CommandReservedMemorySize = 1 * (1 << 20); // 1MB
 
 private:            // Private Structure
                     // Render command list
@@ -104,7 +103,6 @@ private:            // Private Structure
             cUpdateConstantBuffer,
             cSetConstantBuffer,
             cSetRenderTarget,
-            cCopyBuffer,
             cResourceBarrier,
             cSetMarker,
             cBeginEvent,
@@ -124,7 +122,7 @@ private:            // Private Structure
     // Empty command
     typedef struct _COMMAND : public _COMMAND_COMMON
     {
-        char                data[60];        //!<Data of command                    [ 60 ]
+        char                data[44];        //!<Data of command                    [ 44 ]
     } COMMAND;    // [ 64 | 64 ]
     // Begin scene
     typedef struct _COMMAND_BEGINSCENE : public _COMMAND_COMMON
@@ -333,30 +331,16 @@ private:            // Private Structure
             , color(c)
             , depthstencil(d)
         {
-            if (c) c->AddReferenceCounter();
-            if (d) d->AddReferenceCounter();
+            if (color)
+                color->AddReferenceCounter();
+            if (depthstencil)
+                depthstencil->AddReferenceCounter();
         }
         uint32                  index;
         uint32                  surfaceIndex;
-        TextureRendererAccessor  color;
-        TextureRendererAccessor  depthstencil;
+        TextureInterface       *color;
+        TextureInterface       *depthstencil;
     } COMMAND_SETRENDERTARGET;
-    typedef struct _COMMAND_COPYBUFFER : public _COMMAND_COMMON
-    {
-        _COMMAND_COPYBUFFER(void* Dst, uint32 DstOffset, void* Org, uint32 OrgOffset, uint32 Size)
-            : _COMMAND_COMMON(cCopyBuffer)
-            , dst(Dst)
-            , dstoffset(DstOffset)
-            , org(Org)
-            , orgoffset(OrgOffset)
-            , size(Size)
-        {}
-        void                *dst;
-        void                *org;
-        uint32               dstoffset;
-        uint32               orgoffset;
-        uint32               size;
-    } COMMAND_COPYBUFFER;
     typedef struct _COMMAND_RESOURCEBARRIER : public _COMMAND_COMMON
     {
         _COMMAND_RESOURCEBARRIER(TextureInterface* InTexture, const ResourceState& InState)
@@ -433,8 +417,9 @@ public:
     void ReleaseRendererResources();
 
     void* GetCommandListHandle() const { return mImpl->GetCommandListHandle(); }
+    
     void ReadyToExecute() const { mImpl->ReadyToExecute(); }
-    void Finish() const { mImpl->Finish(); }
+    void Finalize(uint64 CompletedFenceIndex) const { mImpl->Finalize(CompletedFenceIndex); }
     void ProcessAfterPresent() const { mImpl->ProcessAfterPresent(); }
 
     uint32 CalculateCommandOffset(COMMAND *cmd);

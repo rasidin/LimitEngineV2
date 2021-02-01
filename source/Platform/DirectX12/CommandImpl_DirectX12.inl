@@ -29,28 +29,182 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 #include "PrivateDefinitions_DirectX12.h"
 
+#include "Containers/VectorArray.h"
+
 namespace LimitEngine {
     class CommandImpl_DirectX12 : public CommandImpl
     {
+        class DescriptorHeapPool {
+        public:
+            enum class PoolType {
+                SRVandUAVandCB = 0,
+                Sampler = 1,
+                Num
+            };
+            static constexpr uint32 PoolTypeCount = static_cast<uint32>(PoolType::Num);
+        private:
+            static constexpr uint32 DescriptorsCountPerHeap = 1024u;
+            struct DescriptorHeapSet {
+                uint64 Fence = 0u;
+                ID3D12DescriptorHeap* Heap = nullptr;
+            };
+        public:
+            ~DescriptorHeapPool() {
+                for (uint32 ptidx = 0; ptidx < PoolTypeCount; ptidx++) {
+                    for (auto *heappool : mUsedHeapPool[ptidx]) {
+                        heappool->Release();
+                    }
+                    mUsedHeapPool[ptidx].Clear();
+                    for (const DescriptorHeapSet& heappool : mFreeHeapPool[ptidx]) {
+                        heappool.Heap->Release();
+                    }
+                    mFreeHeapPool[ptidx].Clear();
+                }
+            }
+        public:
+            ID3D12DescriptorHeap* GetNewHeap(D3D12_DESCRIPTOR_HEAP_TYPE type) {
+                uint32 ptidx = type == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER ? static_cast<uint32>(PoolType::Sampler) : static_cast<uint32>(PoolType::SRVandUAVandCB);
+                ID3D12DescriptorHeap* currentheap = nullptr;
+                for (uint32 hpidx = 0; hpidx < mFreeHeapPool[ptidx].count(); hpidx++) {
+                    if (mFreeHeapPool[ptidx][hpidx].Fence < mCurrentFenceIndex) {
+                        currentheap = mFreeHeapPool[ptidx][hpidx].Heap;
+                        mFreeHeapPool[ptidx].Delete(hpidx);
+                        break;
+                    }
+                }
+                if (!currentheap) {
+                    D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+                    desc.Type = type;
+                    desc.NumDescriptors = DescriptorsCountPerHeap;
+                    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+                    desc.NodeMask = 1;
+                    if (FAILED(((ID3D12Device*)LE_DrawManagerRendererAccessor.GetDeviceHandle())->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&currentheap)))) {
+                        Debug::Error("[CommandImpl_Direct12] Failed to create descriptor heap");
+                        return nullptr;
+                    }
+                }
+                mUsedHeapPool[ptidx].Add(currentheap);
+                return currentheap;
+            }
+            void Finalize(uint64 fence) {
+                mCurrentFenceIndex = fence;
+                for (uint32 ptidx = 0; ptidx < PoolTypeCount; ptidx++) {
+                    for (ID3D12DescriptorHeap* heap : mUsedHeapPool[ptidx]) {
+                        mFreeHeapPool[ptidx].Add({ fence, heap });
+                    }
+                    mUsedHeapPool[ptidx].Clear();
+                }
+            }
+        private:
+            uint64 mCurrentFenceIndex = 0u;
+            VectorArray<ID3D12DescriptorHeap*> mUsedHeapPool[PoolTypeCount];
+            VectorArray<DescriptorHeapSet> mFreeHeapPool[PoolTypeCount];
+        } mDescriptorHeapPool;
         struct Cache
         {
-            static constexpr uint32 CachedSamplerMaxNum = 16;
+            static constexpr uint32 CachedConstantBufferMaxNum = 16u;
+            static constexpr uint32 CachedSamplerMaxNum = 16u;
+            static constexpr uint32 CachedTextureMaxNum = 16u;
 
-            Shader          *CurrentShader;
-            ConstantBuffer  *CurrentConstantBuffer;
-            SamplerState    *CurrentSamplers[CachedSamplerMaxNum];
-            Cache()
-                : CurrentShader(nullptr)
-                , CurrentConstantBuffer(nullptr)
+            Shader                      *CurrentShader;
+            ConstantBuffer              *GlobalConstantBuffer;
+            D3D12_CPU_DESCRIPTOR_HANDLE  CurrentConstantBuffers[CachedConstantBufferMaxNum];
+            D3D12_CPU_DESCRIPTOR_HANDLE  CurrentSamplers[CachedSamplerMaxNum];
+            D3D12_CPU_DESCRIPTOR_HANDLE  CurrentSRVs[CachedTextureMaxNum];
+            Cache() { Clear(); }
+            void Clear()
             {
+                CurrentShader = nullptr;
+                GlobalConstantBuffer = nullptr;
+                ::memset(CurrentConstantBuffers, 0, sizeof(CurrentConstantBuffers));
                 ::memset(CurrentSamplers, 0, sizeof(CurrentSamplers));
+                ::memset(CurrentSRVs, 0, sizeof(CurrentSRVs));
+            }
+            bool IsValid() const { return true; }
+            void Finalize(DescriptorHeapPool &HeapPool, ID3D12GraphicsCommandList *CommandList)
+            {
+                uint32 heapstobindnum = 0u;
+                ID3D12DescriptorHeap* heapstobind[DescriptorHeapPool::PoolTypeCount] = { nullptr, nullptr };
+                D3D12_CPU_DESCRIPTOR_HANDLE cpudescs[DescriptorHeapPool::PoolTypeCount] = { {nullptr}, {nullptr} };
+                D3D12_GPU_DESCRIPTOR_HANDLE gpudescs[DescriptorHeapPool::PoolTypeCount] = { {nullptr}, {nullptr} };
+
+                uint32 cbcount = 0u;
+                uint32 cbrangesizes[CachedConstantBufferMaxNum] = {};
+                for (uint32 cbidx = 0; cbidx < CachedConstantBufferMaxNum; cbidx++) {
+                    if (CurrentConstantBuffers[cbidx].ptr) {
+                        cbrangesizes[cbidx] = 1;
+                        cbcount++;
+                    }
+                }
+
+                uint32 samplercount = 0u;
+                uint32 samplerrangesizes[CachedSamplerMaxNum] = {};
+                for (uint32 ssidx = 0; ssidx < CachedSamplerMaxNum; ssidx++) {
+                    if (CurrentSamplers[ssidx].ptr) {
+                        samplerrangesizes[ssidx] = 1;
+                        samplercount++;
+                    }
+                }
+                uint32 srvcount = 0u;
+                uint32 srcrangesizes[CachedTextureMaxNum] = {};
+                for (uint32 srvidx = 0; srvidx < CachedTextureMaxNum; srvidx++) {
+                    if (CurrentSRVs[srvidx].ptr) {
+                        srcrangesizes[srvidx] = 1;
+                        srvcount++;
+                    }
+                }
+                const bool bHasGlobalCB = GlobalConstantBuffer != nullptr;
+                const bool bHasSamplers = samplercount > 0u;
+                const bool bHasSRVs = srvcount > 0u;
+                if (bHasSamplers) {
+                    heapstobind[heapstobindnum] = HeapPool.GetNewHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+                    cpudescs[heapstobindnum] = heapstobind[heapstobindnum]->GetCPUDescriptorHandleForHeapStart();
+                    gpudescs[heapstobindnum] = heapstobind[heapstobindnum]->GetGPUDescriptorHandleForHeapStart();
+                    ++heapstobindnum;
+                }
+                if (bHasSRVs) {
+                    heapstobind[heapstobindnum] = HeapPool.GetNewHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+                    cpudescs[heapstobindnum] = heapstobind[heapstobindnum]->GetCPUDescriptorHandleForHeapStart();
+                    gpudescs[heapstobindnum] = heapstobind[heapstobindnum]->GetGPUDescriptorHandleForHeapStart();
+                    ++heapstobindnum;
+                }
+                CommandList->SetDescriptorHeaps(heapstobindnum, heapstobind);
+
+                ID3D12Device* device = (ID3D12Device*)LE_DrawManagerRendererAccessor.GetDeviceHandle();
+                if (heapstobindnum > 0) {
+                    UINT paramindex = bHasGlobalCB ? 1 : 0;
+                    if (bHasSamplers) {
+                        CommandList->SetGraphicsRootDescriptorTable(paramindex++, gpudescs[0]);
+                        device->CopyDescriptors(
+                            1, &cpudescs[0], &samplercount,
+                            samplercount, CurrentSamplers, samplerrangesizes, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
+                        );
+                    }
+                    if (bHasSRVs) {
+                        int srvidx = bHasSamplers ? 1 : 0;
+                        CommandList->SetGraphicsRootDescriptorTable(paramindex++, gpudescs[srvidx]);
+                        device->CopyDescriptors(
+                            1, &cpudescs[srvidx], &srvcount,
+                            srvcount, CurrentSRVs, srcrangesizes, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
+                        );
+                    }
+                }
             }
         } mCache;
     public:
         CommandImpl_DirectX12()
             : CommandImpl()
         {}
-        virtual ~CommandImpl_DirectX12() {}
+        virtual ~CommandImpl_DirectX12() {
+            ID3D12GraphicsCommandList* mPooledD3DGraphicsCommandList[CommandListCount];
+            ID3D12CommandAllocator* mPooledD3DCommandAllocator[CommandListCount];
+            for (uint32 cmdidx = 0; cmdidx < CommandListCount; cmdidx++) {
+                if (mPooledD3DGraphicsCommandList[cmdidx])
+                    mPooledD3DGraphicsCommandList[cmdidx]->Release();
+                if (mPooledD3DCommandAllocator[cmdidx])
+                    mPooledD3DCommandAllocator[cmdidx]->Release();
+            }
+        }
 
         void Init(void* Parameter) override
         {
@@ -110,8 +264,9 @@ namespace LimitEngine {
         void ReadyToExecute() override
         {
         }
-        void Finish() override
+        void Finalize(uint64 CompletedFenceValue) override
         {
+            mDescriptorHeapPool.Finalize(CompletedFenceValue);
         }
         void ProcessAfterPresent() override
         {
@@ -146,14 +301,15 @@ namespace LimitEngine {
         }
         bool PrepareForDrawing() override
         {
-            if (!mCache.CurrentShader) return false;
+            if (!mCache.IsValid()) return false;
 
-            ShaderImpl *pShaderImpl = mCache.CurrentShader->GetImplementation();
-            
-            D3D12_ROOT_SIGNATURE_DESC RootSigDesc;
-
+            mCache.Finalize(mDescriptorHeapPool, mD3DGraphicsCommandList);
 
             return true;
+        }
+        void ClearCaches() override
+        {
+            mCache.Clear();
         }
         bool PrepareForDrawingModel() override { return true; }
         void ClearScreen(const LEMath::FloatColorRGBA& Color) override
@@ -202,8 +358,14 @@ namespace LimitEngine {
                 IndexBufferView.SizeInBytes = ibra.GetSize();
             }
         }
-        void SetConstantBuffer(ConstantBuffer *InConstantBuffer) override
+        void SetConstantBuffer(uint32 Index, ConstantBuffer *InConstantBuffer) override
         {
+            if (InConstantBuffer) {
+                mCache.GlobalConstantBuffer = InConstantBuffer;
+                if (ID3D12Resource* resource = static_cast<ID3D12Resource*>(ConstantBufferRendererAccessor(InConstantBuffer).GetResource())) {
+                    mD3DGraphicsCommandList->SetGraphicsRootConstantBufferView(0, resource->GetGPUVirtualAddress());
+                }
+            }
         }
         void SetPipelineState(PipelineState *pso) override
         {
@@ -237,11 +399,13 @@ namespace LimitEngine {
         }
         void BindSampler(uint32 Index, SamplerState *Sampler) override
         {
-            mCache.CurrentSamplers[Index] = Sampler;
+            mCache.CurrentSamplers[Index] = *((D3D12_CPU_DESCRIPTOR_HANDLE*)SamplerStateRendererAccessor(Sampler).GetHandle());
         }
         void BindTexture(uint32 Index, TextureInterface *InTexture) override
         {
             if (Index == 0xffffffff) return;
+
+            mCache.CurrentSRVs[Index] = *(D3D12_CPU_DESCRIPTOR_HANDLE*)TextureRendererAccessor(InTexture).GetShaderResourceView();
         }
         void Dispatch(int X, int Y, int Z) override
         {
@@ -330,45 +494,6 @@ namespace LimitEngine {
         {
             if (!mD3DGraphicsCommandList) return;
             //mD3DGraphicsCommandList->EndEvent();
-        }
-        void* AllocateGPUBuffer(size_t size) override
-        {
-            ID3D12Device* device = (ID3D12Device*)LE_DrawManagerRendererAccessor.GetDeviceHandle();
-            LEASSERT(device);
-
-            D3D12_RESOURCE_DESC desc = {};
-            desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-            desc.Width = size;
-            desc.Height = 1;
-            desc.DepthOrArraySize = 1;
-            desc.MipLevels = 1;
-            desc.SampleDesc.Count = 1;
-            desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-
-            D3D12_HEAP_PROPERTIES heap = {};
-            heap.Type = D3D12_HEAP_TYPE_UPLOAD;
-
-            ID3D12Resource* resource = nullptr;
-            if (SUCCEEDED(device->CreateCommittedResource(
-                &heap,
-                D3D12_HEAP_FLAG_NONE,
-                &desc,
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                IID_PPV_ARGS(&resource)))) {
-                return resource;
-            }
-            return nullptr;
-        }
-        void UploadToGPUBuffer(void* gpubuffer, void* data, size_t size) override
-        {
-            ID3D12Resource* resource = (ID3D12Resource*)gpubuffer;
-            D3D12_RANGE range = { 0, 0 };
-            void* mappedData = nullptr;
-            if (SUCCEEDED(resource->Map(0, &range, &mappedData))) {
-                ::memcpy(mappedData, data, size);
-                resource->Unmap(0, nullptr);
-            }
         }
     private:
         D3D12_RESOURCE_STATES GetResourceStateToD3D12(const ResourceState& State)

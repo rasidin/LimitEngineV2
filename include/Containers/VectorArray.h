@@ -174,6 +174,15 @@ public:
         }
     }
 
+    T PopFront()
+    {
+        if (mSize == 0)
+            return T();
+        T output = mData[0];
+        Delete(0);
+        return output;
+    }
+
     int32 IndexOf(const T &t)
     {
         for (int32 i = 0; i < static_cast<int32>(mSize); i++) {

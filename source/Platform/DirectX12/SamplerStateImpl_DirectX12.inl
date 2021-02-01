@@ -28,7 +28,53 @@ OTHER DEALINGS IN THE SOFTWARE.
 #ifndef LIMITENGINEV2_SAMPLERSTATEIMPL_DIRECTX12_INL_
 #define LIMITENGINEV2_SAMPLERSTATEIMPL_DIRECTX12_INL_
 
+#include <d3d12.h>
+
+#include "Managers/DrawManager.h"
+
+#include "PrivateDefinitions_DirectX12.h"
+
 namespace LimitEngine {
+D3D12_SAMPLER_DESC ConvertSamplerStateDescToD3D12SamplerDesc(const SamplerStateDesc &desc)
+{
+    D3D12_SAMPLER_DESC output;
+
+    static constexpr D3D12_FILTER SamplerStateFilterToD3D12Filter[] = {
+        D3D12_FILTER_MIN_MAG_MIP_POINT,                 // MIN_MAG_MIP_POINT
+        D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR,          // MIN_MAG_POINT_MIP_LINEAR
+        D3D12_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT,    // MIN_POINT_MAG_LINEAR_MIP_POINT
+        D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR,          // MIN_POINT_MAG_MIP_LINEAR
+        D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT,          // MIN_LINEAR_MAG_MIP_POINT
+        D3D12_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR,   // MIN_LINEAR_MAG_POINT_MIP_LINEAR
+        D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT,          // MIN_MAG_LINEAR_MIP_POINT
+        D3D12_FILTER_MIN_MAG_MIP_LINEAR,                // MIN_MAG_MIP_LINEAR
+        D3D12_FILTER_ANISOTROPIC                        // ANISOTROPIC
+    };
+
+    static constexpr D3D12_TEXTURE_ADDRESS_MODE SamplerStateAddressModeToD3D12TextureAddressMode[] = {
+        D3D12_TEXTURE_ADDRESS_MODE_WRAP,        // Wrap,
+        D3D12_TEXTURE_ADDRESS_MODE_MIRROR,      // Mirror,
+        D3D12_TEXTURE_ADDRESS_MODE_CLAMP,       // Clamp,
+        D3D12_TEXTURE_ADDRESS_MODE_BORDER,      // Border,
+        D3D12_TEXTURE_ADDRESS_MODE_MIRROR_ONCE  // Mirror_Once
+    };
+
+    output.Filter = SamplerStateFilterToD3D12Filter[static_cast<int>(desc.Filter)];
+    output.AddressU = SamplerStateAddressModeToD3D12TextureAddressMode[static_cast<int>(desc.AddressU)];
+    output.AddressV = SamplerStateAddressModeToD3D12TextureAddressMode[static_cast<int>(desc.AddressV)];
+    output.AddressW = SamplerStateAddressModeToD3D12TextureAddressMode[static_cast<int>(desc.AddressW)];
+    output.MipLODBias = desc.MipLODBias;
+    output.MaxAnisotropy = desc.MaxAnisotropy;
+    output.ComparisonFunc = TestFlagsToD3D12ComparisonFunc[static_cast<int>(desc.ComparisonFunc)];
+    output.BorderColor[0] = desc.BorderColor.X();
+    output.BorderColor[1] = desc.BorderColor.Y();
+    output.BorderColor[2] = desc.BorderColor.Z();
+    output.BorderColor[3] = desc.BorderColor.W();
+    output.MinLOD = desc.MinLOD;
+    output.MaxLOD = desc.MaxLOD;
+
+    return output;
+}
 class SamplerStateImpl_DirectX12 : public SamplerStateImpl
 {
 public:
@@ -37,9 +83,18 @@ public:
 
     void Create(const SamplerStateDesc& Desc)
     {
+        mHandle = {};
+        mHandle.ptr = reinterpret_cast<SIZE_T>(LE_DrawManagerRendererAccessor.AllocateDescriptor(static_cast<uint32>(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER)));
+        D3D12_SAMPLER_DESC d3dsamplerdesc = ConvertSamplerStateDescToD3D12SamplerDesc(Desc);
+        ((ID3D12Device*)LE_DrawManagerRendererAccessor.GetDeviceHandle())->CreateSampler(
+            &d3dsamplerdesc, mHandle
+        );
     }
 
-    void* GetHandle() { return nullptr; }
+    void* GetHandle() { return &mHandle; }
+
+private:
+    D3D12_CPU_DESCRIPTOR_HANDLE mHandle;
 };
 }
 

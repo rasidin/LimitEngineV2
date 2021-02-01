@@ -49,7 +49,7 @@ public:
 
 public:
     PostProcessResolveFinalColor() {}
-    virtual ~PostProcessResolveFinalColor() {}
+    virtual ~PostProcessResolveFinalColor();
 
     // Interface at PostProcessor
     virtual void Init(const InitializeOptions &Options) override;
@@ -57,6 +57,8 @@ public:
 
 private:
     ColorSpace mColorSpace;
+
+    void* mCPUConstantBuffer = nullptr;
 
     ShaderRefPtr mResolveShader;
     ConstantBufferRefPtr mConstantBuffer = nullptr;

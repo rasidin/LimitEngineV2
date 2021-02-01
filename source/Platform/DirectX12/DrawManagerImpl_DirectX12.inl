@@ -120,9 +120,17 @@ namespace LimitEngine {
             for (uint32 swapChainIndex = 0; swapChainIndex < SWAP_CHAIN_BUFFER_COUNT; swapChainIndex++) {
                 mDisplayBuffers[swapChainIndex] = nullptr;
             }
+            mImmediateCommandAllocator = nullptr;
+            mImmediateCommandQueueFence = nullptr;
+            mImmediateCommandQueueFenceValue = 1;
         }
         virtual ~DrawManagerImpl_DirectX12()
         {}
+
+        virtual void* AllocateDescriptor(uint32 type) override
+        {
+            return reinterpret_cast<void*>(mDescriptorAllocator[type].Allocate().ptr);
+        }
 
         void* MakeInitParameter() override 
         { 
@@ -193,6 +201,16 @@ namespace LimitEngine {
                 mCommandQueueFence[cqType]->Signal(cqType);
             }
 
+            // Create immediate command list
+
+            if (FAILED(mD3DDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mImmediateCommandAllocator)))) {
+                Debug::Error("Failed to create command allocator.");
+                return;
+            }
+
+            mD3DDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mImmediateCommandQueueFence));
+            mImmediateCommandQueueWaitEvent = CreateEvent(nullptr, false, false, nullptr);
+
             for (uint32 HeapArrayIndex = 0; HeapArrayIndex < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; HeapArrayIndex++) {
                 mDescriptorAllocator[HeapArrayIndex].Init(mD3DDevice);
             }
@@ -236,6 +254,55 @@ namespace LimitEngine {
             }
         }
 
+        void* AllocateGPUBuffer(size_t size) override
+        {
+            D3D12_RESOURCE_DESC desc = {};
+            desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+            desc.Alignment = 0;
+            desc.Width = size;
+            desc.Height = 1;
+            desc.DepthOrArraySize = 1;
+            desc.MipLevels = 1;
+            desc.SampleDesc.Count = 1;
+            desc.SampleDesc.Quality = 0;
+            desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+            D3D12_HEAP_PROPERTIES heap = {};
+            heap.Type = D3D12_HEAP_TYPE_UPLOAD;
+            heap.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+            heap.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+            heap.CreationNodeMask = 1;
+            heap.VisibleNodeMask = 1;
+
+            ID3D12Resource* resource = nullptr;
+            if (SUCCEEDED(mD3DDevice->CreateCommittedResource(
+                &heap,
+                D3D12_HEAP_FLAG_NONE,
+                &desc,
+                D3D12_RESOURCE_STATE_GENERIC_READ,
+                nullptr,
+                IID_PPV_ARGS(&resource)))) {
+                return resource;
+            }
+            return nullptr;
+        }
+
+        void* GetImmediateCommandList() override
+        {
+            if (mImmediateCommandListCache.size() > 0) {
+                ID3D12GraphicsCommandList* cmdlist = mImmediateCommandListCache.PopFront();
+                cmdlist->Reset(mImmediateCommandAllocator, nullptr);
+                return cmdlist;
+            }
+
+            ID3D12GraphicsCommandList* newcmdlist = nullptr;
+            if (FAILED(((ID3D12Device*)LE_DrawManagerRendererAccessor.GetDeviceHandle())->CreateCommandList(1, D3D12_COMMAND_LIST_TYPE_DIRECT, mImmediateCommandAllocator, nullptr, IID_PPV_ARGS(&newcmdlist)))) {
+                Debug::Error("Failed to create command allocator.");
+                return nullptr;
+            }
+            return newcmdlist;
+        }
+
         void ResizeScreen(const LEMath::IntSize& size) override { /* Unimplemented */ }
 
         void ProcessBeforeFlushingCommands() override
@@ -245,7 +312,28 @@ namespace LimitEngine {
             }
         }
 
-        void Finish(CommandBuffer* commandBuffer) override
+        uint64 ExecuteImmediateCommandList(void* cmdlist, bool waitcompletion) override
+        {
+            ID3D12GraphicsCommandList* graphicscmdlist = static_cast<ID3D12GraphicsCommandList*>(cmdlist);
+            if (FAILED(graphicscmdlist->Close())) {
+                Debug::Error("Failed to close immediate command list");
+                return 0u;
+            }
+
+            ID3D12CommandList* d3d12cmdlist = static_cast<ID3D12CommandList*>(cmdlist);
+            mCommandQueue[(uint32)CommandQueueType::Graphics]->ExecuteCommandLists(1, &d3d12cmdlist);
+            mCommandQueue[(uint32)CommandQueueType::Graphics]->Signal(mImmediateCommandQueueFence, mImmediateCommandQueueFenceValue);
+
+            if (waitcompletion) {
+                mImmediateCommandQueueFence->SetEventOnCompletion(mImmediateCommandQueueFenceValue, mImmediateCommandQueueWaitEvent);
+                WaitForSingleObject(mImmediateCommandQueueWaitEvent, 1000000u);
+            }
+
+            mImmediateCommandListCache.Add(static_cast<ID3D12GraphicsCommandList*>(cmdlist));
+            return mImmediateCommandQueueFenceValue++;
+        }
+
+        void Finalize(CommandBuffer* commandBuffer) override
         {
             ID3D12GraphicsCommandList* graphicsCommandList = (ID3D12GraphicsCommandList*)commandBuffer->GetCommandListHandle();
             graphicsCommandList->Close();
@@ -264,6 +352,9 @@ namespace LimitEngine {
             mCommandQueue[(uint32)CommandQueueType::Graphics]->ExecuteCommandLists(1, &commandList);
             mCommandQueue[(uint32)CommandQueueType::Graphics]->Signal(mCommandQueueFence[(uint32)CommandQueueType::Graphics], mCommandQueueFenceValue[(uint32)CommandQueueType::Graphics]);
 
+            if (mCommandQueueFenceValue[(uint32)CommandQueueType::Graphics] > 1)
+                commandBuffer->Finalize(mCommandQueueFenceValue[(uint32)CommandQueueType::Graphics]);
+            
             mCommandQueueFenceValue[(uint32)CommandQueueType::Graphics]++;
         }
 
@@ -285,6 +376,20 @@ namespace LimitEngine {
                 mDescriptorAllocator[HeapArrayIndex].Term();
             }
 
+            if (mImmediateCommandAllocator) {
+                mImmediateCommandAllocator->Release();
+                mImmediateCommandAllocator = nullptr;
+            }
+            if (mImmediateCommandQueueFence) {
+                mImmediateCommandQueueFence->Release();
+                mImmediateCommandQueueFence = nullptr;
+            }
+            for (auto *cmdlist : mImmediateCommandListCache) {
+                cmdlist->Release();
+            }
+            mImmediateCommandListCache.Clear();
+
+            CloseHandle(mImmediateCommandQueueWaitEvent);
 #if _DEBUG
             ID3D12DebugDevice* debugInterface;
             if (SUCCEEDED(mD3DDevice->QueryInterface(&debugInterface))) {
@@ -305,21 +410,26 @@ namespace LimitEngine {
         void* GetDeviceContext() const override { return nullptr; }
 
     private:
-        uint32                               mCurrentFrameBufferIndex = 0u;
+        uint32                                      mCurrentFrameBufferIndex = 0u;
 
-        ID3D12Device                        *mD3DDevice = nullptr;
-        ID3D12CommandQueue                  *mCommandQueue[CommandQueueTypeNum];
-        ID3D12Fence                         *mCommandQueueFence[CommandQueueTypeNum];
-        uint64                               mCommandQueueFenceValue[CommandQueueTypeNum];
-        IDXGISwapChain1                     *mDXGISwapChain = nullptr;
-        HANDLE                               mFrameLatencyWaitableObject = nullptr;
-        LEMath::IntSize                      mDisplayBufferSize;
-        RendererFlag::BufferFormat           mDisplayBufferFormat = RendererFlag::BufferFormat::Unknown;
-        ID3D12Resource                      *mDisplayBuffers[SWAP_CHAIN_BUFFER_COUNT];
-        D3D12_CPU_DESCRIPTOR_HANDLE          mDisplayRenderTargetViews[SWAP_CHAIN_BUFFER_COUNT];
-        ResourceState                        mDisplayBufferResourceStates[SWAP_CHAIN_BUFFER_COUNT];
+        ID3D12Device                               *mD3DDevice = nullptr;
+        ID3D12CommandQueue                         *mCommandQueue[CommandQueueTypeNum];
+        ID3D12Fence                                *mCommandQueueFence[CommandQueueTypeNum];
+        uint64                                      mCommandQueueFenceValue[CommandQueueTypeNum];
+        ID3D12CommandAllocator                     *mImmediateCommandAllocator;
+        VectorArray<ID3D12GraphicsCommandList*>     mImmediateCommandListCache;
+        ID3D12Fence                                *mImmediateCommandQueueFence;
+        UINT                                        mImmediateCommandQueueFenceValue;
+        HANDLE                                      mImmediateCommandQueueWaitEvent;
+        IDXGISwapChain1                            *mDXGISwapChain = nullptr;
+        HANDLE                                      mFrameLatencyWaitableObject = nullptr;
+        LEMath::IntSize                             mDisplayBufferSize;
+        RendererFlag::BufferFormat                  mDisplayBufferFormat = RendererFlag::BufferFormat::Unknown;
+        ID3D12Resource                             *mDisplayBuffers[SWAP_CHAIN_BUFFER_COUNT];
+        D3D12_CPU_DESCRIPTOR_HANDLE                 mDisplayRenderTargetViews[SWAP_CHAIN_BUFFER_COUNT];
+        ResourceState                               mDisplayBufferResourceStates[SWAP_CHAIN_BUFFER_COUNT];
 
-        DescriptorAllocator                  mDescriptorAllocator[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES] = {
+        DescriptorAllocator                         mDescriptorAllocator[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES] = {
             D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
             D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER,
             D3D12_DESCRIPTOR_HEAP_TYPE_RTV,

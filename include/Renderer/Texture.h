@@ -154,6 +154,8 @@ public:
 
     bool IsValid() const { return mInterface != nullptr; }
 
+    TextureInterface* GetTexture() const { return mInterface.Get(); }
+
     void* GetShaderResourceView() const  { return mInterface.IsValid() ? mInterface->GetShaderResourceView() : nullptr; }
     void* GetUnorderedAccessView() const { return mInterface.IsValid() ? mInterface->GetUnorderedAccessView() : nullptr; }
     void* GetRenderTargetView() const    { return mInterface.IsValid() ? mInterface->GetRenderTargetView() : nullptr; }

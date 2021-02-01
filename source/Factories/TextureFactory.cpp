@@ -132,6 +132,18 @@ IReferenceCountedObject* TextureFactory::Create(const ResourceSourceFactory *Sou
                     SourceImage = FilteredSourceImage;
                 }
             }
+            if (mImageFilter) {
+                SerializedTextureSource* filteredsourceimage = new SerializedTextureSource();
+                LEMath::IntSize imageSize = (mFilteredImageSize != LEMath::IntVector2::Zero) ? mFilteredImageSize : SourceImage->GetSize();
+                filteredsourceimage->mSize = LEMath::IntVector3(imageSize.X(), imageSize.Y(), (mImportFilter == TextureImportFilter::Reflection) ? 5 : 1);
+                filteredsourceimage->mMipCount = 1;
+                filteredsourceimage->mIsCubemap = false;
+                filteredsourceimage->mFormat = static_cast<uint32>(mImageFilter->GetFilteredImageFormat());
+
+                mImageFilter->FilterImage(SourceImage, filteredsourceimage);
+                delete SourceImage;
+                SourceImage = filteredsourceimage;
+            }
             output = Texture::GenerateFromSourceImage(SourceImage);
             delete SourceImage;
         }
@@ -400,7 +412,7 @@ TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *Source
     } break;
     }
 
-    return dynamic_cast<TextureSourceImage*>(filteredSourceImage);
+    return static_cast<TextureSourceImage*>(filteredSourceImage);
 }
 void TextureFactory::Release(IReferenceCountedObject *data)
 {

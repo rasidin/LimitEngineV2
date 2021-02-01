@@ -157,7 +157,7 @@ public:
 
     PooledRenderTarget GetRenderTarget(const RenderTargetDesc &InDesc, const char *InDebugName = nullptr);
     PooledRenderTarget GetRenderTarget(const LEMath::IntSize &Size, uint32 Depth, const RendererFlag::BufferFormat &Format, const char *InDebugName = nullptr);
-    void ReleaseRenderTarget(PooledRenderTarget &RenderTarget);
+    void ReleaseRenderTarget(const RenderTargetDesc &desc, Texture *texture);
 
     PooledDepthStencil GetDepthStencil(const LEMath::IntSize &Size, const RendererFlag::BufferFormat &Format, const char *InDebugName = nullptr);
     void ReleaseDepthStencil(PooledDepthStencil &DepthStencil);

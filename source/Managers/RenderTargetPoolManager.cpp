@@ -7,6 +7,7 @@
  @author minseob (leeminseob@outlook.com)
  ***********************************************************/
 #include "Managers/RenderTargetPoolManager.h"
+#include "Managers/DrawManager.h"
 
 #include "Renderer/Texture.h"
 
@@ -20,9 +21,18 @@ PooledRenderTarget::PooledRenderTarget(const PooledRenderTarget &RenderTarget)
 }
 void PooledRenderTarget::Release()
 {
-    if (mTexture)
-    if (mTexture->SubReferenceCounter() == 0) {
-        LE_RenderTargetPoolManager.ReleaseRenderTarget(*this);
+    if (mTexture) {
+        LEASSERT(mTexture->GetReferenceCounter() > 0);
+        if (mTexture->SubReferenceCounter() == 0) {
+            mTexture->AddReferenceCounter();
+            RenderTargetDesc captureddesc = mDesc;
+            Texture* capturedtexture = mTexture;
+            LE_DrawManager.AddRendererTaskLambda([captureddesc, capturedtexture]() {
+                capturedtexture->SubReferenceCounter();
+                LEASSERT(capturedtexture->GetReferenceCounter() == 0);
+                LE_RenderTargetPoolManager.ReleaseRenderTarget(captureddesc, capturedtexture);
+            });
+        }
     }
     mTexture = nullptr;
 }
@@ -55,7 +65,7 @@ RenderTargetPoolManager::~RenderTargetPoolManager()
 }
 PooledRenderTarget RenderTargetPoolManager::GetRenderTarget(const RenderTargetDesc &InDesc, const char *InDebugName/* = nullptr*/)
 {
-    return GetRenderTarget(InDesc.Size, InDesc.Depth, InDesc.Format);
+    return GetRenderTarget(InDesc.Size, InDesc.Depth, InDesc.Format, InDebugName);
 }
 PooledRenderTarget RenderTargetPoolManager::GetRenderTarget(const LEMath::IntSize &Size, uint32 Depth, const RendererFlag::BufferFormat &Format, const char *InDebugName/* = nullptr*/)
 {
@@ -84,11 +94,11 @@ PooledRenderTarget RenderTargetPoolManager::GetRenderTarget(const LEMath::IntSiz
     }
     return PooledRenderTarget(nullptr, Desc);
 }
-void RenderTargetPoolManager::ReleaseRenderTarget(PooledRenderTarget &RenderTarget)
+void RenderTargetPoolManager::ReleaseRenderTarget(const RenderTargetDesc& desc, Texture* texture)
 {
     Mutex::ScopedLock lock(mBucketMutex);
-    if (RenderTarget.mTexture)
-        mRTBuckets.Add(RTBucketType(RenderTarget.mDesc, RenderTarget.mTexture));
+    if (texture)
+        mRTBuckets.Add(RTBucketType(desc, texture));
 }
 PooledDepthStencil RenderTargetPoolManager::GetDepthStencil(const LEMath::IntSize &Size, const RendererFlag::BufferFormat &Format, const char *InDebugName/* = nullptr*/)
 {

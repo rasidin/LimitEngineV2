@@ -121,7 +121,6 @@ public:
 
     void Create();
     const SamplerStateDesc& GetDesc() const { return mDesc; }
-    void* GetHandle() { return (mImpl) ? mImpl->GetHandle() : nullptr; }
 
 private:
     explicit SamplerState(const SamplerStateDesc &Desc);
@@ -129,5 +128,18 @@ private:
 private:
     SamplerStateDesc  mDesc;
     SamplerStateImpl *mImpl;
+
+    friend class SamplerStateRendererAccessor;
+};
+class SamplerStateRendererAccessor
+{
+public:
+    SamplerStateRendererAccessor(SamplerState* sampler)
+        : mImpl(sampler->mImpl)
+    {}
+
+    void* GetHandle() const { return mImpl ? mImpl->GetHandle() : nullptr; }
+private:
+    SamplerStateImpl* mImpl = nullptr;
 };
 }

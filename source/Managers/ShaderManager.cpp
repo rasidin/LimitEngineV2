@@ -32,6 +32,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 #include "Shaders/Draw2D.vs.h"
 #include "Shaders/Draw2D.ps.h"
+#include "Shaders/DrawFullscreen.ps.h"
 #include "Shaders/ResolveSceneColorSRGB.ps.h"
 
 namespace LimitEngine {
@@ -51,6 +52,7 @@ namespace LimitEngine {
     {
         mShaders.Add(new Draw2D_VS());
         mShaders.Add(new Draw2D_PS());
+        mShaders.Add(new DrawFullscreen_PS());
         mShaders.Add(new ResolveSceneColorSRGB_PS());
 
         //Shader *shader;

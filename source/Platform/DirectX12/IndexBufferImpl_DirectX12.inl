@@ -96,8 +96,8 @@ public:
             return;
         }
 
-        DrawCommand::CopyBuffer((void*)mIndexBuffer, 0, (void*)indexBufferUpdate, 0, BufferSize);
-        DrawCommand::ResourceBarrier(mOwner, ResourceState::VertexAndConstantBuffer | ResourceState::IndexBuffer);
+        //DrawCommand::CopyBuffer((void*)mIndexBuffer, 0, (void*)indexBufferUpdate, 0, BufferSize);
+        //DrawCommand::ResourceBarrier(mOwner, ResourceState::VertexAndConstantBuffer | ResourceState::IndexBuffer);
         
         mIndexBufferView.BufferLocation = mIndexBuffer->GetGPUVirtualAddress();
         mIndexBufferView.SizeInBytes = BufferSize;

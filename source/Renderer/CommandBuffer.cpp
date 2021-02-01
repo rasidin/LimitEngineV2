@@ -96,6 +96,7 @@ void CommandBuffer::ReleaseRendererResources()
     if (ReservedRendererResources.PipelineStates.count())
     for (PipelineState* pipelinestate : ReservedRendererResources.PipelineStates)
         delete pipelinestate;
+    ReservedRendererResources.Clear();
 }
 
 CommandBuffer::COMMAND* CommandBuffer::popPushCommandBuffer()
@@ -162,13 +163,6 @@ void* CommandBuffer::allocateFromCommandBuffer(size_t size)
     }
     
     return outputPointer;
-}
-
-void* CommandBuffer::copyDataToGPUBuffer(void* data, size_t size)
-{
-    void* gpuResource = mImpl->AllocateGPUBuffer(size);
-    mImpl->UploadToGPUBuffer(gpuResource, data, size);
-    return gpuResource;
 }
 
 void* CommandBuffer::duplicateBuffer(void* data, size_t size)
@@ -281,19 +275,27 @@ void CommandBuffer::Flush(RenderState *rs)
             case COMMAND::cDrawPrimitive:
             {
                 COMMAND_DRAWPRIMITIVE *command = reinterpret_cast<COMMAND_DRAWPRIMITIVE*>(currentCommand);
-                mImpl->PrepareForDrawing();
-                mImpl->DrawPrimitive(command->primitive, command->offset, command->count);
+                if (mImpl->PrepareForDrawing())
+                    mImpl->DrawPrimitive(command->primitive, command->offset, command->count);
+                mImpl->ClearCaches();
             } break;
             case COMMAND::cDrawIndexedPrimitive:
             {
                 COMMAND_DRAWINDEXEDPRIMITIVE *command = reinterpret_cast<COMMAND_DRAWINDEXEDPRIMITIVE*>(currentCommand);
 				if (mImpl->PrepareForDrawing())
                     mImpl->DrawIndexedPrimitive(command->primitive, command->vtxcount, command->count);
+                mImpl->ClearCaches();
             } break;
             case COMMAND::cSetRenderTarget:
             {
                 COMMAND_SETRENDERTARGET *command = reinterpret_cast<COMMAND_SETRENDERTARGET*>(currentCommand);
                 mImpl->SetRenderTarget(command->index, command->color, command->depthstencil, command->surfaceIndex);
+                if (command->color && command->color->SubReferenceCounter() == 0) {
+                    ReservedRendererResources.Add(command->color);
+                }
+                if (command->depthstencil && command->depthstencil->SubReferenceCounter() == 0) {
+                    ReservedRendererResources.Add(command->depthstencil);
+                }
             } break;
 			case COMMAND::cBindTargetTexture:
 			{
@@ -359,14 +361,9 @@ void CommandBuffer::Flush(RenderState *rs)
             case COMMAND::cSetConstantBuffer:
             {
                 COMMAND_SETCONSTANTBUFFER* command = reinterpret_cast<COMMAND_SETCONSTANTBUFFER*>(currentCommand);
-                mImpl->SetConstantBuffer(command->buffer);
+                mImpl->SetConstantBuffer(command->index, command->buffer);
                 if (command->buffer->SubReferenceCounter() == 0)
                     ReservedRendererResources.Add(command->buffer);
-            } break;
-            case COMMAND::cCopyBuffer:
-            {
-                COMMAND_COPYBUFFER* command = reinterpret_cast<COMMAND_COPYBUFFER*>(currentCommand);
-                mImpl->CopyResource(command->dst, command->dstoffset, command->org, command->orgoffset, command->size);
             } break;
             case COMMAND::cResourceBarrier:
             {
@@ -430,7 +427,7 @@ void CommandBuffer::Flush(RenderState *rs)
             } break;
             case COMMAND::cPresent:
             {
-                LE_DrawManagerRendererAccessor.Finish(this);
+                LE_DrawManagerRendererAccessor.Finalize(this);
                 LE_DrawManagerRendererAccessor.Present();
                 mImpl->ProcessAfterPresent();
             } break;
@@ -524,11 +521,6 @@ void DrawCommand::SetConstantBuffer(uint32 idx, ConstantBuffer* buffer)
 void DrawCommand::SetRenderTarget(uint32 index, TextureInterface* color, TextureInterface* depth, uint32 surfaceIndex)
 {
     COMMANDBUFFER_NEW CommandBuffer::COMMAND_SETRENDERTARGET(index, color, depth, surfaceIndex);
-}
-
-void DrawCommand::CopyBuffer(void* Dst, uint32 DstOffset, void* Org, uint32 OrgOffset, uint32 Size)
-{
-    COMMANDBUFFER_NEW CommandBuffer::COMMAND_COPYBUFFER(Dst, DstOffset, LE_DrawManagerRendererAccessor.GetCommandBuffer()->copyDataToGPUBuffer(Org, Size), OrgOffset, Size);
 }
 
 void DrawCommand::ResourceBarrier(TextureInterface *InTexture, const ResourceState &InResourceState)

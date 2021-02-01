@@ -32,6 +32,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 #include "Core/Singleton.h"
 #include "Core/Memory.h"
+#include "Core/MemoryAllocator.h"
 #include "Containers/VectorArray.h"
 #include "Containers/MapArray.h"
 #include "Managers/DrawManager.h"
@@ -143,6 +144,7 @@ private:
         rsdesc.pStaticSamplers = nullptr;
         rsdesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
+        VectorArray<D3D12_DESCRIPTOR_RANGE*> allocateddescranges;
         uint32 rootparamindex = 0u;
         for (uint32 shidx = 0; shidx < static_cast<uint32>(Shader::Type::Num); shidx++) {
             if (rsd.ConstantBufferCount[shidx]) {
@@ -152,12 +154,27 @@ private:
                 rootparam.Descriptor.ShaderRegister = 0;
                 rootparam.Descriptor.RegisterSpace = 0;
             }
+            if (rsd.TextureSamplerCount[shidx]) {
+                D3D12_ROOT_PARAMETER& rootparam = rootparams[rootparamindex++];
+                rootparam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+                rootparam.ShaderVisibility = ShaderTypeToD3D12ShaderVisibility[shidx];
+                rootparam.DescriptorTable.NumDescriptorRanges = rsd.TextureSamplerCount[shidx];
+                D3D12_DESCRIPTOR_RANGE* newDescriptorRange = (D3D12_DESCRIPTOR_RANGE*)MemoryAllocator::Alloc(sizeof(D3D12_DESCRIPTOR_RANGE) * rsd.TextureSamplerCount[shidx]);
+                allocateddescranges.Add(newDescriptorRange);
+                rootparam.DescriptorTable.pDescriptorRanges = newDescriptorRange;
+                newDescriptorRange->RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+                newDescriptorRange->NumDescriptors = rsd.TextureSamplerCount[shidx];
+                newDescriptorRange->BaseShaderRegister = 0;
+                newDescriptorRange->RegisterSpace = 0;
+                newDescriptorRange->OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+            }
             if (rsd.ShaderResourceViewCount[shidx]) {
                 D3D12_ROOT_PARAMETER& rootparam = rootparams[rootparamindex++];
                 rootparam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
                 rootparam.ShaderVisibility = ShaderTypeToD3D12ShaderVisibility[shidx];
                 rootparam.DescriptorTable.NumDescriptorRanges = rsd.ShaderResourceViewCount[shidx];
-                D3D12_DESCRIPTOR_RANGE *newDescriptorRange = new D3D12_DESCRIPTOR_RANGE[rsd.ShaderResourceViewCount[shidx]];
+                D3D12_DESCRIPTOR_RANGE *newDescriptorRange = (D3D12_DESCRIPTOR_RANGE*)MemoryAllocator::Alloc(sizeof(D3D12_DESCRIPTOR_RANGE) * rsd.ShaderResourceViewCount[shidx]);
+                allocateddescranges.Add(newDescriptorRange);
                 newDescriptorRange->RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
                 newDescriptorRange->NumDescriptors = rsd.ShaderResourceViewCount[shidx];
                 newDescriptorRange->BaseShaderRegister = 0;
@@ -171,23 +188,11 @@ private:
                 rootparam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
                 rootparam.ShaderVisibility = ShaderTypeToD3D12ShaderVisibility[shidx];
                 rootparam.DescriptorTable.NumDescriptorRanges = rsd.UnorderedAccessViewCount[shidx];
-                D3D12_DESCRIPTOR_RANGE* newDescriptorRange = new D3D12_DESCRIPTOR_RANGE[rsd.ShaderResourceViewCount[shidx]];
+                D3D12_DESCRIPTOR_RANGE* newDescriptorRange = (D3D12_DESCRIPTOR_RANGE*)MemoryAllocator::Alloc(sizeof(D3D12_DESCRIPTOR_RANGE) * rsd.UnorderedAccessViewCount[shidx]);
+                allocateddescranges.Add(newDescriptorRange);
                 newDescriptorRange = newDescriptorRange;
                 newDescriptorRange->RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
                 newDescriptorRange->NumDescriptors = rsd.UnorderedAccessViewCount[shidx];
-                newDescriptorRange->BaseShaderRegister = 0;
-                newDescriptorRange->RegisterSpace = 0;
-                newDescriptorRange->OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-            }
-            if (rsd.TextureSamplerCount[shidx]) {
-                D3D12_ROOT_PARAMETER& rootparam = rootparams[rootparamindex++];
-                rootparam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-                rootparam.ShaderVisibility = ShaderTypeToD3D12ShaderVisibility[shidx];
-                rootparam.DescriptorTable.NumDescriptorRanges = rsd.TextureSamplerCount[shidx];
-                D3D12_DESCRIPTOR_RANGE* newDescriptorRange = new D3D12_DESCRIPTOR_RANGE[rsd.ShaderResourceViewCount[shidx]];
-                rootparam.DescriptorTable.pDescriptorRanges = newDescriptorRange;
-                newDescriptorRange->RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-                newDescriptorRange->NumDescriptors = rsd.TextureSamplerCount[shidx];
                 newDescriptorRange->BaseShaderRegister = 0;
                 newDescriptorRange->RegisterSpace = 0;
                 newDescriptorRange->OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
@@ -214,6 +219,12 @@ private:
                 LEASSERT(false);
             }
         }
+
+        for (auto* allocateddesc : allocateddescranges) {
+            MemoryAllocator::Free(allocateddesc);
+        }
+        allocateddescranges.Clear();
+
         return output;
     }
 

@@ -29,13 +29,19 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 #include "PrivateDefinitions_DirectX12.h"
 
+#include "Renderer/CommandBuffer.h"
+
 namespace LimitEngine {
     class TextureImpl_DirectX12 : public TextureImpl
     {
     public:
         TextureImpl_DirectX12(Texture *InOwner)
             : TextureImpl(InOwner)
-        {}
+        {
+            mRenderTargetView = {};
+            mDepthStencilView = {};
+            mShaderResourceView = {};
+        }
         virtual ~TextureImpl_DirectX12()
         {}
         const LEMath::IntSize& GetSize() const override { return mSize; }
@@ -79,17 +85,60 @@ namespace LimitEngine {
                 &heapProps,
                 D3D12_HEAP_FLAG_NONE,
                 &resourceDesc,
-                D3D12_RESOURCE_STATE_GENERIC_READ,
+                initData ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_GENERIC_READ,
                 nullptr,
                 IID_PPV_ARGS(&mResource));
             if (FAILED(hr)) {
                 LEASSERT(0);
             }
             else if (initData) {
-                DrawCommand::ResourceBarrier(mOwner, ResourceState::CopyDest);
-                DrawCommand::CopyBuffer(mResource, 0, initData, 0, initDataSize);
-                DrawCommand::ResourceBarrier(mOwner, ResourceState::GenericRead);
+                ID3D12Device* device = static_cast<ID3D12Device*>(LE_DrawManagerRendererAccessor.GetDeviceHandle());
+                ID3D12GraphicsCommandList* cmdlist = static_cast<ID3D12GraphicsCommandList*>(LE_DrawManagerRendererAccessor.GetImmediateCommandList());
+                ID3D12Resource *resource = static_cast<ID3D12Resource *>(LE_DrawManagerRendererAccessor.AllocateGPUBuffer(initDataSize));
+
+                D3D12_RANGE range = { 0, 0 };
+                void* mappeddata = nullptr;
+                if (SUCCEEDED(resource->Map(0, &range, &mappeddata))) {
+                    ::memcpy(mappeddata, initData, initDataSize);
+                    resource->Unmap(0, nullptr);
+                }
+
+                static constexpr uint64 SubResourceCount = 1u;
+                SIZE_T buffersize = (sizeof(D3D12_PLACED_SUBRESOURCE_FOOTPRINT) + sizeof(UINT) + sizeof(UINT64)) * SubResourceCount;
+                void* buffer = HeapAlloc(GetProcessHeap(), 0, buffersize);
+                D3D12_PLACED_SUBRESOURCE_FOOTPRINT* layouts = static_cast<D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(buffer);
+                UINT64* rowsizesinbytes = reinterpret_cast<UINT64*>(layouts + SubResourceCount);
+                UINT* rowcounts = reinterpret_cast<UINT*>(rowsizesinbytes + SubResourceCount);
+                UINT64 requiredsize = 0u;
+                device->GetCopyableFootprints(&resourceDesc, 0, SubResourceCount, 0, layouts, rowcounts, rowsizesinbytes, &requiredsize);
+
+                D3D12_TEXTURE_COPY_LOCATION dstlocation = { mResource, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, 0 };
+                D3D12_TEXTURE_COPY_LOCATION srclocation = { resource, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT, *layouts };
+                cmdlist->CopyTextureRegion(&dstlocation, 0, 0, 0, &srclocation, nullptr);
+
+                D3D12_RESOURCE_BARRIER barrier;
+                barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+                barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+                barrier.Transition.pResource = mResource;
+                barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+                barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_GENERIC_READ;
+                barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+                cmdlist->ResourceBarrier(1, &barrier);
+
+                LE_DrawManagerRendererAccessor.ExecuteImmediateCommandList(cmdlist, true);
+
+                resource->Release();
             }
+
+            mShaderResourceView.ptr = reinterpret_cast<SIZE_T>(LE_DrawManagerRendererAccessor.AllocateDescriptor(static_cast<uint32>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)));
+            D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
+            SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+            SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            SRVDesc.Format = ConvertBufferFormatToDXGIFormat(format);
+            SRVDesc.Texture2D.MipLevels = 1;
+            SRVDesc.Texture2D.MostDetailedMip = 0;
+            device->CreateShaderResourceView(mResource, &SRVDesc, mShaderResourceView);
+
             return true;
         }
         bool Create3D(const LEMath::IntSize3& size, const RendererFlag::BufferFormat &format, uint32 usage, uint32 mipLevels, void* initData, size_t initDataSize) override
@@ -130,10 +179,20 @@ namespace LimitEngine {
                 LEASSERT(0);
             }
             else if (initData) {
-                DrawCommand::ResourceBarrier(mOwner, ResourceState::CopyDest);
-                DrawCommand::CopyBuffer(mResource, 0, initData, 0, initDataSize);
-                DrawCommand::ResourceBarrier(mOwner, ResourceState::GenericRead);
+                //DrawCommand::ResourceBarrier(mOwner, ResourceState::CopyDest);
+                //DrawCommand::CopyBuffer(mResource, 0, initData, 0, initDataSize);
+                //DrawCommand::ResourceBarrier(mOwner, ResourceState::GenericRead);
             }
+
+            mShaderResourceView.ptr = reinterpret_cast<SIZE_T>(LE_DrawManagerRendererAccessor.AllocateDescriptor(static_cast<uint32>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)));
+            D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
+            SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+            SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            SRVDesc.Format = ConvertBufferFormatToDXGIFormat(format);
+            SRVDesc.Texture2D.MipLevels = 1;
+            SRVDesc.Texture2D.MostDetailedMip = 0;
+            device->CreateShaderResourceView(mResource, &SRVDesc, mShaderResourceView);
+
             return true;
         }
         void CreateScreenColor(const LEMath::IntSize& size) override
@@ -184,9 +243,9 @@ namespace LimitEngine {
                 for (uint32 index = 0; index < pitch * size.Height(); index++) {
                     colorBuffer[index] = color;
                 }
-                DrawCommand::ResourceBarrier(mOwner, ResourceState::CopyDest);
-                DrawCommand::CopyBuffer(mResource, 0, colorBuffer, 0, bufferSize);
-                DrawCommand::ResourceBarrier(mOwner, ResourceState::GenericRead);
+                //DrawCommand::ResourceBarrier(mOwner, ResourceState::CopyDest);
+                //DrawCommand::CopyBuffer(mResource, 0, colorBuffer, 0, bufferSize);
+                //DrawCommand::ResourceBarrier(mOwner, ResourceState::GenericRead);
             }
         }
         void CreateDepthStencil(const LEMath::IntSize& size, const RendererFlag::BufferFormat &format) override
@@ -199,12 +258,6 @@ namespace LimitEngine {
             heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
             heapDesc.NodeMask = 0;
             heapDesc.NumDescriptors = 1;
-
-            HRESULT hr;
-            hr = device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&mHeap));
-            if (FAILED(hr)) {
-                LEASSERT(0);
-            }
 
             D3D12_HEAP_PROPERTIES heapProps = {};
             heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
@@ -227,7 +280,7 @@ namespace LimitEngine {
 
             TextureRendererAccessor(mOwner).SetResourceState(ResourceState::DepthWrite);
 
-            hr = device->CreateCommittedResource(
+            HRESULT hr = device->CreateCommittedResource(
                 &heapProps,
                 D3D12_HEAP_FLAG_NONE,
                 &resourceDesc,
@@ -243,7 +296,7 @@ namespace LimitEngine {
             DSVDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
             DSVDesc.Texture2D.MipSlice = 0;
 
-            mDepthStencilView = mHeap->GetCPUDescriptorHandleForHeapStart();
+            mDepthStencilView.ptr = reinterpret_cast<SIZE_T>(LE_DrawManagerRendererAccessor.AllocateDescriptor(static_cast<uint32>(D3D12_DESCRIPTOR_HEAP_TYPE_DSV)));
 
             device->CreateDepthStencilView(mResource, &DSVDesc, mDepthStencilView);
         }
@@ -257,13 +310,6 @@ namespace LimitEngine {
             heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
             heapDesc.NodeMask = 0;
             heapDesc.NumDescriptors = 1;
-
-            HRESULT hr;
-            hr = device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&mHeap));
-            if (FAILED(hr)) {
-                LEASSERT(0);
-            }
-            LEASSERT(mHeap != nullptr);
 
             D3D12_HEAP_PROPERTIES heapProps = {};
             heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
@@ -286,7 +332,7 @@ namespace LimitEngine {
 
             TextureRendererAccessor(mOwner).SetResourceState(ResourceState::RenderTarget);
 
-            hr = device->CreateCommittedResource(
+            HRESULT hr = device->CreateCommittedResource(
                 &heapProps,
                 D3D12_HEAP_FLAG_NONE,
                 &resourceDesc,
@@ -303,9 +349,18 @@ namespace LimitEngine {
             RTVDesc.Texture2D.MipSlice = 0;
             RTVDesc.Texture2D.PlaneSlice = 0;
 
-            mRenderTargetView = mHeap->GetCPUDescriptorHandleForHeapStart();
+            mRenderTargetView.ptr = reinterpret_cast<SIZE_T>(LE_DrawManagerRendererAccessor.AllocateDescriptor(static_cast<uint32>(D3D12_DESCRIPTOR_HEAP_TYPE_RTV)));
 
             device->CreateRenderTargetView(mResource, &RTVDesc, mRenderTargetView);
+
+            mShaderResourceView.ptr = reinterpret_cast<SIZE_T>(LE_DrawManagerRendererAccessor.AllocateDescriptor(static_cast<uint32>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)));
+            D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
+            SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+            SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            SRVDesc.Format = ConvertBufferFormatToDXGIFormat(format);
+            SRVDesc.Texture2D.MipLevels = 1;
+            SRVDesc.Texture2D.MostDetailedMip = 0;
+            device->CreateShaderResourceView(mResource, &SRVDesc, mShaderResourceView);
         }
         void GenerateMipmap() override
         {
@@ -316,8 +371,7 @@ namespace LimitEngine {
 
         void* GetShaderResourceView() const override
         {
-            UNIMPLEMENTED_ERROR
-            return nullptr;
+            return (void*)&mShaderResourceView;
         }
         void* GetUnorderedAccessView() const override
         {
@@ -344,7 +398,6 @@ namespace LimitEngine {
         }
 
     private:
-        ID3D12DescriptorHeap* mHeap;
         ID3D12Resource* mResource;
 
         LEMath::IntSize mSize = LEMath::IntSize::Zero;
@@ -352,5 +405,6 @@ namespace LimitEngine {
 
         D3D12_CPU_DESCRIPTOR_HANDLE mRenderTargetView;
         D3D12_CPU_DESCRIPTOR_HANDLE mDepthStencilView;
+        D3D12_CPU_DESCRIPTOR_HANDLE mShaderResourceView;
     };
 }
