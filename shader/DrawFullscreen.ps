@@ -47,7 +47,7 @@ PS_OUTPUT ps_main(PS_INPUT In)
 	PS_OUTPUT output = (PS_OUTPUT)0;
 
     float3 color = tex0.Sample(defaultSampler, In.uv).rgb;
-    float3 colorXYZ = mul(sRGB2XYZ, color);
+/*    float3 colorXYZ = mul(sRGB2XYZ, color);
     float divider = max(1e-04, colorXYZ.x + colorXYZ.y + colorXYZ.z);
     float2 colorxy = float2(colorXYZ.x / divider, colorXYZ.y / divider);
 
@@ -57,6 +57,9 @@ PS_OUTPUT ps_main(PS_INPUT In)
 
     color = mul(XYZ2sRGB, colorXYZ);
     output.color.rgb = color / pow(2.0, ColorConvertParameters.w);
+    output.color.a = 1.0;
+*/
+    output.color.rgb = color;
     output.color.a = 1.0;
 
 	return output;
