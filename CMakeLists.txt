@@ -3,8 +3,10 @@ cmake_minimum_required(VERSION 3.18)
 project(LimitEngine)
 enable_testing()
 
-include(LEMath.cmake)
-include(LEShaderConverter.cmake)
+add_subdirectory(ToolBase)
+add_subdirectory(LEShaderConverter)
+add_subdirectory(LEMath)
+include_directories(LEMath/include)
 
 option(MAKE_TEST "Make test program" OFF)
 if (MAKE_TEST)
@@ -116,7 +118,12 @@ add_library(LimitEngine
 )
 add_dependencies(LimitEngine generatedheaders)
 
-target_include_directories(LimitEngine PUBLIC ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/externals ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/generated)
+target_include_directories(LimitEngine PUBLIC 
+	${PROJECT_SOURCE_DIR} 
+	${PROJECT_SOURCE_DIR}/externals 
+	${PROJECT_SOURCE_DIR}/include 
+	${PROJECT_SOURCE_DIR}/generated
+)
 
 install(TARGETS LimitEngine
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib

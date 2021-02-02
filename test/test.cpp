@@ -39,7 +39,8 @@ public:
     }
 
     void SetupScene() {
-        mBackgroundImage = Engine->LoadTexture("textures/MyCarlots.Background.2K.lea", LimitEngine::ArchiveFactory::ID, false);
+        //mBackgroundImage = Engine->LoadTexture("local/reference/Scene_Odaiba/Odaiba.Irradiance.lea", LimitEngine::ArchiveFactory::ID, false);
+        mBackgroundImage = Engine->LoadTexture("local/reference/Scene_Odaiba/Odaiba.Background.lea", LimitEngine::ArchiveFactory::ID, false);
 
         if (mBackgroundImage.IsValid()) {
             mBackgroundImage->InitResource();

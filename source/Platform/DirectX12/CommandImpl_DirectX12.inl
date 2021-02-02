@@ -196,8 +196,6 @@ namespace LimitEngine {
             : CommandImpl()
         {}
         virtual ~CommandImpl_DirectX12() {
-            ID3D12GraphicsCommandList* mPooledD3DGraphicsCommandList[CommandListCount];
-            ID3D12CommandAllocator* mPooledD3DCommandAllocator[CommandListCount];
             for (uint32 cmdidx = 0; cmdidx < CommandListCount; cmdidx++) {
                 if (mPooledD3DGraphicsCommandList[cmdidx])
                     mPooledD3DGraphicsCommandList[cmdidx]->Release();

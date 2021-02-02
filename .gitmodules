@@ -1,0 +1,9 @@
+[submodule "LEMath"]
+	path = LEMath
+	url = https://github.com/rasidin/LEMath.git
+[submodule "LEShaderConverter"]
+	path = LEShaderConverter
+	url = https://github.com/rasidin/LEShaderConverter.git
+[submodule "ToolBase"]
+	path = ToolBase
+	url = https://github.com/rasidin/ToolBase.git

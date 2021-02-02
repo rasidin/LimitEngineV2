@@ -94,14 +94,6 @@ namespace LimitEngine {
             else if (initData) {
                 ID3D12Device* device = static_cast<ID3D12Device*>(LE_DrawManagerRendererAccessor.GetDeviceHandle());
                 ID3D12GraphicsCommandList* cmdlist = static_cast<ID3D12GraphicsCommandList*>(LE_DrawManagerRendererAccessor.GetImmediateCommandList());
-                ID3D12Resource *resource = static_cast<ID3D12Resource *>(LE_DrawManagerRendererAccessor.AllocateGPUBuffer(initDataSize));
-
-                D3D12_RANGE range = { 0, 0 };
-                void* mappeddata = nullptr;
-                if (SUCCEEDED(resource->Map(0, &range, &mappeddata))) {
-                    ::memcpy(mappeddata, initData, initDataSize);
-                    resource->Unmap(0, nullptr);
-                }
 
                 static constexpr uint64 SubResourceCount = 1u;
                 SIZE_T buffersize = (sizeof(D3D12_PLACED_SUBRESOURCE_FOOTPRINT) + sizeof(UINT) + sizeof(UINT64)) * SubResourceCount;
@@ -111,6 +103,22 @@ namespace LimitEngine {
                 UINT* rowcounts = reinterpret_cast<UINT*>(rowsizesinbytes + SubResourceCount);
                 UINT64 requiredsize = 0u;
                 device->GetCopyableFootprints(&resourceDesc, 0, SubResourceCount, 0, layouts, rowcounts, rowsizesinbytes, &requiredsize);
+
+                ID3D12Resource* resource = static_cast<ID3D12Resource*>(LE_DrawManagerRendererAccessor.AllocateGPUBuffer(requiredsize));
+                D3D12_RANGE range = { 0, 0 };
+                void* mappeddata = nullptr;
+                if (SUCCEEDED(resource->Map(0, &range, &mappeddata))) {
+                    if (requiredsize != initDataSize) {
+                        size_t srcrowsize = initDataSize / size.Height();
+                        for (uint64 y = 0u; y < size.Height(); y++) {
+                            ::memcpy((uint8*)mappeddata + layouts->Footprint.RowPitch * y, (uint8*)initData + srcrowsize * y, srcrowsize);
+                        }
+                    }
+                    else {
+                        ::memcpy(mappeddata, initData, initDataSize);
+                    }
+                    resource->Unmap(0, nullptr);
+                }
 
                 D3D12_TEXTURE_COPY_LOCATION dstlocation = { mResource, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, 0 };
                 D3D12_TEXTURE_COPY_LOCATION srclocation = { resource, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT, *layouts };

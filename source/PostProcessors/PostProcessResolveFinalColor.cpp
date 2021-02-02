@@ -56,12 +56,10 @@ void PostProcessResolveFinalColor::Init(const InitializeOptions &Options)
         mResolveShader = LE_ShaderManager.GetShader<ResolveSceneColorSRGB_PS>();
         mColorSpace = ColorSpace::sRGB;
         mCPUConstantBuffer = MemoryAllocator::Alloc(sizeof(ResolveSceneColorSRGB_PS::ConstantBuffer0));
-        ((ResolveSceneColorSRGB_PS::ConstantBuffer0*)mCPUConstantBuffer)->EVOffset[0] =-7.0f;
+        ((ResolveSceneColorSRGB_PS::ConstantBuffer0*)mCPUConstantBuffer)->EVOffset[0] = 0.0f;
         mConstantBuffer->Create(sizeof(ResolveSceneColorSRGB_PS::ConstantBuffer0), mCPUConstantBuffer);
-        //mConstantBuffer->Create();
     } break;
     case InitializeOptions::ColorSpace::PQ: {
-        //mResolveShader = LE_ShaderManager.GetShader("ResolveSceneColorPQ");
         mColorSpace = ColorSpace::PQ;
     } break;
     }

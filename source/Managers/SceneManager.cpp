@@ -281,14 +281,25 @@ void SceneManager::drawBackground()
     DrawCommand::BeginEvent("DrawBackground");
     DrawCommand::SetRenderTarget(0, mSceneColor.Get(), mSceneDepth.Get());
 
+    LEMath::IntSize backgroundoffset;
     switch (mBackgroundType) {
     case BackgroundImageType::None:
         DrawCommand::ClearScreen(LEMath::FloatColorRGBA(1.0f, 0.0f, 0.0f, 1.0f));
         break;
     case BackgroundImageType::Fullscreen: 
+        if (mBackgroundImage->GetSize().Width() * mSceneColor.GetDesc().Size.Height() / mBackgroundImage->GetSize().Height() < mSceneColor.GetDesc().Size.Width()) { // Landscape
+            backgroundoffset = LEMath::IntSize(
+                0, (mBackgroundImage->GetSize().Height() * mSceneColor.GetDesc().Size.Width() / mBackgroundImage->GetSize().Width() - mSceneColor.GetDesc().Size.Height()) / 2
+            );
+        }
+        else { // Portrait
+            backgroundoffset = LEMath::IntSize(
+                (mBackgroundImage->GetSize().Width() * mSceneColor.GetDesc().Size.Height() / mBackgroundImage->GetSize().Height() - mSceneColor.GetDesc().Size.Width()) / 2, 0
+            );
+        }
     case BackgroundImageType::Longlat:
     {
-        DrawCommand::SetViewport(LEMath::IntRect(0, 0, mSceneColor.GetDesc().Size.X(), mSceneColor.GetDesc().Size.Y()));
+        DrawCommand::SetViewport(LEMath::IntRect(-backgroundoffset.X(), -backgroundoffset.Y(), mSceneColor.GetDesc().Size.X() + backgroundoffset.X(), mSceneColor.GetDesc().Size.Y() + backgroundoffset.Y()));
         DrawCommand::SetScissorRect(LEMath::IntRect(0, 0, mSceneColor.GetDesc().Size.X(), mSceneColor.GetDesc().Size.Y()));
         DrawCommand::SetPipelineState(mBackgroundPipelineStates[static_cast<uint32>(mBackgroundType)].Get());
         //DrawCommand::SetConstantBuffer(0, mConstantBuffer.Get());
