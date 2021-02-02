@@ -139,6 +139,7 @@ IReferenceCountedObject* TextureFactory::Create(const ResourceSourceFactory *Sou
                 filteredsourceimage->mMipCount = 1;
                 filteredsourceimage->mIsCubemap = false;
                 filteredsourceimage->mFormat = static_cast<uint32>(mImageFilter->GetFilteredImageFormat());
+                filteredsourceimage->mColorData.Resize(imageSize.X() * imageSize.Y() * sizeof(LEMath::FloatVector4));
 
                 mImageFilter->FilterImage(SourceImage, filteredsourceimage);
                 delete SourceImage;
