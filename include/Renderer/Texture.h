@@ -99,6 +99,9 @@ class SerializedTextureSource : public TextureSourceImage
 {
 public:
     explicit SerializedTextureSource() : mSize(), mRowPitch(0u), mMipCount(1u), mFormat(static_cast<uint32>(RendererFlag::BufferFormat::Unknown)), mIsCubemap(false) {}
+    explicit SerializedTextureSource(const LEMath::IntVector3& Size, uint32 MipCount, const RendererFlag::BufferFormat& Format)
+        : mSize(Size), mMipCount(MipCount), mFormat(static_cast<uint32>(Format)), mIsCubemap(false)
+    {}
     explicit SerializedTextureSource(const TextureSourceImage &SourceImage);
     virtual ~SerializedTextureSource();
 
@@ -194,6 +197,8 @@ class Texture : public TextureInterface, public SerializableResource
 public:
     Texture();
     virtual ~Texture();
+
+    void Release();
 
     virtual void InitResource() override;
 

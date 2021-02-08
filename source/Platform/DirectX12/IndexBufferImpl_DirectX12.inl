@@ -100,7 +100,7 @@ public:
         //DrawCommand::ResourceBarrier(mOwner, ResourceState::VertexAndConstantBuffer | ResourceState::IndexBuffer);
         
         mIndexBufferView.BufferLocation = mIndexBuffer->GetGPUVirtualAddress();
-        mIndexBufferView.SizeInBytes = BufferSize;
+        mIndexBufferView.SizeInBytes = static_cast<uint32>(BufferSize);
         mIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
     }
 

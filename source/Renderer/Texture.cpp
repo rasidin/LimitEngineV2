@@ -376,6 +376,10 @@ Texture::~Texture()
     if (mImpl) delete mImpl;
     mImpl = nullptr;
 }
+void Texture::Release()
+{
+    delete this;
+}
 void Texture::InitResource()
 {
     CreateUsingSourceData();
@@ -451,7 +455,7 @@ bool Texture::Serialize(Archive &OutArchive)
 }
 void Texture::SetDebugName(const char *InDebugName)
 {
-    uint32 CopyLength = min(DebugNameLength - 1, strlen(InDebugName) + 1);
+    uint32 CopyLength = min(DebugNameLength - 1, static_cast<uint32>(strlen(InDebugName) + 1));
     ::memcpy(mDebugName, InDebugName, CopyLength);
     mDebugName[CopyLength - 1] = 0;
 }

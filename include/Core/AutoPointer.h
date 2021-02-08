@@ -36,6 +36,14 @@ namespace LimitEngine {
 			mBuffer = ptr.mBuffer;
 			ptr.mBuffer = nullptr;
 		}
+		inline void operator = (T* ptr)
+		{
+			if (mBuffer == ptr) return;
+			if (mBuffer) {
+				mBuffer->Release();
+			}
+			mBuffer = ptr;
+		}
         inline T* Pop() {
             T *output = mBuffer;
             mBuffer = nullptr;
@@ -50,6 +58,7 @@ namespace LimitEngine {
 		{
 			return mBuffer;
 		}
+		inline T* Get() const { return mBuffer; }
         // Does pointer exist?
 		bool Exists() { return mBuffer != nullptr; }
 	protected:

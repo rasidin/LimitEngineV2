@@ -248,7 +248,7 @@ namespace LimitEngine {
                 int pitch = GetSizeAlign(size.Width(), 256);
                 size_t bufferSize = pitch * size.Height() * 4;
                 ByteColorRGBA *colorBuffer = (ByteColorRGBA*)malloc(bufferSize);
-                for (uint32 index = 0; index < pitch * size.Height(); index++) {
+                for (int32 index = 0; index < pitch * size.Height(); index++) {
                     colorBuffer[index] = color;
                 }
                 //DrawCommand::ResourceBarrier(mOwner, ResourceState::CopyDest);

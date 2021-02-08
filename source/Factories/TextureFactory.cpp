@@ -135,8 +135,8 @@ IReferenceCountedObject* TextureFactory::Create(const ResourceSourceFactory *Sou
             if (mImageFilter) {
                 SerializedTextureSource* filteredsourceimage = new SerializedTextureSource();
                 LEMath::IntSize imageSize = (mFilteredImageSize != LEMath::IntVector2::Zero) ? mFilteredImageSize : SourceImage->GetSize();
-                filteredsourceimage->mSize = LEMath::IntVector3(imageSize.X(), imageSize.Y(), (mImportFilter == TextureImportFilter::Reflection) ? 5 : 1);
-                filteredsourceimage->mMipCount = 1;
+                filteredsourceimage->mSize = LEMath::IntVector3(imageSize.X(), imageSize.Y(), 1);
+                filteredsourceimage->mMipCount = mImageFilter->GetMipCount();
                 filteredsourceimage->mIsCubemap = false;
                 filteredsourceimage->mFormat = static_cast<uint32>(mImageFilter->GetFilteredImageFormat());
                 filteredsourceimage->mColorData.Resize(imageSize.X() * imageSize.Y() * sizeof(LEMath::FloatVector4));
@@ -151,6 +151,22 @@ IReferenceCountedObject* TextureFactory::Create(const ResourceSourceFactory *Sou
     } 
 
     return (IReferenceCountedObject*)(output);
+}
+IReferenceCountedObject* TextureFactory::CreateEmpty(const LEMath::IntSize& Size, const RendererFlag::BufferFormat& Format)
+{
+    SerializedTextureSource* sourceimage = new SerializedTextureSource(
+        LEMath::IntVector3(Size.Width(), Size.Height(), 1),
+        mImageFilter?mImageFilter->GetMipCount():1,
+        mImageFilter?mImageFilter->GetFilteredImageFormat():Format
+    );
+    size_t imagesize = Size.X() * Size.Y() * RendererFlag::BufferFormatByteSize[static_cast<uint32>(mImageFilter?mImageFilter->GetFilteredImageFormat():Format)];
+    sourceimage->mColorData.Resize(static_cast<uint32>(imagesize));
+    ::memset(sourceimage->GetColorData(), 0, imagesize);
+
+    if (mImageFilter)
+        mImageFilter->FilterImage(nullptr, sourceimage);
+
+    return (IReferenceCountedObject*)(Texture::GenerateFromSourceImage(sourceimage));
 }
 TextureSourceImage* TextureFactory::FilterSourceImage(TextureSourceImage *SourceImage)
 {

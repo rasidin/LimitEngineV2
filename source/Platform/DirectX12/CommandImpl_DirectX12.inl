@@ -353,7 +353,7 @@ namespace LimitEngine {
                 D3D12_INDEX_BUFFER_VIEW IndexBufferView;
                 IndexBufferView.BufferLocation = IndexResource->GetGPUVirtualAddress();
                 IndexBufferView.Format = DXGI_FORMAT_R32_UINT;
-                IndexBufferView.SizeInBytes = ibra.GetSize();
+                IndexBufferView.SizeInBytes = static_cast<uint32>(ibra.GetSize());
             }
         }
         void SetConstantBuffer(uint32 Index, ConstantBuffer *InConstantBuffer) override
@@ -481,7 +481,7 @@ namespace LimitEngine {
         void SetMarker(const char *InMarkerName) override
         {
             if (!mD3DGraphicsCommandList) return;
-            mD3DGraphicsCommandList->SetMarker(0, InMarkerName, strlen(InMarkerName) + 1);
+            mD3DGraphicsCommandList->SetMarker(0, InMarkerName, static_cast<uint32>(strlen(InMarkerName) + 1));
         }
         void BeginEvent(const char *InEventName) override
         {

@@ -18,6 +18,7 @@ class TextureImageFilter
 public:
     virtual bool FilterImage(class TextureSourceImage *srcimg, class SerializedTextureSource *tarimg) = 0;
     virtual RendererFlag::BufferFormat GetFilteredImageFormat() const = 0;
+    virtual uint32 GetMipCount() const = 0;
 };
 class TextureFactory : public ResourceFactory
 {
@@ -37,6 +38,7 @@ public:
     virtual ~TextureFactory() {}
 
     IReferenceCountedObject* Create(const ResourceSourceFactory *SourceFactory, const ResourceFactory::FileData &size) override;
+    IReferenceCountedObject* CreateEmpty(const LEMath::IntSize &Size, const RendererFlag::BufferFormat &Format);
     void Release(IReferenceCountedObject *data) override;
     uint32 GetResourceTypeCode() override { return makeResourceTypeCode("LMDL"); }
 

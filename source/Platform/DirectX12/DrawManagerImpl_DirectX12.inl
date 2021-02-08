@@ -64,7 +64,7 @@ namespace LimitEngine {
         }
         D3D12_CPU_DESCRIPTOR_HANDLE Allocate(uint32 Count = 1)
         {
-            if (Count > mRemainHandleCount) {
+            if (Count > static_cast<uint32>(mRemainHandleCount)) {
                 GenerateNewDescriptorHeaps();
                 mCurrentDescriptorHandle = mDescriptorHeaps.Last()->GetCPUDescriptorHandleForHeapStart();
             }
