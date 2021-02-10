@@ -30,7 +30,7 @@ namespace LimitEngine {
         // Set sprite frames from file
         AutoPointer<ResourceManager::RESOURCE> textResource = LE_ResourceManager.GetResourceWithoutRegister(GlyphFilePath, TextParserFactory::ID);
         if (textResource.Exists()) {
-            if (TextParser *parser = dynamic_cast<TextParser*>(((ResourceManager::RESOURCE*)textResource)->data))
+            if (TextParser *parser = dynamic_cast<TextParser*>(((ResourceManager::RESOURCE*)textResource.Get())->data))
             {
                 TextParser::NODE *node = NULL;
                 if ((node = parser->GetNode("FILETYPE")) && node->values[0] == "FONT")

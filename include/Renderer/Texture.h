@@ -242,7 +242,6 @@ public:
     void SetSourceImage(SerializedTextureSource *InSource)          { if (mSource) delete mSource; mSource = InSource; if (InSource) { mSize = InSource->GetSize(); mDepth = InSource->GetDepth(); mFormat = InSource->GetFormat(); } }
     SerializedTextureSource* GetSourceImage() const                 { return mSource; }
 
-
     virtual bool Serialize(Archive &OutArchive) override;
 
     void SetDebugName(const char *InDebugName);

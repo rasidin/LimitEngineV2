@@ -23,15 +23,6 @@ public:
 class TextureFactory : public ResourceFactory
 {
 public:
-    enum class TextureImportFilter
-    {
-        None = 0,
-        Irradiance,
-        Reflection,
-        EnvironmentBRDF
-    };
-
-public:
     static constexpr ResourceFactory::ID ID = GENERATE_RESOURCEFACTORY_ID("TEXT");
 
     TextureFactory() {}
@@ -48,11 +39,8 @@ public:
     void SetSizeFilteredImage(const LEMath::IntVector2 &InSize) { mFilteredImageSize = InSize; }
     void SetSampleCount(uint32 count) { mSampleCount = count; }
 
-    void SetImportFilter(TextureImportFilter Filter) { mImportFilter = Filter; }
-
 private:
     TextureImageFilter* mImageFilter = nullptr;
-    TextureImportFilter mImportFilter = TextureImportFilter::None;
     LEMath::IntVector2  mFilteredImageSize = LEMath::IntVector2::Zero;
     uint32 mSampleCount = 1024u;
 };

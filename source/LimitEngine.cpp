@@ -144,7 +144,8 @@ void LimitEngine::SetMainCamera(const CameraRefPtr &InCamera)
 Texture* LimitEngine::LoadTexture(const char *filepath, ResourceFactory::ID ID, bool bTransient)
 {
     if (bTransient) {
-        if (AutoPointer<ResourceManager::RESOURCE> TextureResource = mResourceManager->GetResourceWithoutRegister(filepath, ID)) {
+        AutoPointer<ResourceManager::RESOURCE> TextureResource = mResourceManager->GetResourceWithoutRegister(filepath, ID);
+        if (TextureResource.Exists()) {
             return (Texture*)TextureResource->PopData();
         }
     }
@@ -159,7 +160,8 @@ Model* LimitEngine::LoadModel(const char *filepath, ResourceFactory::ID ID, bool
 {
     Model* OutModel = nullptr;
     if (bTransient) {
-        if (AutoPointer<ResourceManager::RESOURCE> TextureResource = mResourceManager->GetResourceWithoutRegister(filepath, ID)) {
+        AutoPointer<ResourceManager::RESOURCE> TextureResource = mResourceManager->GetResourceWithoutRegister(filepath, ID);
+        if (TextureResource.Exists()) {
             OutModel = (Model*)TextureResource->PopData();
         }
     }
