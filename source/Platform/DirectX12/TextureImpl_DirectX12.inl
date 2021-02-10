@@ -71,7 +71,7 @@ namespace LimitEngine {
             resourceDesc.Width = size.Width();
             resourceDesc.Height = size.Height();
             resourceDesc.DepthOrArraySize = 1;
-            resourceDesc.MipLevels = 1;
+            resourceDesc.MipLevels = mipLevels;
             resourceDesc.Format = ConvertBufferFormatToDXGIFormat(format);
             resourceDesc.SampleDesc.Count = 1;
             resourceDesc.SampleDesc.Quality = 0;
@@ -95,7 +95,7 @@ namespace LimitEngine {
                 ID3D12Device* device = static_cast<ID3D12Device*>(LE_DrawManagerRendererAccessor.GetDeviceHandle());
                 ID3D12GraphicsCommandList* cmdlist = static_cast<ID3D12GraphicsCommandList*>(LE_DrawManagerRendererAccessor.GetImmediateCommandList());
 
-                static constexpr uint64 SubResourceCount = 1u;
+                const uint32 SubResourceCount = mipLevels;
                 SIZE_T buffersize = (sizeof(D3D12_PLACED_SUBRESOURCE_FOOTPRINT) + sizeof(UINT) + sizeof(UINT64)) * SubResourceCount;
                 void* buffer = HeapAlloc(GetProcessHeap(), 0, buffersize);
                 D3D12_PLACED_SUBRESOURCE_FOOTPRINT* layouts = static_cast<D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(buffer);
@@ -108,10 +108,14 @@ namespace LimitEngine {
                 D3D12_RANGE range = { 0, 0 };
                 void* mappeddata = nullptr;
                 if (SUCCEEDED(resource->Map(0, &range, &mappeddata))) {
+                    uint8* initdataptr = (uint8*)initData;
                     if (requiredsize != initDataSize) {
-                        size_t srcrowsize = initDataSize / size.Height();
-                        for (uint64 y = 0u; y < size.Height(); y++) {
-                            ::memcpy((uint8*)mappeddata + layouts->Footprint.RowPitch * y, (uint8*)initData + srcrowsize * y, srcrowsize);
+                        for (uint32 mipidx = 0; mipidx < mipLevels; mipidx++) {
+                            size_t srcrowsize = size.Width() * RendererFlag::BufferFormatByteSize[static_cast<int>(mFormat)];
+                            for (uint64 y = 0u; y < size.Height(); y++) {
+                                ::memcpy((uint8*)mappeddata + layouts[mipidx].Offset + layouts[mipidx].Footprint.RowPitch * y, (uint8*)initdataptr, srcrowsize);
+                                initdataptr += srcrowsize;
+                            }
                         }
                     }
                     else {

@@ -31,10 +31,11 @@ namespace LimitEngine {
 			}
 		}
         // When coping pointer
-		inline void operator = (AutoPointer &ptr)
+		inline AutoPointer& operator = (AutoPointer &ptr)
 		{
 			mBuffer = ptr.mBuffer;
 			ptr.mBuffer = nullptr;
+			return *this;
 		}
 		inline void operator = (T* ptr)
 		{
@@ -50,10 +51,6 @@ namespace LimitEngine {
             return output;
         }
         // Get pointer
-		inline operator T* ()
-		{
-			return mBuffer;
-		}
 		inline T* operator->()
 		{
 			return mBuffer;
