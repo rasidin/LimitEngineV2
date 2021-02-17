@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file ReferenceCountedPointer.h
 @brief Reference counted pointer
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 **********************************************************************/
 #ifndef LIMITENGINEV2_CORE_REFERENCECOUNTEDPOINTER_H_
 #define LIMITENGINEV2_CORE_REFERENCECOUNTEDPOINTER_H_

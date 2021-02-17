@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LimitEngine.h
  @brief Main Class of LimitEngine
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 
 #pragma once

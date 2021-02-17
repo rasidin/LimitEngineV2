@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_Debug.h
  @brief for Debug
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2012/6/26 Created by minseob

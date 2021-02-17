@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_Object.h
  @brief Object Class (BaseObject) Overwrite function for memory
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #pragma once
 

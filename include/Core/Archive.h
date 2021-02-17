@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  Archive.h
  @brief Archive for saving resource
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #pragma once
 #include "Core/Object.h"

@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  Sprite.vsh
  @brief Sprite Shader (Vertex)
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 struct VS_INPUT
 {

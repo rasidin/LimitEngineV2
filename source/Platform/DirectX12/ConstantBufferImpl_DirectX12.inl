@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file  LE_ConstantBufferImpl_DirectX12.inl
 @brief ConstantBuffer Implement (DX12)
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 **********************************************************************/
 #include <d3d12.h>
 

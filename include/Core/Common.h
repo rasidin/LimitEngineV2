@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  Common.h
  @brief Common Definitions
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #include <LEPlatform>
 

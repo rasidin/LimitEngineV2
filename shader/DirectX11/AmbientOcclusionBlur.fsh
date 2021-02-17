@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 -----------------------------------------------------------------------
 @file  BilateralBlur.fsh
 @brief Bilateral blur
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 **********************************************************************/
 
 #define KERNEL_RADIUS 5

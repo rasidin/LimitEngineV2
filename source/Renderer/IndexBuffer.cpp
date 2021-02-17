@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  IndexBuffer.cpp
  @brief Index Buffer Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 
 #include "Renderer/IndexBuffer.h"

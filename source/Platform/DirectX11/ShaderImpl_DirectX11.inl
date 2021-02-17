@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file  LE_ShaderImpl_DirectX11.inl
 @brief Shader Implement (DX11)
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 **********************************************************************/
 #ifdef USE_DX11
 #include "Core/Debug.h"

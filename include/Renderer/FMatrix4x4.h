@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_FMatrix4x4.h
  @brief Rect Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2012/10/20 Created by minseob

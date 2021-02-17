@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  ResourceLoader_Windows.cpp
  @brief Resource Loader (Windows)
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 
 #ifdef WINDOWS

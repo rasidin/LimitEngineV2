@@ -4,7 +4,7 @@ Copyright (C), LIMITGAME, 2020
 -----------------------------------------------------------
 @file  LE_Material.h
 @brief Shader parameter(float, vector, matrix, texture)
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 ***********************************************************/
 #pragma once
 

@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  ShaderParameterParser.h
  @brief Get parameter in shader source code
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #pragma once
 

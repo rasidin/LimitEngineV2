@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 --------------------------------------------------------------------
 @file  Draw2D.vs
 @brief Draw 2d vertex shader
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 ********************************************************************/
 struct VS_INPUT
 {

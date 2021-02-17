@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  ModelInstance.cpp
  @brief Model Instance Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 
 #include "Renderer/ModelInstance.h"

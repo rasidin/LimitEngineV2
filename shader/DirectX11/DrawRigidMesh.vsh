@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  DrawRigidMesh.vsh
  @brief Shader for drawing rigid mesh (VertexShader)
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2012/11/18 Created by minseob

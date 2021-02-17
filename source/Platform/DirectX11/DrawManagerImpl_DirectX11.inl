@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file  DrawManagerImpl_DirectX11.inl
 @brief Main File for Windows
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 **********************************************************************/
 #ifdef USE_DX11
 #include <d3d11.h>

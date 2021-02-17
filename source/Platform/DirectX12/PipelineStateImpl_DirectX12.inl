@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 --------------------------------------------------------------------
 @file  PipelineStateImpl_DirectX12.inl
 @brief PipelineState (DirectX12)
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 ********************************************************************/
 #ifndef LIMITENGINEV2_PIPELINESTATEIMPL_DIRECTX12_INL_
 #define LIMITENGINEV2_PIPELINESTATEIMPL_DIRECTX12_INL_

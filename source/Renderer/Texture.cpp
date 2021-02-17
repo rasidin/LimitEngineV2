@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file  LE_Texture.cpp
 @brief Texture
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 ***********************************************************/
 
 #include <LEFloatVector3.h>

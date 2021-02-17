@@ -4,7 +4,7 @@ Copyright (C), LIMITGAME, 2020
 -----------------------------------------------------------
 @file  ResourceFactory.h
 @brief Resource Factory for ResourceManager
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 ***********************************************************/
 #pragma once
 #include "Core/Object.h"

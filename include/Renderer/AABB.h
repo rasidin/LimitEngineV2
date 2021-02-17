@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_AABB.h
  @brief AABB Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2012/12/02 Created by minseob

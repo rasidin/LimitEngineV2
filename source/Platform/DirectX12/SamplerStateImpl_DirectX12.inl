@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 -----------------------------------------------------------
 @file  SamplerStateImpl_DirectX12.inl
 @brief SamplerState (DirectX12)
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 ***********************************************************/
 #ifndef LIMITENGINEV2_SAMPLERSTATEIMPL_DIRECTX12_INL_
 #define LIMITENGINEV2_SAMPLERSTATEIMPL_DIRECTX12_INL_

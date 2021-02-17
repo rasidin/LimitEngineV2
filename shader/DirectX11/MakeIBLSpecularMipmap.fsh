@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  MakeIBLSpecularImage.fsh
  @brief Make IBLSpecularImage
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2017/1/5 Created by minseob

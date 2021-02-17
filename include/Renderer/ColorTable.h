@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_ColorTable.h
  @brief Color Table for form
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2013/09/02 Created by minseob

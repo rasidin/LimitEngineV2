@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file  Material.cpp
 @brief Material Class
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 *********************************************************************/
 
 #include "Renderer/Material.h"

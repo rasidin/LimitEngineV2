@@ -4,7 +4,7 @@ Copyright (C), LIMITGAME, 2020
 -----------------------------------------------------------
 @file  AutoPointer.h
 @brief Auto Release Pointer
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 ***********************************************************/
 #pragma once
 

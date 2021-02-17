@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  Standard.vsh
  @brief Standard shader for models
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 
 #include "CommonDefinitions.shh"

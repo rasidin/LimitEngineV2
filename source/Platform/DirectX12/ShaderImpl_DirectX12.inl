@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file  LE_ShaderImpl_DirectX12.inl
 @brief Shader Implement (DX12)
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 **********************************************************************/
 namespace LimitEngine {
 class ShaderImpl_DirectX12 : public ShaderImpl

@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  TaskManager.cpp
  @brief TaskManager Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 
 #include "Core/Common.h"

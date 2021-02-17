@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file  IndexBufferImpl_DirectX12.inl
 @brief IndexBuffer for rendering
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 **********************************************************************/
 #pragma once
 #include <d3d12.h>

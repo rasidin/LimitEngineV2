@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file  Standard.fsh
 @brief Shader for drawing rigid mesh (FlagShader)
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 **********************************************************************/
 
 #include "CommonDefinitions.shh"

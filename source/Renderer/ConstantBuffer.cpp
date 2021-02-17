@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file  ConstantBuffer.cpp
 @brief Constant buffer
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 **********************************************************************/
 #include "Renderer/ConstantBuffer.h"
 #include "Managers/DrawManager.h"

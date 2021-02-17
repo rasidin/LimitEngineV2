@@ -4,7 +4,7 @@ Copyright (C), LIMITGAME, 2020
 -----------------------------------------------------------
 @file  ArchiveFactory.h
 @brief Creating data from archive
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 ***********************************************************/
 #pragma once
 #include "Containers/VectorArray.h"

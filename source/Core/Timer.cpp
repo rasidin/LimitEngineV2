@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  Timer.cpp
  @brief Timer Class
- @author minseob(leeminseob@outlook.com)
+ @author minseob(https://github.com/rasidin)
  ***********************************************************/
 
 #include <LEPlatform>

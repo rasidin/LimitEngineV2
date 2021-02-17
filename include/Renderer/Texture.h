@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 -----------------------------------------------------------
 @file  Texture.h
 @brief Texture
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 ***********************************************************/
 
 #pragma once

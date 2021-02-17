@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  DrawRigidMesh.fsh
  @brief Shader for drawing rigid mesh (FlagShader)
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2012/11/18 Created by minseob

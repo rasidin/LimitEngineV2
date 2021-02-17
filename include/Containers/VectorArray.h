@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 --------------------------------------------------------------------
 @file  VectorArray.h
 @brief Vector array
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 ********************************************************************/
 #ifndef _LE_VECTORARRAY_H_
 #define _LE_VECTORARRAY_H_

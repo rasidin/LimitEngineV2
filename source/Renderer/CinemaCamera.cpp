@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  CinemaCamera.cpp
  @brief Cinema Camera Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #include "Renderer/CinemaCamera.h"
 

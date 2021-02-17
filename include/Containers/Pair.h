@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 --------------------------------------------------------------------
 @file  MapArray.h
 @brief Vector array
-@author minseob(leeminseob@outlook.com)
+@author minseob(https://github.com/rasidin)
 ********************************************************************/
 #ifndef LIMITENGINEV2_CONTAINERS_PAIR_H_
 #define LIMITENGINEV2_CONTAINERS_PAIR_H_

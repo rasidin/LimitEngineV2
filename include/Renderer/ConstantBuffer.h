@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file  ConstantBuffer.h
 @brief Constant buffer
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 **********************************************************************/
 #ifndef LIMITENGINEV2_RENDERER_CONSTANTBUFFER_H_
 #define LIMITENGINEV2_RENDERER_CONSTANTBUFFER_H_

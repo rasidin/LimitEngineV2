@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  CinemaCamera.h
  @brief Cinema Camera Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #pragma once
 

@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 -----------------------------------------------------------
 @file  SamplerStateImpl_DirectX11.inl
 @brief SamplerState (DirectX11)
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 ***********************************************************/
 #pragma once
 #include <d3d11.h>

@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  Transform.h
  @brief Transform Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #pragma once
 

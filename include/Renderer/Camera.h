@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  Camera.h
  @brief Camera Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #pragma once
 

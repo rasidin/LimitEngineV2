@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file  PostProcessAmbientOcclusion.cpp
 @brief PostProcessAmbientOcclusion Class
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 **********************************************************************/
 #include "PostProcessors/PostProcessAmbientOcclusion.h"
 

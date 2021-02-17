@@ -4,7 +4,7 @@ Copyright (C), LIMITGAME, 2012
 -----------------------------------------------------------
 @file  LE_Thread.h
 @brief Thread
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 -----------------------------------------------------------
 History:
 - 2017/4/19 Created by minseob

@@ -4,7 +4,7 @@ Copyright (C), LIMITGAME, 2012
 -----------------------------------------------------------
 @file  LE_Event.h
 @brief Event for multithread
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 -----------------------------------------------------------
 History:
 - 2017/4/20 Created by minseob

@@ -4,7 +4,7 @@ Copyright (C), LIMITGAME, 2020
 -----------------------------------------------------------
 @file  ThreadImpl_Windows.cpp
 @brief Thread implementation (windows)
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 ***********************************************************/
 #ifdef WINDOWS
 #include <process.h>

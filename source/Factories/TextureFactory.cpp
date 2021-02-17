@@ -4,7 +4,7 @@ Copyright (C), LIMITGAME, 2020
 -----------------------------------------------------------
 @file  TextureFactory.h
 @brief Factory for creating texture
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 ***********************************************************/
 #include "Core/Debug.h"
 #include "Core/Util.h"

@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ---------------------------------------------------------------------
 @file  TextureImpl_DirectX11.inl
 @brief Texture (DirectX11)
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 *********************************************************************/
 #ifdef USE_DX11
 #include <d3d11.h>

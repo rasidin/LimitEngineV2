@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  FloatRay.h
  @brief Ray
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #pragma once
 

@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  DebugImpl_Windows.cpp
  @brief for Debug
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 
 #include "Core/Debug.h"

@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file  DrawManagerImpl_DirectX12.inl
 @brief Main File for Windows
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 **********************************************************************/
 #include <wrl.h>
 #include <dxgi1_4.h>

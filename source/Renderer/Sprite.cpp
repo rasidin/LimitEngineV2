@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  Sprite.cpp
  @brief Sprite
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 
 #include "Renderer/Sprite.h"

@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  RenderContext.cpp
  @brief RenderContext Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #include <LEIntVector2.h>
 

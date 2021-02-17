@@ -4,7 +4,7 @@ Copyright (C), LIMITGAME, 2020
 -----------------------------------------------------------
 @file  IndexBufferImpl_DirectX11.cpp
 @brief Index buffer for directx11
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 ***********************************************************/
 #ifdef USE_DX11
 #include <d3d11.h>

@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file  RenderState.h
 @brief Render state
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 *********************************************************************/
 #ifndef LIMITENGINEV2_RENDERSTATE_H_
 #define LIMITENGINEV2_RENDERSTATE_H_

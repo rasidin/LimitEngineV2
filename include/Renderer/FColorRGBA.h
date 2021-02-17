@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_fColorRGBA.h
  @brief fColorRGBA Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2012/6/17 Created by minseob

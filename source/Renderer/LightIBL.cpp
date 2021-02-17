@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LightIBL.cpp
  @brief Image based lighting Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #include "Renderer/LightIBL.h"
 

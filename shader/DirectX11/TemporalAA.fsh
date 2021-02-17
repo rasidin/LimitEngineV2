@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  TemporalAA.fsh
  @brief TemporalAA post process
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 struct PS_INPUT
 {

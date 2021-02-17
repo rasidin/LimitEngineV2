@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_Camera2D.h
  @brief Camera Class in 2D
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2013/05/19 Created by minseob

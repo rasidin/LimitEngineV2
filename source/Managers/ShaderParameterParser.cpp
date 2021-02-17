@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  ShaderParameterParser.h
  @brief Get parameter in source code
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #include "Core/Debug.h"
 #include "Renderer/ShaderParameterParser.h"

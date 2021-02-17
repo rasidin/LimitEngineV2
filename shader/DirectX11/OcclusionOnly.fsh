@@ -21,33 +21,35 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
-@file  TextParserSourceFactory.inl
-@brief Resource Source Factory for TextParser
+@file  OcclusionOnly.fsh
+@brief Shader for drawing occlusion (FlagShader)
 @author minseob (https://github.com/rasidin)
 **********************************************************************/
-#pragma once
 
-#include "Core/TextParser.h"
-#include "Factories/ResourceSourceFactory.h"
+#include "CommonDefinitions.shh"
+#include "LightingUtilities.shh"
+#include "BRDF.shh"
 
-namespace LimitEngine {
-class TextParserSourceFactory : public ResourceSourceFactory
+struct PS_INPUT
 {
-public:
-    static constexpr ResourceSourceFactory::ID FactoryID = GENERATE_RESOURCEFACTORY_ID("TEPA");
-
-    TextParserSourceFactory() {}
-    virtual ~TextParserSourceFactory() {}
-
-    virtual ID GetID() const override { return FactoryID; }
-
-    virtual void* ConvertRawData(const void *Data, size_t Size) const {
-        TextParser *Output = new TextParser();
-        if (Output->Parse((const char*)Data)) {
-            return (void*)(Output);
-        }
-        delete Output;
-        return nullptr;
-    }
+    float4 Position : SV_POSITION;
+    float4 Normal : NORMAL;
+    float4 Color : COLOR0;
+    float2 Texcoord0 : TEXCOORD0;
+    float4 WorldPosition : POSITION1;
+    float4 WorldNormal : POSITION2;
 };
+
+float4 ps_main_prepass(PS_INPUT In) : SV_TARGET
+{
+    return float4(In.WorldNormal.xyz, 1);
+}
+
+float4 ps_main_basepass(PS_INPUT In) : SV_TARGET
+{
+    uint3 aoResolution = 0;
+    AmbientOcclusionTexture.GetDimensions(0, aoResolution.x, aoResolution.y, aoResolution.z);
+    float2 positionInAOUV = float2((In.Position.x + 0.5) / (float)aoResolution.x, (In.Position.y + 0.5) / (float)aoResolution.y);
+    float AmbientOcclusion = GetAmbientOcclusionValue(positionInAOUV);
+    return float4(0.0, 0.0, 0.0, clamp(1.0 - pow(AmbientOcclusion, 0.8), 0, 1));
 }

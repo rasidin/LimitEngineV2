@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ---------------------------------------------------------------------
 @file  VertexBufferImpl_DirectX12.inl
 @brief VertexBuffer (DirectX12)
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 *********************************************************************/
 #include <d3d12.h>
 #include "Renderer/DrawCommand.h"

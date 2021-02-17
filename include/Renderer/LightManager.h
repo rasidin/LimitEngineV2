@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_LightManager.h
  @brief Manager of lights
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2016/11/09 Created by minseob

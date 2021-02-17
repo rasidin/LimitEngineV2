@@ -4,7 +4,7 @@ Copyright (C), LIMITGAME, 2020
 -----------------------------------------------------------
 @file  EventImpl_Windows.h
 @brief Implementation for Event (Windows)
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 ***********************************************************/
 #ifdef WINDOWS
 namespace LimitEngine {

@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  Draw2D.fsh
  @brief Draw rect (used by sprite)
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 struct PS_INPUT
 {

@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_AABB.cpp
  @brief AABB Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 
 #include "Renderer/AABB.h"

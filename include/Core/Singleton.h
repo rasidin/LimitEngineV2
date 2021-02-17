@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_Singleton.h
  @brief Singleton Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2012/6/12 Created by minseob

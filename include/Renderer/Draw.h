@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_Draw.h
  @brief Base Draw (Rect, Line...)
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2012/6/25 Created by minseob

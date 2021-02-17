@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  SerializableResource.h
  @brief SerializableResource
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #pragma once
 #include "Archive.h"

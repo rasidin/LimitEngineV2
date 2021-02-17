@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_FrameBuffer.h
  @brief Frame Buffer
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2012/12/22 Created by minseob

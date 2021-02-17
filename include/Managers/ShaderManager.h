@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  ShaderManager.h
  @brief Shader Manager
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #pragma once
 

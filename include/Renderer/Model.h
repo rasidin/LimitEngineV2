@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file Model.h
 @brief Model
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 **********************************************************************/
 #ifndef LIMITENGINEV2_RENDERER_MODEL_H_
 #define LIMITENGINEV2_RENDERER_MODEL_H_

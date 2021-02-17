@@ -4,7 +4,7 @@ Copyright (C), LIMITGAME, 2012
 -----------------------------------------------------------
 @file  LE_Platform_Win32.h
 @brief Definitions for platform
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 -----------------------------------------------------------
 History:
 - 2017/4/19 Created by minseob

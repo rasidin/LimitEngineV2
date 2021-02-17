@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  PostProcessManager.cpp
  @brief PostProcessManager Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #include "Managers/PostProcessManager.h"
 

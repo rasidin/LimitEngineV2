@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file  Memory.h
 @brief Definitions of memory
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 **********************************************************************/
 #ifndef LIMITENGINEV2_CORE_MEMORY_H_
 #define LIMITENGINEV2_CORE_MEMORY_H_

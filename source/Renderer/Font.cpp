@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  Font.cpp
  @brief Font Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 
 #include "Renderer/Font.h"

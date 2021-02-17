@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 -----------------------------------------------------------------------
 @file  AmbientOcclusion.fsh
 @brief Post Process Ambient Occlusion (GTAO [Activision 2016])
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 **********************************************************************/
 
 #include "CommonDefinitions.shh"

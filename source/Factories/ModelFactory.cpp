@@ -4,7 +4,7 @@ Copyright (C), LIMITGAME, 2020
 -----------------------------------------------------------
 @file  ModelFactory.h
 @brief Factory for creating models
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 ***********************************************************/
 #include "Factories/ModelFactory.h"
 #include "Factories/ResourceSourceFactory.h"

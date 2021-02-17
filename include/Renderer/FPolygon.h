@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  FPolygon.h
  @brief Polygon
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 
 #ifndef _LE_FPOLYGON_H_

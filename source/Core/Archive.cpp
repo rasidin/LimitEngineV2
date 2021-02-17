@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  Archive.cpp
  @brief Archive for saving resource
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #include "Core/Archive.h"
 

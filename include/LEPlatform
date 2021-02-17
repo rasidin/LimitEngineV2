@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LEPlatform
  @brief Definitions for platform
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
  #pragma once
  #ifdef WINDOWS

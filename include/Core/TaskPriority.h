@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_TaskPriority.h
  @brief Task Priority
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2016/11/1 Created by minseob

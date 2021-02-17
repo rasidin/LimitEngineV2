@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file Shader.h
 @brief Shader
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 **********************************************************************/
 #ifndef LIMITENGINEV2_RENDERER_SHADER_H_
 #define LIMITENGINEV2_RENDERER_SHADER_H_

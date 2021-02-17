@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file   PrivateDefinitions_DirectX12.h
 @brief  Private definitions for DirectX12
-@author minseob(leeminseob@outlook.com)
+@author minseob(https://github.com/rasidin)
 **********************************************************************/
 #pragma once
 #include <d3d12.h>

@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  CommonDefinitions.shh
  @brief Definitions for shading
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
 ***********************************************************/
 
 #define PI 3.14159265359

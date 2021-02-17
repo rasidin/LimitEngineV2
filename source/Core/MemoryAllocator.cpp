@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  MemoryAllocator.cpp
  @brief Memory allocator
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 
 #include "Core/MemoryAllocator.h"

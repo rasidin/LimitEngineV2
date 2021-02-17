@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  Sprite.vsh
  @brief Sprite Shader (Pixel)
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2012/6/25 Created by minseob

@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_Frustum2D.h
  @brief Frustum Class for 2D
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2013/05/19 Created by minseob

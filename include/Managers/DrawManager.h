@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  DrawManager.h
  @brief DrawManager Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 
 #pragma once

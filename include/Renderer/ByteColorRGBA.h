@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  ByteColorRGBA.h
  @brief ByteColorRGBA Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #pragma once
 

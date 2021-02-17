@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_TextParser.cpp
  @brief Text Parser
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 
 #include <string.h>

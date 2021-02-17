@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_Util.h
  @brief Utilities
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2012/6/17 Created by minseob

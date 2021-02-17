@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  VertexBuffer.cpp
  @brief Vertex Buffer
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #pragma once
 

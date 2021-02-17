@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  MetaData.h
  @brief Meta data of class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #pragma once
 #ifndef _METADATA_H_

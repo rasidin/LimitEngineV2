@@ -4,7 +4,7 @@ Copyright (C), LIMITGAME, 2012
 -----------------------------------------------------------
 @file  LE_Graphics
 @brief Graphics common header
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 -----------------------------------------------------------
 History:
 - 2016/10/31 Created by minseob

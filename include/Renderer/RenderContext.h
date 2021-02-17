@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_RenderContext.h
  @brief RenderContext Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2016/11/07 Created by minseob

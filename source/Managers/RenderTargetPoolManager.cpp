@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  RenderTargetPoolManager.cpp
  @brief RenderTargetPool Manager Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 #include "Managers/RenderTargetPoolManager.h"
 #include "Managers/DrawManager.h"

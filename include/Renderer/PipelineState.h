@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 @file  PipelineState.h
 @brief PipelineState
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 **********************************************************************/
 #ifndef LIMITENGINEV2_PIPELINESTATE_H_
 #define LIMITENGINEV2_PIPELINESTATE_H_

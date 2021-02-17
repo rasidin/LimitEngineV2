@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_String.h
  @brief String Class
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2012/6/11 Created by minseob

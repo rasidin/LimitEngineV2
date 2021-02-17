@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 -------------------------------------------------------------------
 @file  TextureImpl_DirectX12.inl
 @brief Texture (DirectX12)
-@author minseob (leeminseob@outlook.com)
+@author minseob (https://github.com/rasidin)
 *******************************************************************/
 #include <d3d12.h>
 

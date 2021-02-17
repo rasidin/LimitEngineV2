@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  Drawfullscreen.fsh
  @brief Draw Fullscreen (used by scenemanager)
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 struct PS_INPUT
 {

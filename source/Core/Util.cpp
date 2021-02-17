@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  Util.cpp
  @brief Utilities
- @author minseob (leeminseob@outlook.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 
 #include <LEIntVector2.h>
