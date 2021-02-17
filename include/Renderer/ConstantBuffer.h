@@ -41,6 +41,7 @@ public:
     virtual ~ConstantBufferImpl() {}
 
     virtual void Create(size_t size, void* initdata) = 0;
+    virtual void Update(void* data) = 0;
 
     virtual void* GetResource() const = 0;
     virtual void* GetConstantBufferView() const = 0;
@@ -52,6 +53,7 @@ public:
     virtual ~ConstantBuffer();
 
     void Create(size_t size, void* initdata);
+    size_t GetSize() const { return mSize; }
 
 private:
     ConstantBufferImpl *mImpl = nullptr;
@@ -65,6 +67,7 @@ public:
     ConstantBufferRendererAccessor(ConstantBuffer* cb)
         : mImpl(cb->mImpl)
     {}
+    void Update(void* data) { if (mImpl) mImpl->Update(data); }
     void* GetResource() const { return mImpl ? mImpl->GetResource() : nullptr; }
     void* GetConstantBufferView() const { return mImpl ? mImpl->GetConstantBufferView() : nullptr; }
 private:

@@ -111,8 +111,10 @@ namespace LimitEngine {
                     uint8* initdataptr = (uint8*)initData;
                     if (requiredsize != initDataSize) {
                         for (uint32 mipidx = 0; mipidx < mipLevels; mipidx++) {
-                            size_t srcrowsize = size.Width() * RendererFlag::BufferFormatByteSize[static_cast<int>(mFormat)];
-                            for (uint64 y = 0u; y < size.Height(); y++) {
+                            uint32 mipwidth = size.Width() >> mipidx;
+                            uint32 mipheight = size.Height() >> mipidx;
+                            size_t srcrowsize = mipwidth * RendererFlag::BufferFormatByteSize[static_cast<int>(format)];
+                            for (uint64 y = 0u; y < mipheight; y++) {
                                 ::memcpy((uint8*)mappeddata + layouts[mipidx].Offset + layouts[mipidx].Footprint.RowPitch * y, (uint8*)initdataptr, srcrowsize);
                                 initdataptr += srcrowsize;
                             }
@@ -124,9 +126,11 @@ namespace LimitEngine {
                     resource->Unmap(0, nullptr);
                 }
 
-                D3D12_TEXTURE_COPY_LOCATION dstlocation = { mResource, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, 0 };
-                D3D12_TEXTURE_COPY_LOCATION srclocation = { resource, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT, *layouts };
-                cmdlist->CopyTextureRegion(&dstlocation, 0, 0, 0, &srclocation, nullptr);
+                for (uint32 mipidx = 0; mipidx < mipLevels; mipidx++) {
+                    D3D12_TEXTURE_COPY_LOCATION dstlocation = { mResource, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, mipidx };
+                    D3D12_TEXTURE_COPY_LOCATION srclocation = { resource, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT, layouts[mipidx] };
+                    cmdlist->CopyTextureRegion(&dstlocation, 0, 0, 0, &srclocation, nullptr);
+                }
 
                 D3D12_RESOURCE_BARRIER barrier;
                 barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;

@@ -39,12 +39,51 @@ public:
     }
 
     void SetupScene() {
+        mCamera = new LimitEngine::CinemaCamera();
+        mCamera->SetFocalLength(30.0f * 18.0f / 16.0f);
+        mCamera->SetPosition(LEMath::FloatVector3(0.0f, 0.0f, -2.85f));
+        mCamera->SetDirection(LEMath::FloatVector3(0.0f, 0.0f, 1.0f));
+        mCamera->SetShutterSpeed(1.0f / 8.0f);
+        mCamera->SetFStop(1.0f / 4.0f);
+        mCamera->SetExposureOffset(-7.0f);
+        Engine->SetMainCamera(mCamera.Get());
+
+        //mBackgroundImage = Engine->LoadTexture("local/reference/Scene_Odaiba/Odaiba.Background.lea", LimitEngine::ArchiveFactory::ID, false);
         //mBackgroundImage = Engine->LoadTexture("local/reference/Scene_Odaiba/Odaiba.Irradiance.lea", LimitEngine::ArchiveFactory::ID, false);
-        mBackgroundImage = Engine->LoadTexture("local/reference/Scene_Odaiba/Odaiba.Background.lea", LimitEngine::ArchiveFactory::ID, false);
+        mBackgroundImage = Engine->LoadTexture("local/reference/Scene_Odaiba/Odaiba.Reflection.lea", LimitEngine::ArchiveFactory::ID, false);
+        //mBackgroundImage = Engine->LoadTexture("textures/EnvironmentBRDF.texture.lea", LimitEngine::ArchiveFactory::ID, false);
 
         if (mBackgroundImage.IsValid()) {
             mBackgroundImage->InitResource();
             Engine->SetBackgroundImage(mBackgroundImage, LimitEngine::BackgroundImageType::Fullscreen);
+        }
+
+        {
+            LimitEngine::LightIBL* DefaultIBL = new LimitEngine::LightIBL();
+
+            if (LimitEngine::Texture* IBLReflectionTexture = Engine->LoadTexture("local/reference/Scene_Odaiba/Odaiba.Reflection.lea", LimitEngine::ArchiveFactory::ID, false)) {
+                IBLReflectionTexture->InitResource();
+                DefaultIBL->SetIBLReflectionTexture(IBLReflectionTexture);
+            }
+            if (LimitEngine::Texture* IBLIrradianceTexture = Engine->LoadTexture("local/reference/Scene_Odaiba/Odaiba.Irradiance.lea", LimitEngine::ArchiveFactory::ID, false)) {
+                IBLIrradianceTexture->InitResource();
+                DefaultIBL->SetIBLIrradianceTexture(IBLIrradianceTexture);
+            }
+            Engine->AddLight(DefaultIBL);
+        }
+
+        mSphereModel = Engine->LoadModel("models/sphere.model.lea", LimitEngine::ArchiveFactory::ID, false);
+        if (mSphereModel.IsValid())
+        {
+            mSphereModel->InitResource();
+            mSphereModelInstanceID = Engine->AddModel(mSphereModel);
+            Engine->UpdateModelTransform(
+                mSphereModelInstanceID,
+                LimitEngine::Transform(
+                LEMath::FloatVector4(0.0f, 0.0f, 0.0f, 0.0f),
+                LEMath::FloatVector4::Zero,
+                LEMath::FloatVector4(0.1f, 0.1f, 0.1f, 0.0f))
+            );
         }
 #if 0 // Temporaily
 #if 0 // 19F test

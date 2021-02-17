@@ -127,7 +127,9 @@ public:
     virtual const size_t GetCompiledCodeSize() const = 0;
     virtual const uint32 GetConstantBufferCount() const = 0;
     virtual const uint32 GetBoundTextureCount() const = 0;
+    virtual const char** GetBoundTextureNames() const = 0;
     virtual const uint32 GetBoundSamplerCount() const = 0;
+    virtual const char** GetBoundSamplerNames() const = 0;
     virtual const uint32 GetUAVCount() const = 0;
 
 private:

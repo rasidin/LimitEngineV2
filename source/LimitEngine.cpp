@@ -69,11 +69,11 @@ void LimitEngine::Init(WINDOW_HANDLE handle, const InitializeOptions &Options)
     //    Factory->SetSizeFilteredImage(LEMath::IntVector2(128, 128));
     //    Factory->SetSampleCount(256);
     //}
-    //if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("textures/EnvironmentBRDF.texture.lea", ArchiveFactory::ID)) {
-    //    mEnvironmentBRDF = dynamic_cast<Texture*>(LoadedResource->data);
-    //    mEnvironmentBRDF->InitResource();
-    //    mDrawManager->SetEnvironmentBRDFTexture(mEnvironmentBRDF);
-    //}
+    if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("textures/EnvironmentBRDF.texture.lea", ArchiveFactory::ID)) {
+        mEnvironmentBRDF = dynamic_cast<Texture*>(LoadedResource->data);
+        mEnvironmentBRDF->InitResource();
+        mDrawManager->SetEnvironmentBRDFTexture(mEnvironmentBRDF);
+    }
 
     //if (const ResourceManager::RESOURCE *LoadedResource = LE_ResourceManager.GetResourceWithRegister("textures/BlueNoise.texture.text", TextureFactory::ID)) {
     //    mBlueNoiseTexture = dynamic_cast<Texture*>(LoadedResource->data);

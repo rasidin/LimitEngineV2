@@ -1,12 +1,30 @@
-/***********************************************************
- LIMITEngine Source File
- Copyright (C), LIMITGAME, 2020
- -----------------------------------------------------------
- @file  Model.cpp
- @brief Model Class
- @author minseob (leeminseob@outlook.com)
- ***********************************************************/
+/*********************************************************************
+Copyright(c) 2020 LIMITGAME
 
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this softwareand associated documentation
+files(the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify,
+merge, publish, distribute, sublicense, and /or sell copies of
+the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions :
+
+The above copyright noticeand this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+----------------------------------------------------------------------
+@file Model.cpp
+@brief Model
+@author minseob (leeminseob@outlook.com)
+**********************************************************************/
 #include "Renderer/Model.h"
 
 #include <LEFloatVector3.h>
@@ -37,7 +55,7 @@ namespace LimitEngine {
         *this << InMesh.rot;
         *this << InMesh.worldMatrix;
 
-        *this << (SerializableResource*)InMesh.vertexbuffer;
+        *this << (SerializableResource*)InMesh.vertexbuffer.Get();
 
         uint32 NumDrawGroups = InMesh.drawgroups.count();
         *this << NumDrawGroups;
@@ -61,13 +79,13 @@ namespace LimitEngine {
     {
         indexBuffer = new IndexBuffer();
         indexBuffer->Create(indices.count() * 3, &indices[0]);
+        for (int psidx = 0; psidx < static_cast<int>(RenderPass::NumOfRenderPass); psidx++) {
+            pipelinestates[psidx] = new PipelineState();
+        }
     }
 
     void Model::_MESH::InitResource()
     {
-        for (uint32 Index = 0; Index < drawgroups.count(); Index++) {
-            drawgroups[Index]->InitResource();
-        }
         vertexbuffer->InitResource();
     }
 
@@ -131,6 +149,7 @@ namespace LimitEngine {
                         break;
                     }
                 }
+                mMeshes[Index]->drawgroups[DGIdx]->InitResource();
             }
         }
     }
@@ -212,7 +231,7 @@ namespace LimitEngine {
                         TextParser::NODE *verticesNode = eleNode->FindChild("VERTICES");
                         if (verticesNode) { // Make vertices
                             mesh->vertexbuffer = new RigidVertexBuffer();
-                            RigidVertexBuffer *vtxbuf = (VertexBuffer<FVF_PNCTTB, SIZE_PNCTTB>*)mesh->vertexbuffer;
+                            RigidVertexBuffer *vtxbuf = (VertexBuffer<FVF_PNCTTB, SIZE_PNCTTB>*)mesh->vertexbuffer.Get();
                             RigidVertex *vtxptr = new RigidVertex[verticesNode->children.count()]();
                             for (uint32 i=0;i<verticesNode->children.count();i++) {
                                 TextParser::NODE *vtxNode = verticesNode->children[i];
@@ -325,7 +344,7 @@ namespace LimitEngine {
                 mMeshes.push_back(mesh);
                 if (rapidxml::xml_node<const char> *verticesNode = meshNode->first_node("vertices")) {
                     mesh->vertexbuffer = new RigidVertexBuffer();
-                    RigidVertexBuffer *vtxbuf = (VertexBuffer<FVF_PNCTTB, SIZE_PNCTTB>*)mesh->vertexbuffer;
+                    RigidVertexBuffer *vtxbuf = (VertexBuffer<FVF_PNCTTB, SIZE_PNCTTB>*)mesh->vertexbuffer.Get();
                     VectorArray<RigidVertex> RigidVertices;
                     RigidVertices.Reserve(MeshVerticesUnit);
                     for (rapidxml::xml_node<const char> *vertexNode = verticesNode->first_node(); vertexNode; vertexNode = vertexNode->next_sibling()) {
@@ -511,6 +530,12 @@ namespace LimitEngine {
             for(uint32 j=0;j<mesh->drawgroups.count();j++)
             {
                 DRAWGROUP *drawGroup = mesh->drawgroups[j];
+                const bool NeedToGeneratePipelineState = drawGroup->pipelinestates[static_cast<int>(rs.GetRenderPass())]->IsValid() == false;
+                PipelineStateDescriptor desc = rs.GetPipelineStateDescriptor();
+                // Set input
+                if (NeedToGeneratePipelineState) {
+                    mesh->vertexbuffer->GenerateInputElementDescriptors(desc);
+                }
                 // Set material
                 if (Material *material = drawGroup->material)
                 {
@@ -523,13 +548,22 @@ namespace LimitEngine {
                     //LE_LightManager.ApplyLight(rsCopied, NULL);
 
                     // Bind material
-                    material->Bind(rsCopied);
+                    material->ReadyToRender(rsCopied, desc);
                 }
+                // Setup pipeline state
+                if (NeedToGeneratePipelineState) {
+                    desc.Finalize();
+                    drawGroup->pipelinestates[static_cast<int>(rs.GetRenderPass())]->Init(desc);
+                }
+
+                DrawCommand::SetPipelineState(drawGroup->pipelinestates[static_cast<int>(rs.GetRenderPass())].Get());
+                if (Material* material = drawGroup->material) material->Bind(rs);
+
                 // Draw
-                DrawCommand::BindVertexBuffer(mesh->vertexbuffer);
-                DrawCommand::BindIndexBuffer(drawGroup->indexBuffer);
+                DrawCommand::BindVertexBuffer(mesh->vertexbuffer.Get());
+                DrawCommand::BindIndexBuffer(drawGroup->indexBuffer.Get());
                 DrawCommand::DrawIndexedPrimitive( RendererFlag::PrimitiveTypes::TRIANGLELIST,
-                                                   static_cast<uint32>(((RigidVertexBuffer *)mesh->vertexbuffer)->GetSize()), 
+                                                   static_cast<uint32>(((RigidVertexBuffer *)mesh->vertexbuffer.Get())->GetSize()), 
                                                    static_cast<uint32>(drawGroup->indexBuffer->GetSize()));
             }
         }
@@ -585,7 +619,7 @@ namespace LimitEngine {
     {
         for (uint32 i=0;i<mMeshes.size();i++)
         {
-            RigidVertex *vtxptr = (RigidVertex*)((RigidVertexBuffer *)mMeshes[i]->vertexbuffer)->GetBuffer();
+            RigidVertex *vtxptr = (RigidVertex*)((RigidVertexBuffer *)mMeshes[i]->vertexbuffer.Get())->GetBuffer();
             if (vtxptr == NULL || vtxptr[0].GetBinormal() != LEMath::FloatVector3::Zero && vtxptr[0].GetTangent() != LEMath::FloatVector3::Zero)
                 continue;
             for (uint32 l=0;l<mMeshes[i]->drawgroups.size();l++)

@@ -28,12 +28,18 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 #include "Renderer/Material.h"
 
+#include "Core/MemoryAllocator.h"
 #include "Factories/TextureFactory.h"
 #include "Managers/DrawManager.h"
 #include "Managers/ResourceManager.h"
 #include "Managers/ShaderManager.h"
 #include "Renderer/DrawCommand.h"
 #include "Renderer/Shader.h"
+
+#include "Shaders/Standard_prepass.vs.h"
+#include "Shaders/Standard_prepass.ps.h"
+#include "Shaders/Standard_basepass.vs.h"
+#include "Shaders/Standard_basepass.ps.h"
 
 namespace LimitEngine {
     class RendererTask_MaterialSetupShaderParameters : public RendererTask
@@ -55,21 +61,23 @@ namespace LimitEngine {
         *this << InMaterial.mId;
         *this << InMaterial.mName;
         String shaderName;
-        if (InMaterial.mShader[0].IsValid()) {
-            String ShaderPrefix;
-            String RenderPass;
-            InMaterial.mShader[0]->GetName().Split(".", ShaderPrefix, RenderPass);
-            shaderName = ShaderPrefix;
-        }
-        if (IsSaving() && !InMaterial.mShader[0].IsValid()) {
-            *this << InMaterial.mName;
-        }
-        else {
+        //if (InMaterial.mVertexShader[0].IsValid()) {
+        //    String ShaderPrefix;
+        //    String RenderPass;
+        //    InMaterial.mShader[0]->GetName().Split(".", ShaderPrefix, RenderPass);
+        //    shaderName = ShaderPrefix;
+        //}
+        //if (IsSaving() && !InMaterial.mShader[0].IsValid()) {
+        //    *this << InMaterial.mName;
+        //}
+        //else 
+        {
             *this << shaderName;
         }
         if (IsLoading()) {
             for (uint32 RenderPassIndex = 0; RenderPassIndex < (uint32)RenderPass::NumOfRenderPass; RenderPassIndex++) {
-                InMaterial.mShader[RenderPassIndex] = LE_ShaderManager.GetShader(shaderName + "." + RenderPassNames[RenderPassIndex]);
+                InMaterial.mVertexShader[RenderPassIndex] = LE_ShaderManager.GetShader(shaderName + "_" + RenderPassNames[RenderPassIndex] + "_VS");
+                InMaterial.mPixelShader[RenderPassIndex] = LE_ShaderManager.GetShader(shaderName + "_" + RenderPassNames[RenderPassIndex] + "_PS");
             }
         }
         return *this;
@@ -80,6 +88,8 @@ namespace LimitEngine {
         , mName()
     {
         ::memset(mIsEnabledRenderPass, 0, sizeof(mIsEnabledRenderPass));
+        ::memset(mVSConstantUpdateBuffer, 0, sizeof(mVSConstantUpdateBuffer));
+        ::memset(mPSConstantUpdateBuffer, 0, sizeof(mPSConstantUpdateBuffer));
         mIsEnabledRenderPass[(uint32)RenderPass::PrePass] = true;
         mIsEnabledRenderPass[(uint32)RenderPass::BasePass] = true;
     }
@@ -90,15 +100,27 @@ namespace LimitEngine {
         }
         mParameters.Clear();
         for (uint32 Index = 0; Index < (uint32)RenderPass::NumOfRenderPass; Index++) {
-            mShader[Index] = nullptr;
-            mConstantBuffer[Index] = nullptr;
+            mVertexShader[Index] = nullptr;
+            mPixelShader[Index] = nullptr;
+            mVSConstantBuffer[Index] = nullptr;
+            mPSConstantBuffer[Index] = nullptr;
+            if (mVSConstantUpdateBuffer[Index]) {
+                MemoryAllocator::Free(mVSConstantUpdateBuffer[Index]);
+                mVSConstantUpdateBuffer[Index] = nullptr;
+            }
+            if (mPSConstantUpdateBuffer[Index]) {
+                MemoryAllocator::Free(mPSConstantUpdateBuffer[Index]);
+                mPSConstantUpdateBuffer[Index] = nullptr;
+            }
         }
     }
     Material* Material::Load(TextParser::NODE *root)
     {
         // TODO : Share shader between materials...
-        for (uint32 Index = 0; Index < (uint32)RenderPass::NumOfRenderPass; Index++)
-            mShader[Index] = nullptr;
+        for (uint32 Index = 0; Index < (uint32)RenderPass::NumOfRenderPass; Index++) {
+            mVertexShader[Index] = nullptr;
+            mPixelShader[Index] = nullptr;
+        }
 
         //bool CompiledShaders = false;
 		bool SucceedCompilingVS = false;
@@ -114,20 +136,12 @@ namespace LimitEngine {
             else if (node->name == "SHADER") {
                 String shaderName = node->values[0];
                 for (uint32 Index = 0; Index < (uint32)RenderPass::NumOfRenderPass; Index++) {
-                    if (ShaderManager::IsUsable())
-                        mShader[Index] = LE_ShaderManager.GetShader(shaderName + "." + RenderPassNames[Index]);
+                    if (ShaderManager::IsUsable()) {
+                        mVertexShader[Index] = LE_ShaderManager.GetShader(shaderName + "_" + RenderPassNames[Index] + "_VS");
+                        mPixelShader[Index] = LE_ShaderManager.GetShader(shaderName + "_" + RenderPassNames[Index] + "_PS");
+                    }
                 }
             }
-    //        else if (node->name == "VERTEXSHADER") {
-    //            if (!mShader.IsValid()) mShader = new Shader();
-    //            CompiledShaders = true;
-				//SucceedCompilingVS = mShader->Compile(node->values[0], Shader::TYPE_VERTEX);
-    //        }
-    //        else if (node->name == "PIXELSHADER") {
-    //            if (!mShader.IsValid()) mShader = new Shader();
-    //            CompiledShaders = true;
-    //            SucceedCompilingPS = mShader->Compile(node->values[0], Shader::TYPE_PIXEL);
-    //        }
             else { // Texture or Parameter
                 if (node->values.count() == 1) {
                     if (node->IsValueNumber(0)) { // float
@@ -164,8 +178,10 @@ namespace LimitEngine {
     }
     Material* Material::Load(rapidxml::xml_node<const char> *XMLNode)
     {
-        for (uint32 Index = 0; Index < (uint32)RenderPass::NumOfRenderPass; Index++)
-            mShader[Index] = nullptr;
+        for (uint32 Index = 0; Index < (uint32)RenderPass::NumOfRenderPass; Index++) {
+            mVertexShader[Index] = nullptr;
+            mPixelShader[Index] = nullptr;
+        }
 
         if (rapidxml::xml_node<const char> *IDNode = XMLNode->first_node("ID")) {
             mId = IDNode->value();
@@ -174,8 +190,10 @@ namespace LimitEngine {
             String shaderName(ShaderNode->value());
             mName = shaderName;
             for (uint32 Index = 0; Index < (uint32)RenderPass::NumOfRenderPass; Index++) {
-                if (ShaderManager::IsUsable())
-                    mShader[Index] = LE_ShaderManager.GetShader(shaderName + "." + RenderPassNames[Index]);
+                if (ShaderManager::IsUsable()) {
+                    mVertexShader[Index] = LE_ShaderManager.GetShader(shaderName + "_" + RenderPassNames[Index] + "_VS");
+                    mPixelShader[Index] = LE_ShaderManager.GetShader(shaderName + "_" + RenderPassNames[Index] + "_PS");
+                }
             }
         }
 
@@ -183,22 +201,42 @@ namespace LimitEngine {
     }
     bool Material::IsEnabledRenderPass(const RenderPass& InRenderPass) const
     {
-        return mIsEnabledRenderPass[(uint32)InRenderPass] && mShader[(uint32)InRenderPass].IsValid();
+        return mIsEnabledRenderPass[(uint32)InRenderPass] && mPixelShader[(uint32)InRenderPass].IsValid();
     }
     void Material::setupShaderParameters()
     {
-        //for (uint32 renderPassIndex = 0; renderPassIndex < (uint32)RenderPass::NumOfRenderPass; renderPassIndex++) {
-        //    if (!mShader[renderPassIndex].IsValid())
-        //        continue;
-
-        //    for (uint32 paramIndex = 0; paramIndex < mParameters.size(); paramIndex++) {
-        //        mParameters.GetAt(paramIndex).value.SetIndexOfShaderParameter(
-        //            renderPassIndex, mShader[renderPassIndex]->GetUniformLocation(mParameters.GetAt(paramIndex).key));
-        //    }
-
-        //    mConstantBuffer[renderPassIndex] = new ConstantBuffer();
-        //    mConstantBuffer[renderPassIndex]->Create(mShader[renderPassIndex].Get());
-        //}
+        for (int rpidx = 0; rpidx < static_cast<int>(RenderPass::NumOfRenderPass); rpidx++) {
+            if (mVertexShader[rpidx].IsValid()) {
+                if (mVertexShader[rpidx]->GetBoundTextureCount())
+                    mVSTexturePosition[rpidx].Setup(mVertexShader[rpidx]->GetBoundTextureNames(), mVertexShader[rpidx]->GetBoundTextureCount());
+                if (mVertexShader[rpidx]->GetBoundSamplerCount())
+                    mVSSamplerPosition[rpidx].Setup(mVertexShader[rpidx]->GetBoundSamplerNames(), mVertexShader[rpidx]->GetBoundSamplerCount());
+                if (mVertexShader[rpidx]->GetShaderHash() == Standard_prepass_VS::GetHash()) {
+                    mVSConstantBuffer[rpidx] = new ConstantBuffer();
+                    mVSConstantBuffer[rpidx]->Create(sizeof(Standard_prepass_VS::ConstantBuffer0), nullptr);
+                    mVSConstantUpdateBuffer[rpidx] = MemoryAllocator::Alloc(sizeof(Standard_prepass_VS::ConstantBuffer0));
+                    mVSShaderDriver[rpidx].Setup(*(Standard_prepass_VS::ConstantBuffer0*)mVSConstantUpdateBuffer[rpidx]);
+                }
+                else if (mVertexShader[rpidx]->GetShaderHash() == Standard_basepass_VS::GetHash()) {
+                    mVSConstantBuffer[rpidx] = new ConstantBuffer();
+                    mVSConstantBuffer[rpidx]->Create(sizeof(Standard_basepass_VS::ConstantBuffer0), nullptr);
+                    mVSConstantUpdateBuffer[rpidx] = MemoryAllocator::Alloc(sizeof(Standard_basepass_VS::ConstantBuffer0));
+                    mVSShaderDriver[rpidx].Setup(*(Standard_basepass_VS::ConstantBuffer0*)mVSConstantUpdateBuffer[rpidx]);
+                }
+            }
+            if (mPixelShader[rpidx].IsValid()) {
+                if (mPixelShader[rpidx]->GetBoundTextureCount())
+                    mPSTexturePosition[rpidx].Setup(mPixelShader[rpidx]->GetBoundTextureNames(), mPixelShader[rpidx]->GetBoundTextureCount());
+                if (mPixelShader[rpidx]->GetBoundSamplerCount())
+                    mPSSamplerPosition[rpidx].Setup(mPixelShader[rpidx]->GetBoundSamplerNames(), mPixelShader[rpidx]->GetBoundSamplerCount());
+                if (mPixelShader[rpidx]->GetShaderHash() == Standard_basepass_PS::GetHash()) {
+                    mPSConstantBuffer[rpidx] = new ConstantBuffer();
+                    mPSConstantBuffer[rpidx]->Create(sizeof(Standard_basepass_PS::ConstantBuffer0), nullptr);
+                    mPSConstantUpdateBuffer[rpidx] = MemoryAllocator::Alloc(sizeof(Standard_basepass_PS::ConstantBuffer0));
+                    mPSShaderDriver[rpidx].Setup(*(Standard_basepass_PS::ConstantBuffer0*)mPSConstantUpdateBuffer[rpidx]);
+                }
+            }
+        }
     }
     void Material::SetupShaderParameters()
     {
@@ -207,38 +245,37 @@ namespace LimitEngine {
             LE_DrawManager.AddRendererTask(rt_MaterialSetupShaderParameter);
         }
     }
+    void Material::ReadyToRender(const RenderState& rs, PipelineStateDescriptor& desc)
+    {
+        uint32 renderPass = (uint32)rs.GetRenderPass();
+        if (mVertexShader[renderPass].IsValid() && mPixelShader[renderPass].IsValid()) {
+            desc.Shaders[static_cast<int>(Shader::Type::Vertex)] = mVertexShader[renderPass].Get();
+            desc.Shaders[static_cast<int>(Shader::Type::Pixel)] = mPixelShader[renderPass].Get();
+
+            uint32 cbidx = 0u;
+            if (mVSConstantBuffer[renderPass].IsValid()) {
+                rs.SetToShaderDriver(mVSShaderDriver[renderPass]);
+                DrawCommand::UpdateConstantBuffer(mVSConstantBuffer[renderPass].Get(), mVSConstantUpdateBuffer[renderPass], mVSConstantBuffer[renderPass]->GetSize());
+            }
+            if (mPSConstantBuffer[renderPass].IsValid()) {
+                rs.SetToShaderDriver(mPSShaderDriver[renderPass]);
+                DrawCommand::UpdateConstantBuffer(mPSConstantBuffer[renderPass].Get(), mPSConstantUpdateBuffer[renderPass], mPSConstantBuffer[renderPass]->GetSize());
+            }
+        }
+    }
     void Material::Bind(const RenderState &rs)
     {
         uint32 renderPass = (uint32)rs.GetRenderPass();
-        //if (mShader[renderPass].IsValid()) {
-        //    DrawCommand::BindShader(mShader[renderPass].Get());
-        //    DrawCommand::BindConstantBuffer(mConstantBuffer[renderPass].Get());
-
-        //    for (uint32 prmidx = 0; prmidx < mParameters.size(); prmidx++) {
-        //        int indexOfShaderParameter = mParameters.GetAt(prmidx).value.IndexOfShaderParameter(renderPass);
-        //        if (indexOfShaderParameter >= 0) {
-        //            ShaderParameter &shaderParameter = mParameters.GetAt(prmidx).value;
-        //            switch (shaderParameter.GetType())
-        //            {
-        //            case ShaderParameter::Type_Float:
-        //                mShader[renderPass]->SetUniformFloat1(mConstantBuffer[renderPass].Get(), indexOfShaderParameter, shaderParameter);
-        //                break;
-        //            case ShaderParameter::Type_Float2:
-        //                mShader[renderPass]->SetUniformFloat2(mConstantBuffer[renderPass].Get(), indexOfShaderParameter, shaderParameter);
-        //                break;
-        //            case ShaderParameter::Type_Float3:
-        //                mShader[renderPass]->SetUniformFloat3(mConstantBuffer[renderPass].Get(), indexOfShaderParameter, shaderParameter);
-        //                break;
-        //            case ShaderParameter::Type_Float4:
-        //                mShader[renderPass]->SetUniformFloat4(mConstantBuffer[renderPass].Get(), indexOfShaderParameter, shaderParameter);
-        //                break;
-        //            default:
-        //                break;
-        //            }
-        //        }
-        //    }
-
-        //    mShader[renderPass]->ApplyDrivers(rs, this);
-        //}
+        uint32 cbidx = 0u;
+        rs.SetTextures(mVSTexturePosition[renderPass]);
+        rs.SetSamplers(mVSSamplerPosition[renderPass]);
+        rs.SetTextures(mPSTexturePosition[renderPass]);
+        rs.SetSamplers(mPSSamplerPosition[renderPass]);
+        if (mVSConstantBuffer[renderPass].IsValid()) {
+            DrawCommand::SetConstantBuffer(cbidx++, mVSConstantBuffer[renderPass].Get());
+        }
+        if (mPSConstantBuffer[renderPass].IsValid()) {
+            DrawCommand::SetConstantBuffer(cbidx++, mPSConstantBuffer[renderPass].Get());
+        }
     }
 }

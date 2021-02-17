@@ -152,9 +152,10 @@ void SceneManager::PostInit(const InitializeOptions &InitOptions)
         PipelineStateDescriptor psdesc;
         psdesc.SetRenderTargetBlendEnabled(0, false);
         psdesc.SetRenderTargetFormat(0, mSceneColor.Get());
-        psdesc.SetDepthEnabled(false);
+        psdesc.SetDepthEnabled(true);
         psdesc.SetDepthFunc(RendererFlag::TestFlags::Always);
         psdesc.SetStencilEnabled(false);
+        psdesc.SetDepthWriteMask(RendererFlag::DepthWriteMask::All);
         psdesc.Shaders[static_cast<int>(Shader::Type::Pixel)] = mBackgroundShaders[bpsidx];
 
         LE_Draw2DManager.BuildPipelineState(psdesc);
@@ -351,8 +352,10 @@ void SceneManager::drawPrePass()
     RenderState PrePassRenderState = LE_DrawManager.GetRenderState();
     PrePassRenderState.SetRenderPass(RenderPass::PrePass);
     DrawCommand::SetRenderTarget(0, mSceneNormal.Get(), mSceneDepth.Get());
-    //DrawCommand::SetEnable((uint32)RendererFlag::EnabledFlags::DEPTH_WRITE);
-    //DrawCommand::SetDepthFunc(RendererFlag::TestFlags::LEQUAL);
+    PrePassRenderState.SetRenderTarget(0, mSceneNormal.Get(), mSceneDepth.Get());
+    PrePassRenderState.SetDepthEnabled(true);
+    PrePassRenderState.SetDepthWriteMask(RendererFlag::DepthWriteMask::All);
+    PrePassRenderState.SetDepthFunc(RendererFlag::TestFlags::LEqual);
     for (uint32 mdlidx = 0; mdlidx < mModels.count(); mdlidx++) {
         mModels[mdlidx]->Draw(PrePassRenderState);
     }
@@ -386,8 +389,10 @@ void SceneManager::drawBasePass()
     RenderState BasePassRenderState = LE_DrawManager.GetRenderState();
     BasePassRenderState.SetRenderPass(RenderPass::BasePass);
     DrawCommand::SetRenderTarget(0, mSceneColor.Get(), mSceneDepth.Get());
-    //DrawCommand::SetDisable((uint32)RendererFlag::EnabledFlags::DEPTH_WRITE);
-    //DrawCommand::SetDepthFunc(RendererFlag::TestFlags::EQUAL);
+    BasePassRenderState.SetRenderTarget(0, mSceneColor.Get(), mSceneDepth.Get());
+    BasePassRenderState.SetDepthEnabled(true);
+    BasePassRenderState.SetDepthWriteMask(RendererFlag::DepthWriteMask::Zero);
+    BasePassRenderState.SetDepthFunc(RendererFlag::TestFlags::Equal);
     //DrawCommand::SetBlendFunc(0, RendererFlag::BlendFlags::ALPHABLEND);
     for (uint32 mdlidx = 0; mdlidx < mModels.count(); mdlidx++) {
         mModels[mdlidx]->Draw(BasePassRenderState);
@@ -444,18 +449,18 @@ void SceneManager::Draw()
     DrawCommand::ResourceBarrier(mSceneColor.Get(), ResourceState::RenderTarget);
     DrawCommand::ResourceBarrier(mSceneDepth.Get(), ResourceState::DepthWrite);
     drawBackground();
-    //drawPrePass();
+    drawPrePass();
     //PooledRenderTarget AORenderTarget = drawAmbientOcclusion();
     //if (AORenderTarget.Get())
     //    mPendingReleaseRenderTargets[PendingDeleteRenderTargetSlot] = AORenderTarget;
     //LE_DrawManager.SetAmbientOcclusionTexture(AORenderTarget);
-    //drawBasePass();
+    drawBasePass();
     //drawTranslucencyPass();
     DrawCommand::EndScene();
     DrawCommand::ResourceBarrier(mSceneNormal.Get(), ResourceState::GenericRead);
     DrawCommand::ResourceBarrier(mSceneColor.Get(), ResourceState::GenericRead);
     DrawCommand::ResourceBarrier(mSceneDepth.Get(), ResourceState::DepthRead);
-    DrawCommand::SetRenderTarget(0, static_cast<TextureInterface*>(LE_DrawManager.GetFrameBufferTexture().Get()), nullptr);
+    //DrawCommand::SetRenderTarget(0, static_cast<TextureInterface*>(LE_DrawManager.GetFrameBufferTexture().Get()), nullptr);
     DrawCommand::EndEvent();
 }
 

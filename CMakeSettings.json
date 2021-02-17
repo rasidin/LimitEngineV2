@@ -7,7 +7,7 @@
       "inheritEnvironments": [ "msvc_x64" ],
       "buildRoot": "${projectDir}\\build\\${name}",
       "installRoot": "${projectDir}\\install\\${name}",
-      "cmakeCommandArgs": "-DMAKE_TEST=ON -DRAYTRACING=ON",
+      "cmakeCommandArgs": "-DMAKE_LIMITENGINE_TEST=ON -DRAYTRACING=ON",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "variables": []

@@ -1,26 +1,49 @@
-/***********************************************************
- LIMITEngine Header File
- Copyright (C), LIMITGAME, 2020
- -----------------------------------------------------------
- @file  Model.h
- @brief Model Class
- @author minseob (leeminseob@outlook.com)
- ***********************************************************/
-#pragma once 
+/*********************************************************************
+Copyright(c) 2020 LIMITGAME
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this softwareand associated documentation
+files(the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify,
+merge, publish, distribute, sublicense, and /or sell copies of
+the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions :
+
+The above copyright noticeand this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+----------------------------------------------------------------------
+@file Model.h
+@brief Model
+@author minseob (leeminseob@outlook.com)
+**********************************************************************/
+#ifndef LIMITENGINEV2_RENDERER_MODEL_H_
+#define LIMITENGINEV2_RENDERER_MODEL_H_
+
+#include <LERenderer>
 
 #include <LEIntVector3.h>
 #include <LEFloatVector3.h>
 #include <LEFloatMatrix4x4.h>
 
+#include "Containers/VectorArray.h"
 #include "Core/ReferenceCountedObject.h"
 #include "Core/TextParser.h"
 #include "Core/SerializableResource.h"
 #include "Renderer/AABB.h"
 #include "Renderer/FPolygon.h"
 #include "Renderer/FRay.h"
+#include "Renderer/PipelineState.h"
 #include "Renderer/IndexBuffer.h"
 #include "Renderer/RenderState.h"
-#include "Containers/VectorArray.h"
 #include "Renderer/Vertex.h"
 #include "Renderer/VertexBuffer.h"
 #include "Core/String.h"
@@ -43,27 +66,32 @@ namespace LimitEngine {
 
         typedef struct _DRAWGROUP
         {
-            String                  materialID;
+            String                              materialID;
 
-            Material                *material;
-            VectorArray<LEMath::IntVector3>    indices;
-            IndexBuffer             *indexBuffer;
+            Material                           *material;
+            VectorArray<LEMath::IntVector3>     indices;
+            IndexBufferRefPtr                   indexBuffer;
+
+            PipelineStateRefPtr                 pipelinestates[static_cast<int>(RenderPass::NumOfRenderPass)];
 
             ~_DRAWGROUP()
             {
-                if (indexBuffer) delete indexBuffer;
+                indexBuffer = nullptr;
+                for (int psidx = 0; psidx < static_cast<int>(RenderPass::NumOfRenderPass); psidx++) {
+                    pipelinestates[psidx].Release();
+                }
             }
             void InitResource();
         } DRAWGROUP;
 
         typedef struct _MESH
         {
-            LEMath::FloatVector3                 pos;
-            LEMath::FloatVector3                 scl;
-            LEMath::FloatVector3                 rot;
-            LEMath::FloatMatrix4x4               worldMatrix;
+            LEMath::FloatVector3     pos;
+            LEMath::FloatVector3     scl;
+            LEMath::FloatVector3     rot;
+            LEMath::FloatMatrix4x4   worldMatrix;
             
-            VertexBufferGeneric*     vertexbuffer;
+            VertexBufferRefPtr       vertexbuffer;
             VectorArray<DRAWGROUP*>  drawgroups;
             _MESH()
             {
@@ -78,9 +106,7 @@ namespace LimitEngine {
                 for(uint32 i=0;i<drawgroups.size();i++)
                     delete drawgroups[i];
                 drawgroups.Clear();
-				if(vertexbuffer)
-					delete vertexbuffer;
-				vertexbuffer = NULL;
+				vertexbuffer = nullptr;
             }
             void Preprocess()
             {
@@ -158,3 +184,4 @@ namespace LimitEngine {
         VectorArray<Material*>   mMaterials;
     };
 }
+#endif // LIMITENGINEV2_RENDERER_MODEL_H_

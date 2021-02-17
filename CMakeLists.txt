@@ -8,9 +8,10 @@ add_subdirectory(LEShaderConverter)
 add_subdirectory(LEMath)
 include_directories(LEMath/include)
 
-option(MAKE_TEST "Make test program" OFF)
-if (MAKE_TEST)
+option(MAKE_LIMITENGINE_TEST "Make test program" OFF)
+if (MAKE_LIMITENGINE_TEST)
 	add_subdirectory(test)
+	add_test(TestLimitEngine LimitEngineTest)
 endif()
 
 option(RAYTRACING "Rendering using raytracing" OFF)
@@ -79,8 +80,7 @@ foreach(shaderfile ${FILES_VERTEXSHADERS})
   message("cmd ${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe -D -O0 -E=vs_main -T=VS_5_0 -N=${shadername}_VS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.vs")
   add_custom_command(
     OUTPUT "${PROJECT_SOURCE_DIR}/${outshaderpath}.vs.h"
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/bin/LEShaderConverter.exe ${PROJECT_SOURCE_DIR}/tools
-	COMMAND ${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe -D -O0 -E=vs_main -T=VS_5_0 -N=${shadername}_VS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.vs
+	COMMAND LEShaderConverter -D -O0 -E=vs_main -T=VS_5_0 -N=${shadername}_VS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.vs
 	DEPENDS ${shaderfile} ${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe
 	COMMENT "Convert ${shaderfile}"
 	COMMENT "${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe -D -O0 -E=vs_main -T=VS_5_0 -N=${shadername}_VS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.vs"
@@ -96,8 +96,7 @@ foreach(shaderfile ${FILES_PIXELSHADERS})
   message("cmd ${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe -D -O0 -E=ps_main -T=PS_5_0 -N=${shadername}_PS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.ps")
   add_custom_command(
 	OUTPUT "${PROJECT_SOURCE_DIR}/${outshaderpath}.ps.h"
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/bin/LEShaderConverter.exe ${PROJECT_SOURCE_DIR}/tools
-	COMMAND ${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe -D -O0 -E=ps_main -T=PS_5_0 -N=${shadername}_PS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.ps
+	COMMAND LEShaderConverter -D -O0 -E=ps_main -T=PS_5_0 -N=${shadername}_PS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.ps
 	DEPENDS ${shaderfile} ${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe
 	COMMENT "Convert ${shaderfile}"
 	COMMENT "${PROJECT_SOURCE_DIR}/tools/LEShaderConverter.exe -D -O0 -E=ps_main -T=PS_5_0 -N=${shadername}_PS ${shaderfile} ${PROJECT_SOURCE_DIR}/${outshaderpath}.ps"

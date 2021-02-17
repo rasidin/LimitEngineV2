@@ -76,6 +76,7 @@ void PostProcessResolveFinalColor::Process(PostProcessContext &Context, VectorAr
         PipelineStateDescriptor psdesc;
         psdesc.SetRenderTargetBlendEnabled(0, false);
         psdesc.SetRenderTargetFormat(0, framebuffer.Get());
+        psdesc.SetDepthStencilTarget(nullptr);
         psdesc.SetDepthEnabled(false);
         psdesc.SetDepthFunc(RendererFlag::TestFlags::Always);
         psdesc.SetStencilEnabled(false);

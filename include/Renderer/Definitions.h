@@ -36,9 +36,9 @@ enum class RenderPass : char {
 };
 
 static constexpr char* RenderPassNames[] = {
-    "PrePass",
-    "BasePass",
-    "TranslucencyPass"
+    "prepass",
+    "basepass",
+    "translucencypass"
 };
 
 enum class BackgroundImageType : char {

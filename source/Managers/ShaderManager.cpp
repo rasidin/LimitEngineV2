@@ -34,6 +34,10 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "Shaders/Draw2D.ps.h"
 #include "Shaders/DrawFullscreen.ps.h"
 #include "Shaders/ResolveSceneColorSRGB.ps.h"
+#include "Shaders/Standard_prepass.vs.h"
+#include "Shaders/Standard_prepass.ps.h"
+#include "Shaders/Standard_basepass.vs.h"
+#include "Shaders/Standard_basepass.ps.h"
 
 namespace LimitEngine {
 #ifdef WINDOWS
@@ -54,6 +58,11 @@ namespace LimitEngine {
         mShaders.Add(new Draw2D_PS());
         mShaders.Add(new DrawFullscreen_PS());
         mShaders.Add(new ResolveSceneColorSRGB_PS());
+
+        mShaders.Add(new Standard_prepass_VS());
+        mShaders.Add(new Standard_prepass_PS());
+        mShaders.Add(new Standard_basepass_VS());
+        mShaders.Add(new Standard_basepass_PS());
 
         //Shader *shader;
 /*

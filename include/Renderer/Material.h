@@ -39,53 +39,72 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "Containers/MapArray.h"
 #include "Renderer/ConstantBuffer.h"
 #include "Renderer/ShaderParameter.h"
+#include "Renderer/Shader.h"
+#include "Renderer/RenderState.h"
 
 #include "../externals/rapidxml/rapidxml.hpp"
 
 namespace LimitEngine {
-    class Shader;
-    class RendererTask_MaterialSetupShaderParameters;
-    class Material : public Object<LimitEngineMemoryCategory::Graphics>
-    {
-        friend RendererTask_MaterialSetupShaderParameters;
-    public:
-        Material();
-        virtual ~Material();
+class Shader;
+class RendererTask_MaterialSetupShaderParameters;
+class Material : public Object<LimitEngineMemoryCategory::Graphics>
+{
+    friend RendererTask_MaterialSetupShaderParameters;
+public:
+    Material();
+    virtual ~Material();
         
-        Material* Load(TextParser::NODE *root);
-        Material* Load(rapidxml::xml_node<const char> *XMLNode);
-        void SetupShaderParameters();
-        void Bind(const RenderState &rs);
+    Material* Load(TextParser::NODE *root);
+    Material* Load(rapidxml::xml_node<const char> *XMLNode);
+    void SetupShaderParameters();
+    void ReadyToRender(const RenderState& rs, PipelineStateDescriptor& desc);
+    void Bind(const RenderState &rs);
 
-        void SetID(const String &n) { mId = n; }
-        const String& GetID() const { return mId; }
-        void SetName(const String &name) { mName = name; }
-        const String& GetName() const { return mName; }
+    void SetID(const String &n) { mId = n; }
+    const String& GetID() const { return mId; }
+    void SetName(const String &name) { mName = name; }
+    const String& GetName() const { return mName; }
         
-        bool IsEnabledRenderPass(const RenderPass& InRenderPass) const;
-        void SetEnabledRenderPass(const RenderPass& InRenderPass, bool InEnabled) { mIsEnabledRenderPass[(uint32)InRenderPass] = InEnabled; }
+    bool IsEnabledRenderPass(const RenderPass& InRenderPass) const;
+    void SetEnabledRenderPass(const RenderPass& InRenderPass, bool InEnabled) { mIsEnabledRenderPass[(uint32)InRenderPass] = InEnabled; }
 
-		void SetShader(const RenderPass &InRenderPass, Shader *shader) { mShader[(uint32)InRenderPass] = shader; setupShaderParameters(); }
-        ShaderRefPtr GetShader(const RenderPass &InRenderPass) const { return mShader[(uint32)InRenderPass]; }
+    ShaderRefPtr GetShader(const Shader::Type &InShaderType, const RenderPass &InRenderPass) const { 
+        switch (InShaderType) {
+        case Shader::Type::Vertex:
+            return mVertexShader[static_cast<int>(InRenderPass)];
+        case Shader::Type::Pixel:
+            return mPixelShader[static_cast<int>(InRenderPass)];
+        default:
+            return nullptr;
+        }
+    }
 
-        ConstantBufferRefPtr GetConstantBuffer(const RenderPass &InRenderPass) const { return mConstantBuffer[(uint32)InRenderPass]; }
+	void SetParameter(const String &name, const ShaderParameter &param) { mParameters.Add(name, param); }
+	ShaderParameter GetParameter(const String &name) const { return mParameters[name]; }
+private:
+    void setupShaderParameters();
 
-		void SetParameter(const String &name, const ShaderParameter &param) { mParameters.Add(name, param); }
-		ShaderParameter GetParameter(const String &name) const { return mParameters[name]; }
-    private:
-        void setupShaderParameters();
+private:
+    String                                      mId;
+    String                                      mName;
 
-    private:
-        String                              mId;
-        String                              mName;
+    bool                                        mIsEnabledRenderPass[(uint32)RenderPass::NumOfRenderPass];
 
-        bool                                mIsEnabledRenderPass[(uint32)RenderPass::NumOfRenderPass];
+    MapArray<String, ShaderParameter>           mParameters;
 
-        MapArray<String, ShaderParameter>   mParameters;
+    ShaderRefPtr                                mVertexShader[(uint32)RenderPass::NumOfRenderPass];
+    ShaderRefPtr                                mPixelShader[(uint32)RenderPass::NumOfRenderPass];
+    ConstantBufferRefPtr                        mVSConstantBuffer[(uint32)RenderPass::NumOfRenderPass];
+    ConstantBufferRefPtr                        mPSConstantBuffer[(uint32)RenderPass::NumOfRenderPass];
+    void*                                       mVSConstantUpdateBuffer[(uint32)RenderPass::NumOfRenderPass];
+    void*                                       mPSConstantUpdateBuffer[(uint32)RenderPass::NumOfRenderPass];
+    RenderState::ShaderDriverForRenderState     mVSShaderDriver[(uint32)RenderPass::NumOfRenderPass];
+    RenderState::ShaderDriverForRenderState     mPSShaderDriver[(uint32)RenderPass::NumOfRenderPass];
+    RenderState::TexturePositionForRenderState  mVSTexturePosition[(uint32)RenderPass::NumOfRenderPass];
+    RenderState::TexturePositionForRenderState  mPSTexturePosition[(uint32)RenderPass::NumOfRenderPass];
+    RenderState::SamplerPositionForRenderState  mVSSamplerPosition[(uint32)RenderPass::NumOfRenderPass];
+    RenderState::SamplerPositionForRenderState  mPSSamplerPosition[(uint32)RenderPass::NumOfRenderPass];
 
-        ShaderRefPtr                        mShader[(uint32)RenderPass::NumOfRenderPass];
-        ConstantBufferRefPtr                mConstantBuffer[(uint32)RenderPass::NumOfRenderPass];
-
-        friend Archive;
-    };
+    friend Archive;
+};
 }

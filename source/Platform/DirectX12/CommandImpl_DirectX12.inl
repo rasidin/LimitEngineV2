@@ -107,15 +107,13 @@ namespace LimitEngine {
             static constexpr uint32 CachedTextureMaxNum = 16u;
 
             Shader                      *CurrentShader;
-            ConstantBuffer              *GlobalConstantBuffer;
-            D3D12_CPU_DESCRIPTOR_HANDLE  CurrentConstantBuffers[CachedConstantBufferMaxNum];
+            ConstantBuffer              *CurrentConstantBuffers[CachedConstantBufferMaxNum];
             D3D12_CPU_DESCRIPTOR_HANDLE  CurrentSamplers[CachedSamplerMaxNum];
             D3D12_CPU_DESCRIPTOR_HANDLE  CurrentSRVs[CachedTextureMaxNum];
             Cache() { Clear(); }
             void Clear()
             {
                 CurrentShader = nullptr;
-                GlobalConstantBuffer = nullptr;
                 ::memset(CurrentConstantBuffers, 0, sizeof(CurrentConstantBuffers));
                 ::memset(CurrentSamplers, 0, sizeof(CurrentSamplers));
                 ::memset(CurrentSRVs, 0, sizeof(CurrentSRVs));
@@ -131,7 +129,7 @@ namespace LimitEngine {
                 uint32 cbcount = 0u;
                 uint32 cbrangesizes[CachedConstantBufferMaxNum] = {};
                 for (uint32 cbidx = 0; cbidx < CachedConstantBufferMaxNum; cbidx++) {
-                    if (CurrentConstantBuffers[cbidx].ptr) {
+                    if (CurrentConstantBuffers[cbidx]) {
                         cbrangesizes[cbidx] = 1;
                         cbcount++;
                     }
@@ -153,7 +151,6 @@ namespace LimitEngine {
                         srvcount++;
                     }
                 }
-                const bool bHasGlobalCB = GlobalConstantBuffer != nullptr;
                 const bool bHasSamplers = samplercount > 0u;
                 const bool bHasSRVs = srvcount > 0u;
                 if (bHasSamplers) {
@@ -172,21 +169,24 @@ namespace LimitEngine {
 
                 ID3D12Device* device = (ID3D12Device*)LE_DrawManagerRendererAccessor.GetDeviceHandle();
                 if (heapstobindnum > 0) {
-                    UINT paramindex = bHasGlobalCB ? 1 : 0;
+                    UINT paramindex = cbcount;
+                    UINT descindex = 0u;
                     if (bHasSamplers) {
-                        CommandList->SetGraphicsRootDescriptorTable(paramindex++, gpudescs[0]);
+                        CommandList->SetGraphicsRootDescriptorTable(paramindex++, gpudescs[descindex]);
                         device->CopyDescriptors(
-                            1, &cpudescs[0], &samplercount,
+                            1, &cpudescs[descindex], &samplercount,
                             samplercount, CurrentSamplers, samplerrangesizes, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
                         );
+                        descindex++;
                     }
                     if (bHasSRVs) {
-                        int srvidx = bHasSamplers ? 1 : 0;
-                        CommandList->SetGraphicsRootDescriptorTable(paramindex++, gpudescs[srvidx]);
+                        int srvidx = cbcount + samplercount;
+                        CommandList->SetGraphicsRootDescriptorTable(paramindex++, gpudescs[descindex]);
                         device->CopyDescriptors(
-                            1, &cpudescs[srvidx], &srvcount,
+                            1, &cpudescs[descindex], &srvcount,
                             srvcount, CurrentSRVs, srcrangesizes, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
                         );
+                        descindex++;
                     }
                 }
             }
@@ -348,20 +348,15 @@ namespace LimitEngine {
 
             if (mD3DGraphicsCommandList) {
                 IndexBufferRendererAccessor ibra(ib);
-
-                ID3D12Resource* IndexResource = (ID3D12Resource*)ibra.GetHandle();
-                D3D12_INDEX_BUFFER_VIEW IndexBufferView;
-                IndexBufferView.BufferLocation = IndexResource->GetGPUVirtualAddress();
-                IndexBufferView.Format = DXGI_FORMAT_R32_UINT;
-                IndexBufferView.SizeInBytes = static_cast<uint32>(ibra.GetSize());
+                mD3DGraphicsCommandList->IASetIndexBuffer((D3D12_INDEX_BUFFER_VIEW*)ibra.GetHandle());
             }
         }
         void SetConstantBuffer(uint32 Index, ConstantBuffer *InConstantBuffer) override
         {
             if (InConstantBuffer) {
-                mCache.GlobalConstantBuffer = InConstantBuffer;
+                mCache.CurrentConstantBuffers[Index] = InConstantBuffer;
                 if (ID3D12Resource* resource = static_cast<ID3D12Resource*>(ConstantBufferRendererAccessor(InConstantBuffer).GetResource())) {
-                    mD3DGraphicsCommandList->SetGraphicsRootConstantBufferView(0, resource->GetGPUVirtualAddress());
+                    mD3DGraphicsCommandList->SetGraphicsRootConstantBufferView(Index, resource->GetGPUVirtualAddress());
                 }
             }
         }
@@ -378,6 +373,7 @@ namespace LimitEngine {
         }
         void UpdateConstantBuffer(ConstantBuffer* cb, void* data, size_t size) override
         {
+            if (cb) ConstantBufferRendererAccessor(cb).Update(data);
         }
         void BindTargetTexture(uint32 Index, Texture* InTexture) override
         {
@@ -415,6 +411,7 @@ namespace LimitEngine {
 
             mD3DGraphicsCommandList->IASetPrimitiveTopology(PrimitiveTopologyTypeToD3DPrimitiveTopology[Primitive]);
             mD3DGraphicsCommandList->DrawInstanced(Count, 1, Offset, 0);
+            ClearCaches();
         }
         void DrawIndexedPrimitive(uint32 Primitive, uint32 VertexCount, uint32 Count) override
         {
@@ -423,6 +420,7 @@ namespace LimitEngine {
 
             mD3DGraphicsCommandList->IASetPrimitiveTopology(PrimitiveTopologyTypeToD3DPrimitiveTopology[Primitive]);
             mD3DGraphicsCommandList->DrawIndexedInstanced(Count, 1, 0, 0, 0);
+            ClearCaches();
         }
         void SetRenderTarget(uint32 Index, const TextureRendererAccessor& Color, const TextureRendererAccessor& Depth, uint32 SurfaceIndex) override
         {

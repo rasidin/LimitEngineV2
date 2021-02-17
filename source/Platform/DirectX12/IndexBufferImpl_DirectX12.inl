@@ -49,7 +49,7 @@ public:
         LEASSERT(device != nullptr);
 
         D3D12_HEAP_PROPERTIES HeapPropertiesDefault;
-        HeapPropertiesDefault.Type = D3D12_HEAP_TYPE_DEFAULT;
+        HeapPropertiesDefault.Type = D3D12_HEAP_TYPE_UPLOAD;
         HeapPropertiesDefault.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
         HeapPropertiesDefault.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
         HeapPropertiesDefault.CreationNodeMask = 1;
@@ -67,34 +67,42 @@ public:
             &HeapPropertiesDefault,
             D3D12_HEAP_FLAG_NONE,
             &ResourceDescDefault,
-            D3D12_RESOURCE_STATE_COPY_DEST,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
             nullptr,
             IID_PPV_ARGS(&mIndexBuffer)))) {
             Debug::Error("[IndexBuffer]Failed to create index buffer");
             return;
         }
 
-        IndexBufferRendererAccessor(mOwner).SetResourceState(ResourceState::GenericRead);
-
-        ID3D12Resource* indexBufferUpdate;
-        D3D12_HEAP_PROPERTIES HeapPropertiesUpload;
-        HeapPropertiesDefault.Type = D3D12_HEAP_TYPE_UPLOAD;
-        HeapPropertiesDefault.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-        HeapPropertiesDefault.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-        HeapPropertiesDefault.CreationNodeMask = 1;
-        HeapPropertiesDefault.VisibleNodeMask = 1;
-        if (FAILED(device->CreateCommittedResource(
-            &HeapPropertiesUpload,
-            D3D12_HEAP_FLAG_NONE,
-            &ResourceDescDefault,
-            D3D12_RESOURCE_STATE_GENERIC_READ,
-            nullptr,
-            IID_PPV_ARGS(&indexBufferUpdate)))) {
-            mIndexBuffer->Release();
-            mIndexBuffer = nullptr;
-            Debug::Error("[IndexBuffer]Failed to create index buffer (for uploading)");
-            return;
+        if (Buffer) {
+            void* mapped = nullptr;
+            if (SUCCEEDED(mIndexBuffer->Map(0, nullptr, &mapped))) {
+                ::memcpy(mapped, Buffer, BufferSize);
+                mIndexBuffer->Unmap(0, nullptr);
+            }
         }
+
+        //IndexBufferRendererAccessor(mOwner).SetResourceState(ResourceState::GenericRead);
+
+        //ID3D12Resource* indexBufferUpdate;
+        //D3D12_HEAP_PROPERTIES HeapPropertiesUpload;
+        //HeapPropertiesUpload.Type = D3D12_HEAP_TYPE_UPLOAD;
+        //HeapPropertiesUpload.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+        //HeapPropertiesUpload.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+        //HeapPropertiesUpload.CreationNodeMask = 1;
+        //HeapPropertiesUpload.VisibleNodeMask = 1;
+        //if (FAILED(device->CreateCommittedResource(
+        //    &HeapPropertiesUpload,
+        //    D3D12_HEAP_FLAG_NONE,
+        //    &ResourceDescDefault,
+        //    D3D12_RESOURCE_STATE_GENERIC_READ,
+        //    nullptr,
+        //    IID_PPV_ARGS(&indexBufferUpdate)))) {
+        //    mIndexBuffer->Release();
+        //    mIndexBuffer = nullptr;
+        //    Debug::Error("[IndexBuffer]Failed to create index buffer (for uploading)");
+        //    return;
+        //}
 
         //DrawCommand::CopyBuffer((void*)mIndexBuffer, 0, (void*)indexBufferUpdate, 0, BufferSize);
         //DrawCommand::ResourceBarrier(mOwner, ResourceState::VertexAndConstantBuffer | ResourceState::IndexBuffer);

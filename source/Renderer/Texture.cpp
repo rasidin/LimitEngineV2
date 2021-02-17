@@ -293,7 +293,6 @@ public:
     {
         if (mOwner) {
             mOwner->mImpl->CreateDepthStencil(mSize, mFormat);
-            mOwner->mFormat = mOwner->mImpl->GetFormat();
         }
     }
 private:
@@ -416,6 +415,7 @@ void Texture::CreateDepthStencil(const LEMath::IntSize &size, const RendererFlag
     AutoPointer<RendererTask> rt_createDepth = new RendererTask_CreateDepthStencil(this, size, format);
     LE_DrawManager.AddRendererTask(rt_createDepth);
     mSize = size; 
+    mFormat = format;
 }
 void Texture::CreateRenderTarget(const LEMath::IntSize &size, const RendererFlag::BufferFormat &format, uint32 usage /*= 0*/)
 {

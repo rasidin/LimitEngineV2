@@ -94,9 +94,14 @@ struct PipelineStateDescriptor {
         RenderTargetsNum = MAX((rtnum + 1), RenderTargetsNum);
         RenderTargetFormats[rtnum] = fbtex->GetFormat();
     }
-    inline void SetDepthStecilTarget(TextureInterface* dstex)
+    inline void SetDepthStencilTarget(TextureInterface* dstex)
     {
-        DepthTargetFormat = dstex->GetFormat();
+        if (dstex == nullptr) {
+            DepthTargetFormat = RendererFlag::BufferFormat::Unknown;
+        }
+        else {
+            DepthTargetFormat = dstex->GetFormat();
+        }
     }
 
     struct StencilFaceOperator {

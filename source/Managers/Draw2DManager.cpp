@@ -44,12 +44,12 @@ namespace LimitEngine {
 
         // Create vertex buffer for drawing full screen (For postfilter, background...)
         Vertex2D scrVertex[6];
-        scrVertex[0].SetPosition(LEMath::FloatVector3(0.0f, 0.0f, 0.0f));
-        scrVertex[1].SetPosition(LEMath::FloatVector3(0.0f, 1.0f, 0.0f));
-        scrVertex[2].SetPosition(LEMath::FloatVector3(1.0f, 0.0f, 0.0f));
-        scrVertex[3].SetPosition(LEMath::FloatVector3(0.0f, 1.0f, 0.0f));
-        scrVertex[4].SetPosition(LEMath::FloatVector3(1.0f, 1.0f, 0.0f));
-        scrVertex[5].SetPosition(LEMath::FloatVector3(1.0f, 0.0f, 0.0f));
+        scrVertex[0].SetPosition(LEMath::FloatVector3(0.0f, 0.0f, 1.0f));
+        scrVertex[1].SetPosition(LEMath::FloatVector3(0.0f, 1.0f, 1.0f));
+        scrVertex[2].SetPosition(LEMath::FloatVector3(1.0f, 0.0f, 1.0f));
+        scrVertex[3].SetPosition(LEMath::FloatVector3(0.0f, 1.0f, 1.0f));
+        scrVertex[4].SetPosition(LEMath::FloatVector3(1.0f, 1.0f, 1.0f));
+        scrVertex[5].SetPosition(LEMath::FloatVector3(1.0f, 0.0f, 1.0f));
         scrVertex[0].SetColor(ByteColorRGBA(0xffffffff));
         scrVertex[1].SetColor(ByteColorRGBA(0xffffffff));
         scrVertex[2].SetColor(ByteColorRGBA(0xffffffff));

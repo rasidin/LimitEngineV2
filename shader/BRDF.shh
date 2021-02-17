@@ -1,0 +1,122 @@
+/*********************************************************************
+Copyright (c) 2020 LIMITGAME
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify,
+merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+----------------------------------------------------------------------
+@file  BRDF.shh
+@brief BRDF model
+@author minseob (leeminseob@outlook.com)
+**********************************************************************/
+
+#ifndef USE_IMPORTANCE_SAMPLING
+#define USE_IMPORTANCE_SAMPLING 0
+#endif
+#ifndef USE_ENVIRONMENT_BRDF
+#define USE_ENVIRONMENT_BRDF 1
+#endif
+
+Texture2D EnvironmentBRDFTexture;
+SamplerState EnvironmentBRDFSampler
+{
+    Filter = MIN_MAG_MIP_LINEAR;
+    AddressU = Clamp;
+    AddressV = Clamp;
+};
+float2 SampleEnvirnonmentBRDF(float r, float NoV)
+{
+	return EnvironmentBRDFTexture.Sample(EnvironmentBRDFSampler, float2(1.0 - NoV, r)).xy;
+}
+
+float Fresnel(float f0, float d)
+{
+	if (d > 0.9999)
+		return f0;
+	return f0 + (1.0 - f0) * pow(1.0 - d, 2.0);
+}
+
+float3 SampleHalfDirection(float2 xi, float r, float3 normal)
+{
+	float r2 = r * r;
+	float phi = 2 * PI * xi.y;
+	float costheta = sqrt(max(1.0e-4, (1 - xi.x) / (1 + (r2 * r2 - 1) * xi.x)));
+	float sintheta = sqrt(max(1.0e-4, 1 - costheta * costheta));
+
+	float3 li = normalize(float3(sintheta * cos(phi), sintheta * sin(phi), costheta));
+	
+	float3 up = abs(normal.z) < 0.999 ? float3(0,0,1) : float3(1,0,0);
+	float3 tanX = normalize(cross( up, normal ));
+	float3 tanY = cross(normal, tanX);
+
+	return normalize(tanX * li.x + tanY * li.y + normal * li.z);
+}
+
+float Geometry_Smith_GGX(float i, float r)
+{
+	return 2.0 * i / (i + sqrt(i * i + r * r * (1.0 - i * i)));
+}
+
+float Geometry(float NoH, float VoH, float r)
+{
+	return Geometry_Smith_GGX(NoH, r) * Geometry_Smith_GGX(VoH, r);
+}
+
+float3 Irradiance(float3 n)
+{
+	float3 irradianceColor = SampleIBLIrradiance(n);
+	return irradianceColor;
+}
+
+float3 Radiance(uint4 Context, float f0, float r, float3 N, float3 V, float3 WorldPosition)
+{
+	float NoV = saturate(dot(N, V));
+	float3 outColor = (float3)0.0;
+#if USE_IMPORTANCE_SAMPLING	
+	for (uint i = Context.x; i < Context.w; i += Context.y)
+	{
+		float2 Xi = Hammersley(i, Context.w);
+		float3 H  = SampleHalfDirection(Xi, r, N);
+		float VoH = dot(V, H);
+
+		// reflect V to H
+		float3 L  = 2 * dot(V, H) * H - V;
+		
+		float NoL = dot(N, L);
+		if (VoH > 0 && NoL > 0) {
+			float NoH = max(1.0e-4, abs(dot(N, H)));
+		
+			float  F = max(1.0e-4, Fresnel(f0, VoH));
+			float  G = Geometry(NoH, VoH, r);
+			float3 ProjectedL = WorldDirectionToSphereCaptureDirection(L, WorldPosition);
+			float3 LColor = SampleIBLReflection(L, 0.0);
+		
+			outColor += F * G * LColor * VoH / (NoH * NoV);
+		}
+	}
+	outColor /= float(Context.z);
+#elif USE_ENVIRONMENT_BRDF
+	float3 L = 2 * dot(V, N) * N - V;
+	float3 ReflectionColor = SampleIBLReflection(L, r);
+	float2 EnvironmentBRDF = SampleEnvirnonmentBRDF(r, NoV);
+	outColor = ReflectionColor * (f0 * EnvironmentBRDF.x + EnvironmentBRDF.y);
+#else
+#endif
+	return outColor;
+}
