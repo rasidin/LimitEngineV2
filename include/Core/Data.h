@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  Data.h
  @brief Default Data Class
- @author minseob (rasidin1@hotmail.com)
+ @author minseob (https://github.com/rasidin)
  ***********************************************************/
 
 #pragma once

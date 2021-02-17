@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_PostFilter_MSAA.h
  @brief PostFilter MSAA
- @author minseob (rasidin1@hotmail.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2012/12/19 Created by minseob

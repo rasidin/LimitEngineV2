@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_PostFilter_Filmic.h
  @brief PostFilter Filmic
- @author minseob (rasidin1@hotmail.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2012/12/22 Created by minseob

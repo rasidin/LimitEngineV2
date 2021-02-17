@@ -4,7 +4,7 @@
  -----------------------------------------------------------
  @file  LE_RenderBuffer.cpp
  @brief Render Buffer Class
- @author minseob (rasidin1@hotmail.com)
+ @author minseob (https://github.com/rasidin)
  -----------------------------------------------------------
  History:
  - 2012/12/22 Created by minseob
