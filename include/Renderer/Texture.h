@@ -39,6 +39,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "Core/SerializableResource.h"
 #include "Containers/VectorArray.h"
 #include "Renderer/ByteColorRGBA.h"
+#include "Renderer/SerializableRendererResource.h"
 
 namespace LimitEngine {
 enum TEXTURE_USAGE
@@ -129,7 +130,7 @@ private:
     friend TextureSourceImage;
     friend Archive;
 };
-class TextureInterface : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>
+class TextureInterface : public SerializableRendererResource
 {
 protected:
     virtual const LEMath::IntSize& GetSize() const = 0;
@@ -173,7 +174,7 @@ public:
 private:
     ReferenceCountedPointer<TextureInterface> mInterface;
 };
-class Texture : public TextureInterface, public SerializableResource
+class Texture : public TextureInterface
 {
     friend class RendererTask_LoadTextureFromMemory;
 	friend class RendererTask_LoadTextureFromMERLBRDFData;
@@ -193,6 +194,7 @@ class Texture : public TextureInterface, public SerializableResource
     };
 
     static constexpr uint32 DebugNameLength = 0x40;
+    static constexpr uint32 FileTypeID = ('T' | ('E' << 8) | ('X' << 16) | ('T' << 24));
 
 public:
     Texture();
@@ -248,12 +250,12 @@ public:
 
 public: // Generators
     static Texture* GenerateFromSourceImage(const TextureSourceImage *SourceImage);
+    static bool IsTextureResource(const SerializableRendererResource* Resource) { return Resource->GetFileType() == FileTypeID; }
 
-    SerializableResource* GenerateNew() const override { return dynamic_cast<SerializableResource*>(new Texture()); }
+    SerializableRendererResource* GenerateNew() const override { return (SerializableRendererResource*)(new Texture()); }
 
-protected: // Interface for serializing
-    virtual uint32 GetFileType() const { return ('T' | ('E' << 8) | ('X' << 16) | ('T' << 24)); }
-    virtual uint32 GetVersion() const { return static_cast<uint32>(FileVersion::CurrentVersion); }
+    virtual uint32 GetFileType() const override { return FileTypeID; }
+    virtual uint32 GetVersion() const override { return static_cast<uint32>(FileVersion::CurrentVersion); }
 
 private:
     TextureImpl                *mImpl;

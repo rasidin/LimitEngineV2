@@ -141,17 +141,32 @@ void LimitEngine::SetMainCamera(const CameraRefPtr &InCamera)
 {
     mSceneManager->SetCamera(InCamera);
 }
+SerializableRendererResource* LimitEngine::Load(const char* filepath, ResourceFactory::ID ID, bool bTransient)
+{
+    if (bTransient) {
+        AutoPointer<ResourceManager::RESOURCE> Resource = mResourceManager->GetResourceWithoutRegister(filepath, ID);
+        if (Resource.Exists())
+            return Resource->PopData();
+    }
+    else {
+        if (const ResourceManager::RESOURCE* Resource = mResourceManager->GetResourceWithRegister(filepath, ID)) {
+            return Resource->data;
+        }
+    }
+    return nullptr;
+}
 Texture* LimitEngine::LoadTexture(const char *filepath, ResourceFactory::ID ID, bool bTransient)
 {
     if (bTransient) {
         AutoPointer<ResourceManager::RESOURCE> TextureResource = mResourceManager->GetResourceWithoutRegister(filepath, ID);
-        if (TextureResource.Exists()) {
+        if (TextureResource.Exists() && Texture::IsTextureResource(TextureResource->data)) {
             return (Texture*)TextureResource->PopData();
         }
     }
     else {
         if (const ResourceManager::RESOURCE *TextureResource = mResourceManager->GetResourceWithRegister(filepath, ID)) {
-            return (Texture*)TextureResource->data;
+            if (Texture::IsTextureResource(TextureResource->data))
+                return (Texture*)TextureResource->data;
         }
     }
     return nullptr;
@@ -160,14 +175,15 @@ Model* LimitEngine::LoadModel(const char *filepath, ResourceFactory::ID ID, bool
 {
     Model* OutModel = nullptr;
     if (bTransient) {
-        AutoPointer<ResourceManager::RESOURCE> TextureResource = mResourceManager->GetResourceWithoutRegister(filepath, ID);
-        if (TextureResource.Exists()) {
-            OutModel = (Model*)TextureResource->PopData();
+        AutoPointer<ResourceManager::RESOURCE> Resource = mResourceManager->GetResourceWithoutRegister(filepath, ID);
+        if (Resource.Exists() && Model::IsModelResource(Resource->data)) {
+            OutModel = (Model*)Resource->PopData();
         }
     }
     else {
-        if (const ResourceManager::RESOURCE *TextureResource = mResourceManager->GetResourceWithRegister(filepath, ID)) {
-            OutModel = (Model*)TextureResource->data;
+        if (const ResourceManager::RESOURCE * Resource = mResourceManager->GetResourceWithRegister(filepath, ID)) {
+            if (Model::IsModelResource(Resource->data))
+                OutModel = (Model*)Resource->data;
         }
     }
     return OutModel;

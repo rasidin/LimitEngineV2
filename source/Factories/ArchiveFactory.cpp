@@ -27,7 +27,7 @@ ArchiveFactory::~ArchiveFactory()
     }
     Generators.Clear();
 }
-IReferenceCountedObject* ArchiveFactory::Create(const ResourceSourceFactory*, const FileData &Data)
+SerializableRendererResource* ArchiveFactory::Create(const ResourceSourceFactory*, const FileData &Data)
 {
     if (!Data.Data || Data.Size == 0u) return nullptr;
 
@@ -41,8 +41,8 @@ IReferenceCountedObject* ArchiveFactory::Create(const ResourceSourceFactory*, co
     uint32 Version = ((ArchiveHeader*)Data.Data)->Version;
 
     Archive LoadedArchive((uint8*)Data.Data + sizeof(ArchiveHeader), Data.Size - sizeof(ArchiveHeader));
-    SerializableResource *Generator = nullptr;
-    SerializableResource *newObject = nullptr;
+    SerializableRendererResource *Generator = nullptr;
+    SerializableRendererResource*newObject = nullptr;
     for (uint32 generatorIndex = 0; generatorIndex < Generators.count(); generatorIndex++) {
         if (Generators[generatorIndex]->GetFileType() == FileType) {
             Generator = Generators[generatorIndex];
@@ -54,19 +54,19 @@ IReferenceCountedObject* ArchiveFactory::Create(const ResourceSourceFactory*, co
         newObject->Serialize(LoadedArchive);
     }
 
-    return dynamic_cast<IReferenceCountedObject*>(newObject);
+    return newObject;
 }
-void ArchiveFactory::Release(IReferenceCountedObject *data)
+void ArchiveFactory::Release(SerializableRendererResource *data)
 {
     if (data) {
-        if (Font *fontData = dynamic_cast<Font*>(data)) {
-            delete fontData;
+        if (Font::IsFontResource(data)) {
+            delete (Font*)data;
         }
-        else if (Texture *textureData = dynamic_cast<Texture*>(data)) {
-            delete textureData;
+        else if (Texture::IsTextureResource(data)) {
+            delete (Texture*)data;
         }
-        else if (Model *modelData = dynamic_cast<Model*>(data)) {
-            delete modelData;
+        else if (Model::IsModelResource(data)) {
+            delete (Model*)data;
         }
         data = nullptr;
     }

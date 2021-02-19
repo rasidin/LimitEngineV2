@@ -11,6 +11,7 @@
 #include "Core/Data.h"
 #include "Core/Util.h"
 #include "Core/SerializableResource.h"
+#include "Renderer/SerializableRendererResource.h"
 
 #include "Factories/ResourceFactory.h"
 #include "Factories/ResourceSourceFactory.h"
@@ -18,7 +19,6 @@
 #include "Factories/ArchiveFactory.h"
 #include "Factories/ModelFactory.h"
 #include "Factories/TextureFactory.h"
-#include "Factories/TextParserFactory.h"
 
 #include "../Factories/SourceFactories/TGASourceFactory.inl"
 #include "../Factories/SourceFactories/TextParserSourceFactory.inl"
@@ -90,7 +90,6 @@ namespace LimitEngine {
         mFactories.Add(ArchiveFactory::ID,    new ArchiveFactory());
         mFactories.Add(ModelFactory::ID,      new ModelFactory());
         mFactories.Add(TextureFactory::ID,    new TextureFactory());
-        mFactories.Add(TextParserFactory::ID, new TextParserFactory());
 
         mSourceFactories.Add("tga",  new TGASourceFactory());
         mSourceFactories.Add("text", new TextParserSourceFactory());
@@ -192,7 +191,7 @@ namespace LimitEngine {
         size_t size = 0;
         if (void *data = mLoader->GetResource(convertedPath, &size)) {
             ResourceSourceFactory **sourceFactory = mSourceFactories.Find(fileFormat);
-            if (IReferenceCountedObject *createdData = Factory->Create(sourceFactory?(*sourceFactory):nullptr, ResourceFactory::FileData(Filename, data, size))) {
+            if (SerializableRendererResource *createdData = Factory->Create(sourceFactory?(*sourceFactory):nullptr, ResourceFactory::FileData(Filename, data, size))) {
                 RESOURCE *newRes = new RESOURCE(Filename, Factory, size, createdData);
                 if (NeedRegister)
                     mResources.Add(newRes);

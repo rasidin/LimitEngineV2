@@ -23,7 +23,7 @@ Copyright (C), LIMITGAME, 2020
 #include <LEHalfVector4.h>
 
 namespace LimitEngine {
-IReferenceCountedObject* TextureFactory::Create(const ResourceSourceFactory *SourceFactory, const ResourceFactory::FileData &Data)
+SerializableRendererResource* TextureFactory::Create(const ResourceSourceFactory *SourceFactory, const ResourceFactory::FileData &Data)
 {
     if (!Data.IsValid() || !SourceFactory)
         return NULL;
@@ -150,9 +150,9 @@ IReferenceCountedObject* TextureFactory::Create(const ResourceSourceFactory *Sou
         }
     } 
 
-    return (IReferenceCountedObject*)(output);
+    return output;
 }
-IReferenceCountedObject* TextureFactory::CreateEmpty(const LEMath::IntSize& Size, const RendererFlag::BufferFormat& Format)
+SerializableRendererResource* TextureFactory::CreateEmpty(const LEMath::IntSize& Size, const RendererFlag::BufferFormat& Format)
 {
     SerializedTextureSource* sourceimage = new SerializedTextureSource(
         LEMath::IntVector3(Size.Width(), Size.Height(), 1),
@@ -166,12 +166,12 @@ IReferenceCountedObject* TextureFactory::CreateEmpty(const LEMath::IntSize& Size
     if (mImageFilter)
         mImageFilter->FilterImage(nullptr, sourceimage);
 
-    return (IReferenceCountedObject*)(Texture::GenerateFromSourceImage(sourceimage));
+    return Texture::GenerateFromSourceImage(sourceimage);
 }
-void TextureFactory::Release(IReferenceCountedObject *data)
+void TextureFactory::Release(SerializableRendererResource*data)
 {
     if (data == NULL)
         return;
-    delete dynamic_cast<Texture*>(data);
+    delete (Texture*)(data);
 }
 }

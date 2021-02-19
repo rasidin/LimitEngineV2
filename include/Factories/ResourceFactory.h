@@ -10,6 +10,7 @@ Copyright (C), LIMITGAME, 2020
 #include "Core/Object.h"
 #include "Core/Memory.h"
 #include "Core/ReferenceCountedObject.h"
+#include "Renderer/SerializableRendererResource.h"
 
 #define GENERATE_RESOURCEFACTORY_ID(a) (a[0] | (a[1] << 8) | (a[2] << 16) | (a[3] << 24))
 
@@ -35,8 +36,8 @@ public:
 public:
     typedef uint32 ID;
 
-    virtual IReferenceCountedObject* Create(const class ResourceSourceFactory *SourceFactory, const FileData &Data) = 0;
-    virtual void Release(IReferenceCountedObject *data) = 0;
+    virtual SerializableRendererResource* Create(const class ResourceSourceFactory *SourceFactory, const FileData &Data) = 0;
+    virtual void Release(SerializableRendererResource *data) = 0;
     virtual uint32 GetResourceTypeCode() = 0;
 protected:
     uint32 makeResourceTypeCode(const char *typeCode) { return typeCode[0] | (typeCode[1] << 8) | (typeCode[2] << 16) | (typeCode[3] << 24); }

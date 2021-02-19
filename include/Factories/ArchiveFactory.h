@@ -9,6 +9,7 @@ Copyright (C), LIMITGAME, 2020
 #pragma once
 #include "Containers/VectorArray.h"
 #include "Factories/ResourceFactory.h"
+#include "Renderer/SerializableRendererResource.h"
 
 namespace LimitEngine {
 class ArchiveFactory : public ResourceFactory
@@ -19,11 +20,11 @@ public:
     ArchiveFactory();
     virtual ~ArchiveFactory();
 
-    IReferenceCountedObject* Create(const ResourceSourceFactory *Format, const FileData &Data) override;
-    void Release(IReferenceCountedObject *Data) override;
+    SerializableRendererResource* Create(const ResourceSourceFactory *Format, const FileData &Data) override;
+    void Release(SerializableRendererResource *Data) override;
     uint32 GetResourceTypeCode() override { return 0u; }
 
 private:
-    VectorArray<class SerializableResource*> Generators;
+    VectorArray<class SerializableRendererResource*> Generators;
 };
 }

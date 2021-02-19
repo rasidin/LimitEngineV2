@@ -152,6 +152,7 @@ void SceneManager::PostInit(const InitializeOptions &InitOptions)
         PipelineStateDescriptor psdesc;
         psdesc.SetRenderTargetBlendEnabled(0, false);
         psdesc.SetRenderTargetFormat(0, mSceneColor.Get());
+        psdesc.SetDepthStencilTarget(mSceneDepth.Get());
         psdesc.SetDepthEnabled(true);
         psdesc.SetDepthFunc(RendererFlag::TestFlags::Always);
         psdesc.SetStencilEnabled(false);

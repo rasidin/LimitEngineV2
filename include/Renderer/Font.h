@@ -14,16 +14,19 @@
 #include "Core/ReferenceCountedPointer.h"
 #include "Core/SerializableResource.h"
 #include "Containers/VectorArray.h"
+#include "Renderer/SerializableRendererResource.h"
 
 namespace LimitEngine {
     class Sprite;
-    class Font : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>, public SerializableResource
+    class Font : public SerializableRendererResource
     {
         enum class FileVersion : uint32 {
             FirstVersion = 1,
 
             CurrentVersion = FirstVersion
         };
+
+        static constexpr uint32 FileTypeID = ('F' | ('O' << 8) | ('N' << 16) | ('T' << 24));
 
     private:
         struct Glyph
@@ -68,12 +71,13 @@ namespace LimitEngine {
 
     public: // Generator
         static Font* GenerateFromFile(const char *ImageFilePath, const char *GlyphFilePath);
-        SerializableResource* GenerateNew() const override { return dynamic_cast<SerializableResource*>(new Font()); }
+        static bool IsFontResource(SerializableRendererResource* Resource) { return  Resource->GetFileType() == FileTypeID; }
+        SerializableRendererResource* GenerateNew() const override { return new Font(); }
 
     protected: // Serializer
         virtual bool Serialize(Archive &OutArchive) override;
 
-        virtual uint32 GetFileType() const { return ('F' | ('O' << 8) | ('N' << 16) | ('T' << 24)); }
+        virtual uint32 GetFileType() const { return FileTypeID; }
         virtual uint32 GetVersion() const { return (uint32)FileVersion::CurrentVersion; }
 
     private:

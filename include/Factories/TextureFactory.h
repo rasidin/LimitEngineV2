@@ -28,9 +28,9 @@ public:
     TextureFactory() {}
     virtual ~TextureFactory() {}
 
-    IReferenceCountedObject* Create(const ResourceSourceFactory *SourceFactory, const ResourceFactory::FileData &size) override;
-    IReferenceCountedObject* CreateEmpty(const LEMath::IntSize &Size, const RendererFlag::BufferFormat &Format);
-    void Release(IReferenceCountedObject *data) override;
+    SerializableRendererResource* Create(const ResourceSourceFactory *SourceFactory, const ResourceFactory::FileData &size) override;
+    SerializableRendererResource* CreateEmpty(const LEMath::IntSize &Size, const RendererFlag::BufferFormat &Format);
+    void Release(SerializableRendererResource *data) override;
     uint32 GetResourceTypeCode() override { return makeResourceTypeCode("LMDL"); }
 
     void SetImageFilter(TextureImageFilter* filter) { mImageFilter = filter; }

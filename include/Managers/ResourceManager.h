@@ -17,6 +17,7 @@
 #include "Containers/MapArray.h"
 #include "Containers/VectorArray.h"
 #include "Factories/ResourceFactory.h"
+#include "Renderer/SerializableRendererResource.h"
 
 /// Input filename format : filename.[type].[format]    ex > testModel.model.text
 namespace LimitEngine {
@@ -41,20 +42,21 @@ public:
     {
         friend ResourceManager;
 
-        String                      id;
-        ResourceFactory*            factory;
-        uint32                      type;
-        size_t                      size;
-        IReferenceCountedObject    *data;
+        String                          id;
+        ResourceFactory*                factory;
+        uint32                          type;
+        uint32                          datatype;
+        size_t                          size;
+        SerializableRendererResource   *data;
         
         _RESOURCE() : type(0), data(NULL) {}
-        _RESOURCE(const String &i, ResourceFactory *f, size_t s, IReferenceCountedObject *d)
+        _RESOURCE(const String &i, ResourceFactory *f, size_t s, SerializableRendererResource *d)
             : id(i), factory(f), type(f ? f->GetResourceTypeCode() : 0), size(s), data(d)
         {
             if (data) data->AddReferenceCounter();
         }
 
-        void* PopData() { void *output = data; data = nullptr; return output; }
+        SerializableRendererResource* PopData() { SerializableRendererResource *output = data; data = nullptr; return output; }
         void Release();
         void ReleaseResource();
     private:

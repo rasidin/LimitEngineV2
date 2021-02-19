@@ -44,6 +44,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "Renderer/PipelineState.h"
 #include "Renderer/IndexBuffer.h"
 #include "Renderer/RenderState.h"
+#include "Renderer/SerializableRendererResource.h"
 #include "Renderer/Vertex.h"
 #include "Renderer/VertexBuffer.h"
 #include "Core/String.h"
@@ -58,11 +59,11 @@ namespace LimitEngine {
     class IndexBuffer;
     class Material;
     class Shader;
-    class Model : public ReferenceCountedObject<LimitEngineMemoryCategory::Graphics>, public SerializableResource, public MetaData
+    class Model : public SerializableRendererResource, public MetaData
     {
         friend ModelFactory;
     public:
-        static constexpr uint32 FileType = GENERATE_SERIALIZABLERESOURCE_ID("MODL");
+        static constexpr uint32 FileTypeID = GENERATE_SERIALIZABLERESOURCE_ID("MODL");
 
         typedef struct _DRAWGROUP
         {
@@ -147,15 +148,16 @@ namespace LimitEngine {
     public: // Generator
         static Model* GenerateFromTextParser(const ReferenceCountedPointer<TextParser> &Parser);
         static Model* GenerateFromXML(const rapidxml::xml_document<const char> *XMLDoc);
+        static bool IsModelResource(const SerializableRendererResource* Resource) { return Resource->GetFileType() == FileTypeID; }
 
         virtual void InitResource() override;
 
+        virtual uint32 GetFileType() const override { return FileTypeID; }
+        virtual uint32 GetVersion() const override { return 1u; }
+
     protected: // For serialization
         virtual bool Serialize(Archive &OutArchive) override;
-        virtual SerializableResource* GenerateNew() const override { return new Model(); }
-
-        virtual uint32 GetFileType() const override { return FileType; }
-        virtual uint32 GetVersion() const override  { return 1u; }
+        virtual SerializableRendererResource* GenerateNew() const override { return new Model(); }
 
     private:
 		void setupMetaData();

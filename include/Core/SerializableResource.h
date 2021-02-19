@@ -20,13 +20,11 @@ namespace LimitEngine {
 
         virtual void InitResource() {}
 
-    protected:
-        virtual bool Serialize(Archive &OutArchive) { return false; }
-
-        virtual SerializableResource* GenerateNew() const { return nullptr; }
-
         virtual uint32 GetFileType() const { return 0u; }
         virtual uint32 GetVersion() const { return 0u; }
+
+    protected:
+        virtual bool Serialize(Archive &OutArchive) { return false; }
 
         friend class Archive;
         friend class ArchiveFactory;

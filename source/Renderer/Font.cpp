@@ -13,7 +13,6 @@
 
 #include "Core/TextParser.h"
 #include "Core/Util.h"
-#include "Factories/TextParserFactory.h"
 #include "Renderer/DrawCommand.h"
 #include "Renderer/Sprite.h"
 #include "Managers/ResourceManager.h"
@@ -28,42 +27,42 @@ namespace LimitEngine {
         Output->mSprite = Sprite::GenerateFromFile(ImageFilePath, nullptr);
 
         // Set sprite frames from file
-        AutoPointer<ResourceManager::RESOURCE> textResource = LE_ResourceManager.GetResourceWithoutRegister(GlyphFilePath, TextParserFactory::ID);
-        if (textResource.Exists()) {
-            if (TextParser *parser = dynamic_cast<TextParser*>(((ResourceManager::RESOURCE*)textResource.Get())->data))
-            {
-                TextParser::NODE *node = NULL;
-                if ((node = parser->GetNode("FILETYPE")) && node->values[0] == "FONT")
-                {
-                    if (TextParser::NODE *datanode = parser->GetNode("DATA"))
-                        if (node = datanode->children[0])
-                        {
-                            Output->mGlyphs.Reserve(node->children.count());
-                            for (uint32 i = 0; i < node->children.count(); i++)
-                            {
-                                if (TextParser::NODE *child = node->children[i]) {
-                                    Font::Glyph &newGlyph = Output->mGlyphs.Add();
-                                    if (TextParser::NODE *node_rect = child->FindChild("RECT"))
-                                    {
-                                        LEMath::IntRect frameRect(
-                                            node_rect->values[0].ToInt(),
-                                            node_rect->values[1].ToInt(),
-                                            node_rect->values[2].ToInt(),
-                                            node_rect->values[3].ToInt()
-                                        );
-                                        newGlyph.frameIndex = Output->mSprite->AddFrame(frameRect);
-                                        newGlyph.size = LEMath::IntVector2(frameRect.Width(), frameRect.Height());
-                                    }
-                                    if (TextParser::NODE *node_ascii = child->FindChild("ASCII"))
-                                    {
-                                        newGlyph.ascii = node_ascii->values[0].ToInt();
-                                    }
-                                }
-                            }
-                        }
-                }
-            }
-        }
+        //AutoPointer<ResourceManager::RESOURCE> textResource = LE_ResourceManager.GetResourceWithoutRegister(GlyphFilePath, TextParserFactory::ID);
+        //if (textResource.Exists()) {
+        //    if (TextParser *parser = dynamic_cast<TextParser*>(((ResourceManager::RESOURCE*)textResource.Get())->data))
+        //    {
+        //        TextParser::NODE *node = NULL;
+        //        if ((node = parser->GetNode("FILETYPE")) && node->values[0] == "FONT")
+        //        {
+        //            if (TextParser::NODE *datanode = parser->GetNode("DATA"))
+        //                if (node = datanode->children[0])
+        //                {
+        //                    Output->mGlyphs.Reserve(node->children.count());
+        //                    for (uint32 i = 0; i < node->children.count(); i++)
+        //                    {
+        //                        if (TextParser::NODE *child = node->children[i]) {
+        //                            Font::Glyph &newGlyph = Output->mGlyphs.Add();
+        //                            if (TextParser::NODE *node_rect = child->FindChild("RECT"))
+        //                            {
+        //                                LEMath::IntRect frameRect(
+        //                                    node_rect->values[0].ToInt(),
+        //                                    node_rect->values[1].ToInt(),
+        //                                    node_rect->values[2].ToInt(),
+        //                                    node_rect->values[3].ToInt()
+        //                                );
+        //                                newGlyph.frameIndex = Output->mSprite->AddFrame(frameRect);
+        //                                newGlyph.size = LEMath::IntVector2(frameRect.Width(), frameRect.Height());
+        //                            }
+        //                            if (TextParser::NODE *node_ascii = child->FindChild("ASCII"))
+        //                            {
+        //                                newGlyph.ascii = node_ascii->values[0].ToInt();
+        //                            }
+        //                        }
+        //                    }
+        //                }
+        //        }
+        //    }
+        //}
         return Output;
     }
     Font::Font()

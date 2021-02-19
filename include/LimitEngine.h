@@ -16,9 +16,11 @@
 #include "InitializeOptions.h"
 #include "Core/Singleton.h"
 #include "Core/ReferenceCountedPointer.h"
+#include "Core/SerializableResource.h"
 #include "Managers/TaskManager.h"
 #include "Factories/ResourceFactory.h"
 #include "Renderer/Transform.h"
+#include "Renderer/SerializableRendererResource.h"
 //#include "ResourceManager.h"
 //#include "GuiManager.h"
 //#include "ProfileManager.h"
@@ -42,6 +44,7 @@ public: // Public functions
 
     void SetMainCamera(const CameraRefPtr &InCamera);
 
+    SerializableRendererResource* Load(const char *filepath, ResourceFactory::ID ID, bool bTransient);
     Texture* LoadTexture(const char *filepath, ResourceFactory::ID ResourceID, bool bTransient);
     Model* LoadModel(const char *filepath, ResourceFactory::ID ResourceID, bool bTransient);
 
