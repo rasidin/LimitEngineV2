@@ -44,10 +44,9 @@ public:
     virtual void Process(PostProcessContext &Context, VectorArray<PooledRenderTarget> &RenderTargets) override;
 
 private:
-    ShaderRefPtr        mTemporalAAShader;
-    int                 mShaderParameterPosition_SceneColor;
-    int                 mShaderParameterPosition_SceneColorHistory;
+    ShaderRefPtr            mTemporalAAShader;
+    PipelineStateRefPtr     mPipelineState;
 
-    PooledRenderTarget  mHistorySceneColor;
+    PooledRenderTarget      mHistorySceneColor;
 };
 } // LimitEngine

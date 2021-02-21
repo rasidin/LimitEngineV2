@@ -48,9 +48,9 @@ public:
         mCamera->SetExposureOffset(-7.0f);
         Engine->SetMainCamera(mCamera.Get());
 
-        //mBackgroundImage = Engine->LoadTexture("local/reference/Scene_Odaiba/Odaiba.Background.lea", LimitEngine::ArchiveFactory::ID, false);
+        mBackgroundImage = Engine->LoadTexture("local/reference/Scene_Odaiba/Odaiba.Background.lea", LimitEngine::ArchiveFactory::ID, false);
         //mBackgroundImage = Engine->LoadTexture("local/reference/Scene_Odaiba/Odaiba.Irradiance.lea", LimitEngine::ArchiveFactory::ID, false);
-        mBackgroundImage = Engine->LoadTexture("local/reference/Scene_Odaiba/Odaiba.Reflection.lea", LimitEngine::ArchiveFactory::ID, false);
+        //mBackgroundImage = Engine->LoadTexture("local/reference/Scene_Odaiba/Odaiba.Reflection.lea", LimitEngine::ArchiveFactory::ID, false);
         //mBackgroundImage = Engine->LoadTexture("textures/EnvironmentBRDF.texture.lea", LimitEngine::ArchiveFactory::ID, false);
 
         if (mBackgroundImage.IsValid()) {

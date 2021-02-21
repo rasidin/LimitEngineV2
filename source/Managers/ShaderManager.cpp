@@ -34,6 +34,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "Shaders/Draw2D.ps.h"
 #include "Shaders/DrawFullscreen.ps.h"
 #include "Shaders/ResolveSceneColorSRGB.ps.h"
+#include "Shaders/TemporalAA.ps.h"
 #include "Shaders/Standard_prepass.vs.h"
 #include "Shaders/Standard_prepass.ps.h"
 #include "Shaders/Standard_basepass.vs.h"
@@ -58,133 +59,12 @@ namespace LimitEngine {
         mShaders.Add(new Draw2D_PS());
         mShaders.Add(new DrawFullscreen_PS());
         mShaders.Add(new ResolveSceneColorSRGB_PS());
+        mShaders.Add(new TemporalAA_PS());
 
         mShaders.Add(new Standard_prepass_VS());
         mShaders.Add(new Standard_prepass_PS());
         mShaders.Add(new Standard_basepass_VS());
         mShaders.Add(new Standard_basepass_PS());
-
-        //Shader *shader;
-/*
-        // Set Standard shader (PrePass)
-        {
-            shader = new Shader("Standard.PrePass");
-            shader->SetCompiledBinary(Shader_Standard_VS, sizeof(Shader_Standard_VS), Shader::TYPE_VERTEX);
-            shader->SetCompiledBinary(Shader_Standard_PrePass_PS, sizeof(Shader_Standard_PrePass_PS), Shader::TYPE_PIXEL);
-            AddShader(shader);
-        }
-
-        // Set Standard shader (BasePass)
-        {
-            shader = new Shader("Standard.BasePass");
-            shader->SetCompiledBinary(Shader_Standard_VS, sizeof(Shader_Standard_VS), Shader::TYPE_VERTEX);
-            shader->SetCompiledBinary(Shader_Standard_BasePass_PS, sizeof(Shader_Standard_BasePass_PS), Shader::TYPE_PIXEL);
-            AddShader(shader);
-        }
-
-        // Set Standard shader (TranslucencyPass)
-        {
-            shader = new Shader("Standard.TranslucencyPass");
-            shader->SetCompiledBinary(Shader_Standard_VS, sizeof(Shader_Standard_VS), Shader::TYPE_VERTEX);
-            shader->SetCompiledBinary(Shader_Standard_TranslucencyPass_PS, sizeof(Shader_Standard_TranslucencyPass_PS), Shader::TYPE_PIXEL);
-            AddShader(shader);
-        }
-
-        // Set StandardParamOnly shader (PrePass)
-        {
-            shader = new Shader("StandardParamOnly.PrePass");
-            shader->SetCompiledBinary(Shader_Standard_VS, sizeof(Shader_Standard_VS), Shader::TYPE_VERTEX);
-            shader->SetCompiledBinary(Shader_Standard_PrePass_PS, sizeof(Shader_Standard_PrePass_PS), Shader::TYPE_PIXEL);
-            AddShader(shader);
-        }
-
-        // Set StandardParamOnly shader (BasePass)
-        {
-            shader = new Shader("StandardParamOnly.BasePass");
-            shader->SetCompiledBinary(Shader_Standard_VS, sizeof(Shader_Standard_VS), Shader::TYPE_VERTEX);
-            shader->SetCompiledBinary(Shader_StandardParamOnly_BasePass_PS, sizeof(Shader_StandardParamOnly_BasePass_PS), Shader::TYPE_PIXEL);
-            AddShader(shader);
-        }
-
-        // Set StandardParamOnly shader (TranslucencyPass)
-        {
-            shader = new Shader("StandardParamOnly.TranslucencyPass");
-            shader->SetCompiledBinary(Shader_Standard_VS, sizeof(Shader_Standard_VS), Shader::TYPE_VERTEX);
-            shader->SetCompiledBinary(Shader_StandardParamOnly_TranslucencyPass_PS, sizeof(Shader_StandardParamOnly_TranslucencyPass_PS), Shader::TYPE_PIXEL);
-            AddShader(shader);
-        }
-
-        // Set StandardParamOnly shader (PrePass)
-        {
-            shader = new Shader("OcclusionOnly.PrePass");
-            shader->SetCompiledBinary(Shader_Standard_VS, sizeof(Shader_Standard_VS), Shader::TYPE_VERTEX);
-            shader->SetCompiledBinary(Shader_OcclusionOnly_PrePass_PS, sizeof(Shader_OcclusionOnly_PrePass_PS), Shader::TYPE_PIXEL);
-            AddShader(shader);
-        }
-
-        // Set StandardParamOnly shader (BasePass)
-        {
-            shader = new Shader("OcclusionOnly.BasePass");
-            shader->SetCompiledBinary(Shader_Standard_VS, sizeof(Shader_Standard_VS), Shader::TYPE_VERTEX);
-            shader->SetCompiledBinary(Shader_OcclusionOnly_BasePass_PS, sizeof(Shader_OcclusionOnly_BasePass_PS), Shader::TYPE_PIXEL);
-            AddShader(shader);
-        }
-
-        // Set Sprite Shader
-        {
-            shader = new Shader("Draw2D");
-            shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
-            shader->SetCompiledBinary(Shader_Draw2D_PS, sizeof(Shader_Draw2D_PS), Shader::TYPE_PIXEL);
-            AddShader(shader);
-        }
-
-        // Set Font Shader
-        {
-            shader = new Shader("DrawFont");
-            shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
-            shader->SetCompiledBinary(Shader_DrawFont_PS, sizeof(Shader_DrawFont_PS), Shader::TYPE_PIXEL);
-            AddShader(shader);
-        }
-
-        // Set 
-        {
-            shader = new Shader("DrawFullscreen");
-            shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
-            shader->SetCompiledBinary(Shader_DrawFullscreen_PS, sizeof(Shader_DrawFullscreen_PS), Shader::TYPE_PIXEL);
-            AddShader(shader);
-        }
-
-        // PostProcess TemporalAA
-        {
-            shader = new Shader("TemporalAA");
-            shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
-            shader->SetCompiledBinary(Shader_TemporalAA_PS, sizeof(Shader_TemporalAA_PS), Shader::TYPE_PIXEL);
-            AddShader(shader);
-        }
-
-        // PostProcess AmbientOcclusion
-        {
-            shader = new Shader("AmbientOcclusion");
-            shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
-            shader->SetCompiledBinary(Shader_AmbientOcclusion_PS, sizeof(Shader_AmbientOcclusion_PS), Shader::TYPE_PIXEL);
-            AddShader(shader);
-        }
-
-        // PostProcess AmbientOcclusion Blur
-        {
-            shader = new Shader("AmbientOcclusionBlur");
-            shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
-            shader->SetCompiledBinary(Shader_AmbientOcclusionBlur_PS, sizeof(Shader_AmbientOcclusionBlur_PS), Shader::TYPE_PIXEL);
-            AddShader(shader);
-        }
-*/
-        // Set Resolve scene color (SRGB)
-        //{
-        //    shader = new Shader("ResolveSceneColorSRGB");
-        //    shader->SetCompiledBinary(Shader_Draw2D_VS, sizeof(Shader_Draw2D_VS), Shader::TYPE_VERTEX);
-        //    shader->SetCompiledBinary(Shader_ResolveSceneColorSRGB_PS, sizeof(Shader_ResolveSceneColorSRGB_PS), Shader::TYPE_PIXEL);
-        //    AddShader(shader);
-        //}
     }
     void ShaderManager::Term()
     {

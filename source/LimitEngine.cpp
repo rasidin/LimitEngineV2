@@ -256,13 +256,13 @@ LimitEngine::LimitEngine()
 LimitEngine::~LimitEngine()
 {
 	delete mResourceManager; mResourceManager = NULL;
-	delete mDrawManager; mDrawManager = nullptr;
     delete mPostProcessManager; mPostProcessManager = nullptr;
 	delete mShaderManager; mShaderManager = nullptr;
     delete mSceneManager; mSceneManager = nullptr;
     delete mRenderTargetPoolManager; mRenderTargetPoolManager = nullptr;
+    delete mDrawManager; mDrawManager = nullptr;
 
-	delete mTaskManager; mTaskManager = nullptr;
+    delete mTaskManager; mTaskManager = nullptr;
 	delete mDebug; mDebug = nullptr;
 }
 

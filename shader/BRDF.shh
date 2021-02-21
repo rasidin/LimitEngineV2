@@ -42,7 +42,7 @@ SamplerState EnvironmentBRDFSampler
 };
 float2 SampleEnvirnonmentBRDF(float r, float NoV)
 {
-	return EnvironmentBRDFTexture.Sample(EnvironmentBRDFSampler, float2(1.0 - NoV, r)).xy;
+	return EnvironmentBRDFTexture.Sample(EnvironmentBRDFSampler, float2(NoV, r)).xy;
 }
 
 float Fresnel(float f0, float d)
