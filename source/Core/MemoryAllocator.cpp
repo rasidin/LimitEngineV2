@@ -20,15 +20,15 @@ void* MemoryAllocator::mPool = NULL;
 size_t MemoryAllocator::mPoolSize = 0;
     
 MemoryAllocator::MEMBLOCKHEADER* MemoryAllocator::mMemBlocks = NULL;
-uint32 MemoryAllocator::mWholeMemBlocksCount = 0;
+uint64 MemoryAllocator::mWholeMemBlocksCount = 0u;
 
 //!---- MEMBLOCKHEADER
-MemoryAllocator::MEMBLOCKHEADER* MemoryAllocator::MEMBLOCKHEADER::splitMemoryArea(uint32 splitBlocks)
+MemoryAllocator::MEMBLOCKHEADER* MemoryAllocator::MEMBLOCKHEADER::splitMemoryArea(uint64 splitBlocks)
 {
     if ( this->memBlocks <= splitBlocks )
         return NULL;
         
-    const uint32 secondAreaWholeBlocks = memBlocks - splitBlocks;
+    const uint64 secondAreaWholeBlocks = memBlocks - splitBlocks;
     LEASSERT( 1 <= secondAreaWholeBlocks );
         
     this->memBlocks = splitBlocks;
@@ -48,7 +48,7 @@ bool MemoryAllocator::MEMBLOCKHEADER::canMergeNextMemoryArea()
     
 bool MemoryAllocator::MEMBLOCKHEADER::mergeNextMemoryArea()
 {
-    if ( ! this->canMergeNextMemoryArea() )
+    if (!this->canMergeNextMemoryArea())
         return false;
         
     MEMBLOCKHEADER* nextArea = this->getNextMemoryArea();
@@ -67,7 +67,7 @@ void MemoryAllocator::Init()
     mPool = NULL;
     mPoolSize = NULL;
     mMemBlocks = NULL;
-    mWholeMemBlocksCount = 0;
+    mWholeMemBlocksCount = 0u;
 }
 
 void MemoryAllocator::InitWithMemoryPool(size_t size)
@@ -78,7 +78,7 @@ void MemoryAllocator::InitWithMemoryPool(size_t size)
     LEASSERT( (mPool != NULL) && "allocate memory pool failed!!!");
 
     mMemBlocks = reinterpret_cast< MEMBLOCKHEADER* >( mPool );
-    mWholeMemBlocksCount = static_cast<uint32>(size / MemoryBlockSize);
+    mWholeMemBlocksCount = size / MemoryBlockSize;
     LEASSERT( 1 <= mWholeMemBlocksCount );
 
     MEMBLOCKHEADER* header = mMemBlocks;
@@ -95,7 +95,7 @@ void* MemoryAllocator::Alloc(size_t size, LimitEngineMemoryCategory category)
     }
     else
     {
-        const size_t newMemBlocks = GetSizeAlign(size, MemoryBlockSize) / MemoryBlockSize;
+        const uint64 newMemBlocks = GetSizeAlign(size, MemoryBlockSize) / MemoryBlockSize;
 
         MEMBLOCKHEADER* memAreaUnused = findUnusedMemoryArea(newMemBlocks);
         if (memAreaUnused == nullptr)
@@ -149,7 +149,7 @@ void MemoryAllocator::Term()
     LEASSERT( (1 == memoryAreasCount) && "[MemoryAllocator::Term] Leak!!!" );
         
     mMemBlocks           = NULL;
-    mWholeMemBlocksCount = 0;
+    mWholeMemBlocksCount = 0u;
         
     Memory::Free(mPool);
     mPool = NULL;
@@ -175,14 +175,14 @@ MemoryAllocator::MEMBLOCKHEADER* MemoryAllocator::findUnusedMemoryArea(size_t re
     return NULL;
 }
     
-uint32 MemoryAllocator::getMemoryAreasCount()
+uint64 MemoryAllocator::getMemoryAreasCount()
 {
-    uint32 areasCount = 0;
+    uint64 areasCount = 0u;
     MEMBLOCKHEADER* curArea = mMemBlocks;
     const MEMBLOCKHEADER* memEnd = getMemoryEndAddr();
     while ( curArea < memEnd )
     {
-        ++ areasCount;
+        ++areasCount;
         curArea = curArea->getNextMemoryArea();
         if (curArea->allocated) {
             DEBUG_MESSAGE("[MemoryAllocator] MemoryLeak : category %s size %d address %llx (%llx)\n", LimitEngineMemoryCategoryName[curArea->category], static_cast<int>(curArea->memBlocks * MemoryBlockSize), static_cast<uint64>(intptr_t(curArea + 1) - intptr_t(mPool)), static_cast<uint64>(intptr_t(curArea + 1)));

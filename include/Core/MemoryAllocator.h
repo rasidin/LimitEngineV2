@@ -74,7 +74,7 @@ public:
             return (this + 1) + memBlocks;
         }
 
-        MEMBLOCKHEADER* splitMemoryArea(uint32 splitBlocks);
+        MEMBLOCKHEADER* splitMemoryArea(uint64 splitBlocks);
 
         bool canMergeNextMemoryArea();
         bool mergeNextMemoryArea();
@@ -93,7 +93,7 @@ public:
 private:
     static MEMBLOCKHEADER* findUnusedMemoryArea(size_t requiredMemBlocks);
 
-    static uint32 getMemoryAreasCount();
+    static uint64 getMemoryAreasCount();
     static void mergeUnusedMemoryAreaAll();
 
     static const MEMBLOCKHEADER* getMemoryEndAddr()
@@ -104,7 +104,7 @@ private:
     static void                *mPool;                      // Memory pool
     static size_t               mPoolSize;                  // Size of memory pool
     static MEMBLOCKHEADER      *mMemBlocks;                 // Memory blocks
-    static uint32               mWholeMemBlocksCount;       // Count of memory blocks
+    static uint64               mWholeMemBlocksCount;       // Count of memory blocks
 };
 }
 #endif // LIMITENGINEV2_CORE_MEMORYALLOCATOR_H_
