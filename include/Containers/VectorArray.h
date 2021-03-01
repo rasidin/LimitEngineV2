@@ -134,14 +134,14 @@ public:
             return;
         }
 
-        T *newData = (T*)malloc(sizeof(T) * n);
-        memset(newData, 0, sizeof(T) * n);
-        if (n <= mSize)
-            memcpy(newData, mData, sizeof(T) * n);
+        mReserved = n * 2;
+        T *newData = (T*)malloc(sizeof(T) * mReserved);
+        memset(newData, 0, sizeof(T) * mReserved);
+        if (mReserved <= mSize)
+            memcpy(newData, mData, sizeof(T) * mReserved);
         else
             memcpy(newData, mData, sizeof(T) * mSize);
         mSize = n;
-        mReserved = mSize;
         if (mData) free(mData);
         mData = newData;
     }

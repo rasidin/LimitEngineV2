@@ -53,137 +53,137 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "../externals/rapidxml/rapidxml.hpp"
 
 namespace LimitEngine {
-    typedef Vertex<FVF_PNCTTB, SIZE_PNCTTB> RigidVertex;
-    typedef VertexBuffer<FVF_PNCTTB, SIZE_PNCTTB> RigidVertexBuffer;
-    class ModelFactory;
-    class IndexBuffer;
-    class Material;
-    class Shader;
-    class Model : public SerializableRendererResource, public MetaData
+typedef Vertex<FVF_PNCTTB, SIZE_PNCTTB> RigidVertex;
+typedef VertexBuffer<FVF_PNCTTB, SIZE_PNCTTB> RigidVertexBuffer;
+class ModelFactory;
+class IndexBuffer;
+class Material;
+class Shader;
+class Model : public SerializableRendererResource, public MetaData
+{
+    friend ModelFactory;
+public:
+    static constexpr uint32 FileTypeID = GENERATE_SERIALIZABLERESOURCE_ID("MODL");
+
+    typedef struct _DRAWGROUP
     {
-        friend ModelFactory;
-    public:
-        static constexpr uint32 FileTypeID = GENERATE_SERIALIZABLERESOURCE_ID("MODL");
+        String                              materialID;
 
-        typedef struct _DRAWGROUP
+        Material                           *material;
+        VectorArray<LEMath::IntVector3>     indices;
+        IndexBufferRefPtr                   indexBuffer;
+
+        PipelineStateRefPtr                 pipelinestates[static_cast<int>(RenderPass::NumOfRenderPass)];
+
+        ~_DRAWGROUP()
         {
-            String                              materialID;
-
-            Material                           *material;
-            VectorArray<LEMath::IntVector3>     indices;
-            IndexBufferRefPtr                   indexBuffer;
-
-            PipelineStateRefPtr                 pipelinestates[static_cast<int>(RenderPass::NumOfRenderPass)];
-
-            ~_DRAWGROUP()
-            {
-                indexBuffer = nullptr;
-                for (int psidx = 0; psidx < static_cast<int>(RenderPass::NumOfRenderPass); psidx++) {
-                    pipelinestates[psidx].Release();
-                }
+            indexBuffer = nullptr;
+            for (int psidx = 0; psidx < static_cast<int>(RenderPass::NumOfRenderPass); psidx++) {
+                pipelinestates[psidx].Release();
             }
-            void InitResource();
-        } DRAWGROUP;
+        }
+        void InitResource();
+    } DRAWGROUP;
 
-        typedef struct _MESH
+    typedef struct _MESH
+    {
+        LEMath::FloatVector3     pos;
+        LEMath::FloatVector3     scl;
+        LEMath::FloatVector3     rot;
+        LEMath::FloatMatrix4x4   worldMatrix;
+
+        VertexBufferRefPtr       vertexbuffer;
+        VectorArray<DRAWGROUP*>  drawgroups;
+        _MESH()
         {
-            LEMath::FloatVector3     pos;
-            LEMath::FloatVector3     scl;
-            LEMath::FloatVector3     rot;
-            LEMath::FloatMatrix4x4   worldMatrix;
-            
-            VertexBufferRefPtr       vertexbuffer;
-            VectorArray<DRAWGROUP*>  drawgroups;
-            _MESH()
-            {
-                pos = LEMath::FloatVector3::Zero;
-                scl = LEMath::FloatVector3::One;
-                rot = LEMath::FloatVector3::Zero;
-                vertexbuffer = NULL;
-                drawgroups.Clear();
-            }
-            ~_MESH()
-            {
-                for(uint32 i=0;i<drawgroups.size();i++)
-                    delete drawgroups[i];
-                drawgroups.Clear();
-				vertexbuffer = nullptr;
-            }
-            void Preprocess()
-            {
-                worldMatrix = LEMath::FloatMatrix4x4::GenerateTransform((LEMath::FloatVector4)pos) * LEMath::FloatMatrix4x4::GenerateRotationXYZ((LEMath::FloatVector4)rot) * LEMath::FloatMatrix4x4::GenerateScaling((LEMath::FloatVector4)scl);
-            }
-            void InitResource();
-            DRAWGROUP* AddDrawGroup() {
-                DRAWGROUP *out = new DRAWGROUP();
-                drawgroups.push_back(out);
-                return out;
-            }
-        } MESH;
-    public:
-        Model();
-        Model(const char *filename);
-        virtual ~Model();
+            pos = LEMath::FloatVector3::Zero;
+            scl = LEMath::FloatVector3::One;
+            rot = LEMath::FloatVector3::Zero;
+            vertexbuffer = NULL;
+            drawgroups.Clear();
+        }
+        ~_MESH()
+        {
+            for(uint32 i=0;i<drawgroups.size();i++)
+                delete drawgroups[i];
+            drawgroups.Clear();
+			vertexbuffer = nullptr;
+        }
+        void Preprocess()
+        {
+            worldMatrix = LEMath::FloatMatrix4x4::GenerateTransform((LEMath::FloatVector4)pos) * LEMath::FloatMatrix4x4::GenerateRotationXYZ((LEMath::FloatVector4)rot) * LEMath::FloatMatrix4x4::GenerateScaling((LEMath::FloatVector4)scl);
+        }
+        void InitResource();
+        DRAWGROUP* AddDrawGroup() {
+            DRAWGROUP *out = new DRAWGROUP();
+            drawgroups.push_back(out);
+            return out;
+        }
+    } MESH;
+public:
+    Model();
+    Model(const char *filename);
+    virtual ~Model();
 
-        AABB GetBoundingBox() { return mBoundingbox; }
+    AABB GetBoundingBox() { return mBoundingbox; }
 
-        void Draw(const RenderState &rs, const LEMath::FloatMatrix4x4 &Transform);
+    void Draw(const RenderState &rs, const LEMath::FloatMatrix4x4 &Transform);
 
-        void SetName(const String &name)        { mName = name; }
-        String GetName()                        { return mName; }
-        uint32 GetMeshCount()                   { return mMeshes.size(); }
-        MESH* GetMesh(uint32 n)                 { return mMeshes[n]; }
-        uint32 GetMaterialCount()               { return mMaterials.size(); }
-        Material* GetMaterial(uint32 n)         { return mMaterials[n]; }
+    void SetName(const String &name)        { mName = name; }
+    String GetName()                        { return mName; }
+    uint32 GetMeshCount()                   { return mMeshes.size(); }
+    MESH* GetMesh(uint32 n)                 { return mMeshes[n]; }
+    uint32 GetMaterialCount()               { return mMaterials.size(); }
+    Material* GetMaterial(uint32 n)         { return mMaterials[n]; }
 
-		void SetPosition(const LEMath::FloatVector3 &p)     { mPosition = p; }
-        void SetScale(const LEMath::FloatVector3 &s)        { mScale = s; }
-        void SetRotation(const LEMath::FloatVector3 &r)     { mRotation = r; }
+	void SetPosition(const LEMath::FloatVector3 &p)     { mPosition = p; }
+    void SetScale(const LEMath::FloatVector3 &s)        { mScale = s; }
+    void SetRotation(const LEMath::FloatVector3 &r)     { mRotation = r; }
 
-        bool IsInBoundingBox(const LEMath::FloatVector3 &v);
+    bool IsInBoundingBox(const LEMath::FloatVector3 &v);
         
-        fPolygon::INTERSECT_RESULT Intersect(const fRay &r);
-		fPolygon::INTERSECT_RESULT IntersectSphere(const fRay &r, float radius);
+    fPolygon::INTERSECT_RESULT Intersect(const fRay &r);
+	fPolygon::INTERSECT_RESULT IntersectSphere(const fRay &r, float radius);
 
-    public: // Generator
-        static Model* GenerateFromTextParser(const ReferenceCountedPointer<TextParser> &Parser);
-        static Model* GenerateFromXML(const rapidxml::xml_document<const char> *XMLDoc);
-        static bool IsModelResource(const SerializableRendererResource* Resource) { return Resource->GetFileType() == FileTypeID; }
+public: // Generator
+    static Model* GenerateFromTextParser(const ReferenceCountedPointer<TextParser> &Parser);
+    static Model* GenerateFromXML(const rapidxml::xml_document<const char> *XMLDoc);
+    static bool IsModelResource(const SerializableRendererResource* Resource) { return Resource->GetFileType() == FileTypeID; }
 
-        virtual void InitResource() override;
+    virtual void InitResource() override;
 
-        virtual uint32 GetFileType() const override { return FileTypeID; }
-        virtual uint32 GetVersion() const override { return 1u; }
+    virtual uint32 GetFileType() const override { return FileTypeID; }
+    virtual uint32 GetVersion() const override { return 1u; }
 
-    protected: // For serialization
-        virtual bool Serialize(Archive &OutArchive) override;
-        virtual SerializableRendererResource* GenerateNew() const override { return new Model(); }
+protected: // For serialization
+    virtual bool Serialize(Archive &OutArchive) override;
+    virtual SerializableRendererResource* GenerateNew() const override { return new Model(); }
 
-    private:
-		void setupMetaData();
+private:
+	void setupMetaData();
 
-        void Load(const char *text);
-        Model* Load(TextParser::NODE *node);
-        Model* Load(const rapidxml::xml_node<const char> *XMLNode);
+    void Load(const char *text);
+    Model* Load(TextParser::NODE *node);
+    Model* Load(const rapidxml::xml_node<const char> *XMLNode);
 
-        void calcTangentBinormal();
-        void setupMaterialShaderParameters();
-        LEMath::FloatMatrix4x4 getTransformMatrix();
-    private:
-        AABB                     mBoundingbox;
+    void calcTangentBinormal();
+    void setupMaterialShaderParameters();
+    LEMath::FloatMatrix4x4 getTransformMatrix();
+private:
+    AABB                     mBoundingbox;
         
-        VectorArray<MESH*>       mMeshes;
+    VectorArray<MESH*>       mMeshes;
         
-        LEMath::FloatVector3     mBasePosition;
-        LEMath::FloatVector3     mBaseScale;
-        LEMath::FloatVector3     mBaseRotation;
-        LEMath::FloatMatrix4x4   mBaseMatrix;
+    LEMath::FloatVector3     mBasePosition;
+    LEMath::FloatVector3     mBaseScale;
+    LEMath::FloatVector3     mBaseRotation;
+    LEMath::FloatMatrix4x4   mBaseMatrix;
         
-        String                   mName;
-        LEMath::FloatVector3     mPosition;
-        LEMath::FloatVector3     mScale;
-        LEMath::FloatVector3     mRotation;
-        VectorArray<Material*>   mMaterials;
-    };
+    String                   mName;
+    LEMath::FloatVector3     mPosition;
+    LEMath::FloatVector3     mScale;
+    LEMath::FloatVector3     mRotation;
+    VectorArray<Material*>   mMaterials;
+};
 }
 #endif // LIMITENGINEV2_RENDERER_MODEL_H_
